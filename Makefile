@@ -6,7 +6,7 @@ OPTIMIZE  = -O2
 
 LDFLAGS	  = -g
 
-LIBS   	  =  
+LIBS   	  = #-I/usr/loacl/include -L/usr/local/lib
 
 SOURCES   = readvtklis.cpp
 
