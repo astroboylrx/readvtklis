@@ -34,6 +34,30 @@ public:
 	Particle *List;
 };
 
+/********** Cell data **********/
+class VtkFile{
+private:
+
+public:
+	int nx1, nx2, nx3, i, j, k;
+	
+};
+
+class CellData_Scaler{
+private:
+
+public:
+	int i;
+};
+
+class CellData_Vector{
+private:
+
+public:
+	int i;
+};
+
+	
 /********** Read particle list from file **********/
 ParticleList *ReadLis(string filename)
 {
@@ -75,6 +99,7 @@ ParticleList *ReadLis(string filename)
 	file.close();
 	return pl;
 }
+
 
 
 
