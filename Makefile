@@ -1,8 +1,8 @@
 CC	  = g++
 
-CFLAGS	  = -c -Wall -g
+CXXFLAGS  = -c -Wall -g
 
-OPTIMIZE  = -O2
+OPTIMIZE  = -O2 -m64
 
 LDFLAGS	  = -g
 
@@ -11,6 +11,8 @@ LIBS   	  = #-I/usr/loacl/include -L/usr/local/lib
 SOURCES   = readvtklis.cpp
 
 OBJECTS   = $(SOURCES:.cpp=.o)
+
+INCL      = $(SOURCES:.cpp=.h)
 
 EXEC      = readlis
 

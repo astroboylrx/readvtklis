@@ -5,11 +5,12 @@
 #include <vector>
 #include <cstdlib>
 #include <cmath>
+#include <cstdio>
 
 using namespace std;
 
 /********** Particle class **********/
-class Particle{
+class Particle {
 private:
 
 public:
@@ -19,7 +20,7 @@ public:
 };
 
 /********** ParticleList class **********/
-class ParticleList{
+class ParticleList {
 private:
 
 public:
@@ -32,13 +33,16 @@ public:
 	float coorlim[12], *typeinfo, time, dt;
 	// particle list pointer
 	Particle *List;
+	PartilceList();
+	~ParticleList();
 };
 
 /********** Cell data **********/
-class VtkFile{
+class VtkFile {
 private:
 
 public:
+	int Version;
 	int nx1, nx2, nx3, i, j, k;
 	
 };
@@ -65,13 +69,12 @@ ParticleList *ReadLis(string filename)
 	pl = (ParticleList *)malloc(sizeof(ParticleList));
 	ifstream file (filename.c_str(), ios::binary);
 	if (file.is_open()) {
-		for (int i = 0; i < 12; i++) {
-			file.read((char *)(&pl->coorlim[i]), sizeof(float));
-			//cout << pl->coorlim[i] << endl;
-			// The values in coorlim are the coordinate limits of this grid and domain:
-			// x1l, x1u, x2l, x2u, x3l, x3u, x1dl, x1du, x2dl, x2du, x3dl, x3du
-			// here l means lower limit, u means upper limit, d means domain
-		}
+		file.read((char *)(pl->coorlim), 12*sizeof(float));
+		// you can read an array in a bundle, like above
+		// The values in coorlim are the coordinate limits of this grid and domain:
+		// x1l, x1u, x2l, x2u, x3l, x3u, x1dl, x1du, x2dl, x2du, x3dl, x3du
+		// here l means lower limit, u means upper limit, d means domain
+
 		file.read((char *)(&pl->ntype), sizeof(float));
 		pl->typeinfo = (float *)malloc(pl->ntype*sizeof(float));
 		for (int i = 0; i < pl->ntype; i++) {
