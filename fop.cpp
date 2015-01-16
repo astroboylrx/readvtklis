@@ -8,6 +8,17 @@
 
 #include "fop.h"
 
+/********** Print stars contain info **********/
+int FileIO::print_stars(string info)
+{   cout << endl;
+    cout << setw(10) << setfill('*') << "*";
+    cout << " " << info << " ";
+    cout << setw(10) << setfill('*') << "*" << endl;
+    //cout << endl;
+    return 0;
+}
+
+/********** Constructor **********/
 FileIO::FileIO(int argc, const char * argv[])
 {
     int temp;
@@ -17,6 +28,7 @@ FileIO::FileIO(int argc, const char * argv[])
         cout << "Example: ./readvtklis -i comb -b Cout -s all -f 0:100 -o result.txt" << endl;
         exit(1);
     } else {
+        print_stars("Check Path");
         while ((temp = getopt(argc, (char **)argv, "i:b:s:f:o:")) != -1) {
             switch (temp) {
                 case 'i':
@@ -49,7 +61,7 @@ FileIO::FileIO(int argc, const char * argv[])
                     break;
                 case 'o':
                     output_path_name.assign(optarg);
-                    cout << "output_path_name is " << output_path_name;
+                    cout << "output_path_name is " << output_path_name << endl;
                     oflag = 1;
                     break;
                 case '?':
@@ -89,9 +101,38 @@ FileIO::FileIO(int argc, const char * argv[])
     }
 }
 
+/********** Generate file name in order **********/
 int FileIO::Generate_Filename()
 {
+    if (*data_path.rbegin() != '/') {
+        data_path.push_back('/');
+    }
+    for (int i = start_no; i <= end_no; i++) {
+        stringstream ss;
+        ss << setw(4) << setfill('0') << i;
+        string file_no = ss.str();
+        lis_filenames.push_back(data_path+data_basename+'.'+file_no+'.'+post_name+".lis");
+        vtk_filenames.push_back(data_path+data_basename+'.'+file_no+".vtk");
+    }
+    print_stars("Check Filenames");
+    cout << "There are " << lis_filenames.size() << " lis files in total." << endl;
+    cout << "The first one is " << *lis_filenames.begin() << endl;
+    cout << "There are " << vtk_filenames.size() << " vtk files in total." << endl;
+    cout << "The first one is " << *vtk_filenames.begin() << endl;
     
     return 0;
 }
 
+/********** Destructor **********/
+FileIO::~FileIO()
+{
+    vector<string> temp1, temp2;
+    lis_filenames.swap(temp1);
+    vtk_filenames.swap(temp2);
+    
+    /***
+     By clear() method, a reallocation is not guaranteed to happen, and the vector capacity is not guaranteed to change due to calling this function. A typical alternative that forces a reallocation is to use swap:
+     vector<T>().swap(x);   // clear x reallocating
+     In Mac OS, using Xcode, test verifies that clear() won't guarantee the free of memory.
+     */
+}

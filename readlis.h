@@ -32,16 +32,18 @@ public:
     // the coordinate limit, info of partile type
     // the time, and time step
     float coorlim[12], *typeinfo, time, dt;
-    // particle list pointer
-    Particle *List;
+    // particle list vector
+    vector <Particle> List;
     // constructor and destructor
     ParticleList();
     ~ParticleList();
     
-    // read info from lis file
+    // Read particle list from file
     int ReadLis(string filename);
     // calculate the scale height of partiles
     float ScaleHeight();
+    // free List to control memory
+    int InitializeList();
 };
 
 

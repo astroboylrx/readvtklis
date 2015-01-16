@@ -11,7 +11,9 @@
 
 #include <cstdio>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <string>
 #include <cstring>
@@ -44,6 +46,9 @@ public:
     
     // generate file name in order
     int Generate_Filename();
+    
+    // print stars contain info
+    int print_stars(string info);
 
 };
 

@@ -15,15 +15,19 @@ using namespace std;
 
 int main(int argc, const char * argv[]) {
     
-    FileIO fio(int argc, const char * argv[]);
+    FileIO *fio = new FileIO(argc, argv);
+    fio->Generate_Filename();
+    ParticleList *pl = new ParticleList;
+
+    for (int i = fio->start_no; i <= fio->end_no; i++) {
+        pl->ReadLis(fio->lis_filenames[i]);
+        cout << pl->ScaleHeight() << endl;
+        pl->InitializeList();
+    }
     
     
-    //ParticleList *pl;
-    //pl = (ParticleList *)malloc(sizeof(ParticleList));
-    
-    
-    
-    
-    cout << "Hello, World!\n";
+    delete fio;
+    delete pl;
+
     return 0;
 }

@@ -8,6 +8,12 @@
 
 #include "readlis.h"
 
+/********** Constructor **********/
+ParticleList::ParticleList()
+{
+    ;
+}
+
 /********** Read particle list from file **********/
 int ParticleList::ReadLis(string filename)
 {
@@ -27,18 +33,20 @@ int ParticleList::ReadLis(string filename)
         file.read((char *)(&time), sizeof(float));
         file.read((char *)(&dt), sizeof(float));
         file.read((char *)(&n), sizeof(long));
-        List = (Particle *)malloc(n*sizeof(Particle));
+        List.reserve(n);
         for (long i = 0; i < n; i++) {
+            Particle temp;
             for (int j = 0; j < 3; j++) {
-                file.read((char *)(&List[i].x[j]), sizeof(float));
+                file.read((char *)(&temp.x[j]), sizeof(float));
             }
             for (int j = 0; j < 3; j++) {
-                file.read((char *)(&List[i].v[j]), sizeof(float));
+                file.read((char *)(&temp.v[j]), sizeof(float));
             }
-            file.read((char *)(&List[i].rad), sizeof(float));
-            file.read((char *)(&List[i].mass), sizeof(float));
-            file.read((char *)(&List[i].pid), sizeof(long));
-            file.read((char *)(&List[i].cpuid), sizeof(int));
+            file.read((char *)(&temp.rad), sizeof(float));
+            file.read((char *)(&temp.mass), sizeof(float));
+            file.read((char *)(&temp.pid), sizeof(long));
+            file.read((char *)(&temp.cpuid), sizeof(int));
+            List.push_back(temp);
         }
     } else {
         cout << "Failed to open " << filename << endl;
@@ -47,6 +55,7 @@ int ParticleList::ReadLis(string filename)
     return 0;
 }
 
+/********** Calculate the scale height of partiles **********/
 float ParticleList::ScaleHeight()
 {
     float Hp = 0;
@@ -57,8 +66,20 @@ float ParticleList::ScaleHeight()
     return Hp;
 }
 
+/********** Free List to control memory **********/
+int ParticleList::InitializeList()
+{
+    vector<Particle> temp;
+    List.swap(temp);
+    return 0;
+}
+
+/********** Destructor **********/
 ParticleList::~ParticleList()
 {
-    delete List;
+    if (List.size() > 0) {
+        vector<Particle> temp;
+        List.swap(temp);
+    }
 }
 
