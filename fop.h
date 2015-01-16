@@ -20,6 +20,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <unistd.h>
+#include <ctime>
 
 using namespace::std;
 
