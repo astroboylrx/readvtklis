@@ -34,6 +34,7 @@ int ParticleList::ReadLis(string filename)
         file.read((char *)(&dt), sizeof(float));
         file.read((char *)(&n), sizeof(long));
         List.reserve(n);
+        
         for (long i = 0; i < n; i++) {
             Particle temp;
             for (int j = 0; j < 3; j++) {
