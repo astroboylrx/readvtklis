@@ -59,8 +59,8 @@ int ParticleList::ReadLis(string filename)
 float ParticleList::ScaleHeight()
 {
     float Hp = 0;
-    for (long i = 0; i < n; i++) {
-        Hp += List[i].x[2]*List[i].x[2];
+    for (vector<Particle>::iterator it = List.begin(); it != List.end(); ++it) {
+        Hp += it->x[2]*it->x[2];
     }
     Hp = sqrt(Hp/n);
     return Hp;

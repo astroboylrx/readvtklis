@@ -115,9 +115,9 @@ int FileIO::Generate_Filename()
         vtk_filenames.push_back(data_path+data_basename+'.'+file_no+".vtk");
     }
     print_stars("Check Filenames");
-    cout << "There are " << lis_filenames.size() << " lis files in total." << endl;
+    cout << "We generate " << lis_filenames.size() << " lis_filenames in total." << endl;
     cout << "The first one is " << *lis_filenames.begin() << endl;
-    cout << "There are " << vtk_filenames.size() << " vtk files in total." << endl;
+    cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
     cout << "The first one is " << *vtk_filenames.begin() << endl;
     
     return 0;
