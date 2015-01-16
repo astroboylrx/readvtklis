@@ -1,28 +1,24 @@
-CC	  = g++
+CXX	  = g++
 
-CXXFLAGS  = -c -Wall -g
+OPTIMIZE  = -O2 -m64 -Wall -g
 
-OPTIMIZE  = -O2 -m64
-
-LDFLAGS	  = -g
-
-LIBS   	  = #-I/usr/loacl/include -L/usr/local/lib
-
-SOURCES   = readvtklis.cpp
-
+SOURCES   = readvtklis.cpp readvtk.cpp readlis.cpp fop.cpp
 OBJECTS   = $(SOURCES:.cpp=.o)
+INCL      = readvtk.h readlis.h fop.h
 
-INCL      = $(SOURCES:.cpp=.h)
+CXXFLAGS  = #-I/opt/local/include/gcc48
+LDFLAGS   = #-L/opt/local/lib/gcc48
+LIBS      = -lm
 
-EXEC      = readlis
+EXEC      = readvtklis
 
 all: $(SOURCES) $(EXEC)
 
 $(EXEC): $(OBJECTS) 
-	$(CC) $(OPTIMIZE) $(LDFLAGS) $(OBJECTS)  $(LIBS) -o $@
+	$(CXX) $(OPTIMIZE) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
 	rm $(OBJECTS)
 .cpp.o:
-	$(CC) $(OPTIMIZE) $(CFLAGS) $< -o $@
+	$(CXX) $(OPTIMIZE) $(CXXFLAGS) -c $< -o $@
 
 .PHONY : clean
 

@@ -35,7 +35,7 @@ public:
     // particle list pointer
     Particle *List;
     // constructor and destructor
-    void PartilceList();
+    ParticleList();
     ~ParticleList();
     
     // read info from lis file

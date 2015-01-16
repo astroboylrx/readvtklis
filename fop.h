@@ -12,9 +12,12 @@
 #include <cstdio>
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include <string>
 #include <cstring>
+#include <cstdlib>
 #include <cmath>
+#include <unistd.h>
 
 using namespace::std;
 
@@ -22,7 +25,26 @@ class FileIO {
 private:
     
 public:
+    // all sorts of path and name
+    string data_path;
+    string data_basename;
+    string post_name;
+    string output_path_name;
     
+    // lis and vtk filenames
+    vector<string> lis_filenames;
+    vector<string> vtk_filenames;
+    
+    // the start number and the end number to process
+    int start_no, end_no;
+    
+    // constructor and destructor
+    FileIO(int argc, const char * argv[]);
+    ~FileIO();
+    
+    // generate file name in order
+    int Generate_Filename();
+
 };
 
 
