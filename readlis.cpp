@@ -9,8 +9,8 @@
 #include "readlis.h"
 
 //#define RESERVE_PUSH_BACK
-#define FROM_ARRAY_TO_VECTOR
-#define NEW_LIST_RESERVE
+//#define FROM_ARRAY_TO_VECTOR
+#define NEW_LIST_TO_SWAP
 
 /********** Constructor **********/
 ParticleList::ParticleList()
@@ -79,6 +79,29 @@ int ParticleList::ReadLis(string filename)
         delete temp;
         /*** construct array and give it to vector ***/
 #endif
+        
+#ifdef NEW_LIST_TO_SWAP
+        /*** construct new vector and swap ***/
+        vector<Particle> temp(n);
+        for (vector<Particle>::iterator it = temp.begin(); it != temp.end(); it++) {
+            for (int j = 0; j < 3; j++) {
+                file.read((char *)(&it->x[j]), sizeof(float));
+            }
+            for (int j = 0; j < 3; j++) {
+                file.read((char *)(&it->v[j]), sizeof(float));
+            }
+            file.read((char *)(&it->rad), sizeof(float));
+            file.read((char *)(&it->mass), sizeof(float));
+            file.read((char *)(&it->pid), sizeof(long));
+            file.read((char *)(&it->cpuid), sizeof(int));
+        }
+        List.swap(temp);
+        /*** construct new vector and swap ***/
+#endif
+        
+        
+        
+        
     } else {
         cout << "Failed to open " << filename << endl;
     }
