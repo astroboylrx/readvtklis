@@ -24,6 +24,11 @@
 
 using namespace::std;
 
+// After tests, reserve and push_back is fastest
+//#define RESERVE_PUSH_BACK
+//#define FROM_ARRAY_TO_VECTOR
+#define RESIZE_LIST
+
 class FileIO {
 private:
     

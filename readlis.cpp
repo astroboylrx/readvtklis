@@ -8,11 +8,6 @@
 
 #include "readlis.h"
 
-// After tests, reserve and push_back is fastest
-#define RESERVE_PUSH_BACK
-//#define FROM_ARRAY_TO_VECTOR
-//#define RESIZE_LIST
-
 /********** Constructor **********/
 ParticleList::ParticleList()
 {
@@ -83,7 +78,9 @@ int ParticleList::ReadLis(string filename)
         
 #ifdef RESIZE_LIST
         /*** resize list ***/
-        List.resize(n);
+        if (List.size() != n) {
+            List.resize(n);
+        }
         for (vector<Particle>::iterator it = List.begin(); it != List.end(); it++) {
             for (int j = 0; j < 3; j++) {
                 file.read((char *)(&it->x[j]), sizeof(float));

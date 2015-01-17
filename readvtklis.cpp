@@ -25,7 +25,9 @@ int main(int argc, const char * argv[]) {
     for (int i = fio->start_no; i <= fio->end_no; i++) {
         pl->ReadLis(fio->lis_filenames[i]);
         cout << pl->ScaleHeight() << endl;
+#ifndef RESIZE_LIST
         pl->InitializeList();
+#endif
     }
     
     
