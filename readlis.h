@@ -32,6 +32,8 @@ public:
     // the coordinate limit, info of partile type
     // the time, and time step
     float coorlim[12], *typeinfo, time, dt;
+    // coorlim details
+    float x1l, x1u, x2l, x2u, x3l, x3u, x1dl, x1du, x2dl, x2du, x3dl, x3du;
     // particle list vector
     vector <Particle> List;
     // constructor and destructor
