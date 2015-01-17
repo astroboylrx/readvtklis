@@ -8,6 +8,10 @@
 
 #include "readlis.h"
 
+//#define RESERVE_PUSH_BACK
+#define FROM_ARRAY_TO_VECTOR
+#define NEW_LIST_RESERVE
+
 /********** Constructor **********/
 ParticleList::ParticleList()
 {
@@ -33,8 +37,10 @@ int ParticleList::ReadLis(string filename)
         file.read((char *)(&time), sizeof(float));
         file.read((char *)(&dt), sizeof(float));
         file.read((char *)(&n), sizeof(long));
-        List.reserve(n);
         
+#ifdef RESERVE_PUSH_BACK
+        /*** reserve and push_back ***/
+        List.reserve(n);
         for (long i = 0; i < n; i++) {
             Particle temp;
             for (int j = 0; j < 3; j++) {
@@ -49,6 +55,30 @@ int ParticleList::ReadLis(string filename)
             file.read((char *)(&temp.cpuid), sizeof(int));
             List.push_back(temp);
         }
+        /*** reserve and push_back ***/
+#endif
+        
+#ifdef FROM_ARRAY_TO_VECTOR
+        /*** construct array and give it to vector ***/
+        Particle *temp = new Particle;
+        temp = (Particle *)malloc(n*sizeof(Particle));
+        for (long i = 0; i < n; i++) {
+            for (int j = 0; j < 3; j++) {
+                file.read((char *)(&temp[i].x[j]), sizeof(float));
+            }
+            for (int j = 0; j < 3; j++) {
+                file.read((char *)(&temp[i].v[j]), sizeof(float));
+            }
+            file.read((char *)(&temp[i].rad), sizeof(float));
+            file.read((char *)(&temp[i].mass), sizeof(float));
+            file.read((char *)(&temp[i].pid), sizeof(long));
+            file.read((char *)(&temp[i].cpuid), sizeof(int));
+        }
+        vector<Particle> tempList(temp, temp+n);
+        List.swap(tempList);
+        delete temp;
+        /*** construct array and give it to vector ***/
+#endif
     } else {
         cout << "Failed to open " << filename << endl;
     }
