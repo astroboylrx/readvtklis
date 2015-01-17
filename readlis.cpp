@@ -10,7 +10,7 @@
 
 //#define RESERVE_PUSH_BACK
 //#define FROM_ARRAY_TO_VECTOR
-#define NEW_LIST_TO_SWAP
+#define RESIZE_LIST
 
 /********** Constructor **********/
 ParticleList::ParticleList()
@@ -80,10 +80,10 @@ int ParticleList::ReadLis(string filename)
         /*** construct array and give it to vector ***/
 #endif
         
-#ifdef NEW_LIST_TO_SWAP
-        /*** construct new vector and swap ***/
-        vector<Particle> temp(n);
-        for (vector<Particle>::iterator it = temp.begin(); it != temp.end(); it++) {
+#ifdef RESIZE_LIST
+        /*** resize list ***/
+        List.resize(n);
+        for (vector<Particle>::iterator it = List.begin(); it != List.end(); it++) {
             for (int j = 0; j < 3; j++) {
                 file.read((char *)(&it->x[j]), sizeof(float));
             }
@@ -95,8 +95,7 @@ int ParticleList::ReadLis(string filename)
             file.read((char *)(&it->pid), sizeof(long));
             file.read((char *)(&it->cpuid), sizeof(int));
         }
-        List.swap(temp);
-        /*** construct new vector and swap ***/
+        /*** resize list ***/
 #endif
         
         
