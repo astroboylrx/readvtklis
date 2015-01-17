@@ -8,9 +8,9 @@
 
 #include "readlis.h"
 
-//#define RESERVE_PUSH_BACK
+#define RESERVE_PUSH_BACK
 //#define FROM_ARRAY_TO_VECTOR
-#define RESIZE_LIST
+//#define RESIZE_LIST
 
 /********** Constructor **********/
 ParticleList::ParticleList()
