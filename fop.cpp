@@ -31,23 +31,32 @@ FileIO::FileIO(int argc, const char * argv[])
         print_stars("Check Path");
         while ((temp = getopt(argc, (char **)argv, "i:b:s:f:o:")) != -1) {
             switch (temp) {
-                case 'i':
+                case 'i': {
                     data_path.assign(optarg);
                     cout << "data_path is " << data_path << endl;
                     iflag = 1;
                     break;
-                case 'b':
+                }
+                case 'b': {
                     data_basename.assign(optarg);
                     cout << "data_basename is " << data_basename << endl;
                     bflag = 1;
                     break;
-                case 's':
+                }
+                case 's': {
                     post_name.assign(optarg);
                     cout << "post_name is " << post_name << endl;
                     sflag = 1;
                     break;
-                case 'f':
-                    sscanf(optarg,"%d:%d", &start_no, &end_no);
+                }
+                case 'f': {
+                    //sscanf(optarg,"%d:%d", &start_no, &end_no);
+                    // obviously, the line above can replace the four line below
+                    istringstream ifs;
+                    ifs.str(optarg);
+                    char tempchar;
+                    ifs >> start_no >> tempchar >> end_no;
+                    
                     if (start_no < 0) {
                         cout << "The start number should be larger than 0. (Auto fix to 0)" << endl;
                         start_no = 0;
@@ -59,12 +68,14 @@ FileIO::FileIO(int argc, const char * argv[])
                     cout << "start_no=" << start_no << ", end_no=" << end_no << endl;
                     fflag = 1;
                     break;
-                case 'o':
+                }
+                case 'o': {
                     output_path_name.assign(optarg);
                     cout << "output_path_name is " << output_path_name << endl;
                     oflag = 1;
                     break;
-                case '?':
+                }
+                case '?': {
                     if (optopt == 'i' || optopt == 'b' || optopt == 's' || optopt == 'f' || optopt == 'o')
                         fprintf (stderr, "Option -%c requires an argument.\n", optopt);
                     else if (isprint (optopt))
@@ -72,9 +83,11 @@ FileIO::FileIO(int argc, const char * argv[])
                     else
                         fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
                     exit(2);
-                default:
+                }
+                default: {
                     cout << "Argument wrong." << endl;
                     abort();
+                }
             }
         }
         // Since argc needs to > 11, so the five IF statements should not be called at all.
@@ -104,7 +117,7 @@ FileIO::FileIO(int argc, const char * argv[])
 /********** Generate file name in order **********/
 int FileIO::Generate_Filename()
 {
-    if (*data_path.rbegin() != '/') {
+    if (data_path.back() != '/') {
         data_path.push_back('/');
     }
     for (int i = start_no; i <= end_no; i++) {

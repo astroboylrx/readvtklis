@@ -17,7 +17,8 @@ class CellData_Scaler{
 private:
     
 public:
-    string dataname, datatype, numcomp;
+    string dataname, datatype;
+    int numcomp;
     // numcomp: number of components, default 1
     string tablename;
     long pos; // the position of data, offset from SEEK_SET
@@ -29,7 +30,8 @@ public:
     CellData_Scaler();
     ~CellData_Scaler();
     
-    
+    // construct data
+    int Initialize_Data();
     // read scaler data
     int Read_Scaler_Data(string filename);
 };
@@ -38,7 +40,7 @@ class CellData_Vector{
 private:
     
 public:
-    string DataName, DataType;
+    string dataname, datatype;
     long pos; // the position of data, offset from SEEK_SET
     int dimensions[3];
     float ****data;
@@ -60,6 +62,7 @@ private:
 public:
     string Version;
     string Header;
+    double time;
     string FileFormat; // ACSII or BINARY
     string DatasetStructure;
     // in fact, now we are only dealing with STRUCTURED_POINTS
@@ -68,9 +71,9 @@ public:
     // ORIGIN x y z
     // SPACING s_x s_y s_z
     int dimensions[3];
-    float origin[3], spacing[3];
-    long CellData; // number of CELL_DATA, should be equal to the product of dimensions
-    long PointData;
+    double origin[3], spacing[3];
+    long n_CellData; // number of CELL_DATA, should be equal to the product of dimensions
+    long n_PointData;
     // in fact, now we are only dealing with CELL_DATA
     vector<CellData_Scaler> cd_scaler;
     vector<CellData_Vector> cd_vector;
