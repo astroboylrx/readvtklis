@@ -59,32 +59,21 @@ int CellData_Scaler::Initialize_Data(int *dimensions_been_told)
 /********** Read scaler data **********/
 int CellData_Scaler::Read_Scaler_Data(string filename)
 {
-    FILE *fp;
-    //ifstream file (filename.c_str(), ios::binary);
-    //file.seekg(pos, ios::beg);
-    fp = fopen(filename.c_str(), "r");
-    fseek(fp, pos, SEEK_SET);
-    assert(fseek(fp, -1, SEEK_CUR) == 0);
-    while (isspace(fgetc(fp)))
-        assert(fseek(fp, -2, SEEK_CUR) == 0);
-    fseek(fp, -1, SEEK_CUR);
-    assert(fgetc(fp) == 't');
-    assert(fgetc(fp) == '\n');
-    pos = ftell(fp);
-    fclose(fp);
-    
-    fp = fopen(filename.c_str(), "rb");
-    fseek(fp, pos, SEEK_SET);
+    ifstream file (filename.c_str(), ios::binary);
+    file.seekg(pos, ios::beg);
+    //FILE *fp;
+    //fp = fopen(filename.c_str(), "r");
+    //fseek(fp, pos, SEEK_SET);
     for (int i = 0; i != dimensions[2]; i++) {
         for (int j = 0; j != dimensions[1]; j++) {
             for (int k = 0; k != dimensions[0]; k++) {
-                //file.read((char *)(&data[i][j][k]), sizeof(float));
-                fread(&data[i][j][k], sizeof(float), 1, fp);
+                file.read((char *)(&data[i][j][k]), sizeof(float));
+                //fread(&data[i][j][k], sizeof(float), 1, fp);
             }
         }
     }
-    //file.close();
-    fclose(fp);
+    file.close();
+    //fclose(fp);
     return 0;
 }
 
@@ -351,10 +340,12 @@ int VtkFile::Read_Header_Record_Pos(string filename)
             
             // final check
             getline(file, tempstring);
+            cout << "check " << tempstring.size() << "; last one is " << tempstring.back() << endl;
             if (tempstring.compare("LOOKUP_TABLE default") != 0) {
                 cout << "Expected \"LOOKUP_TABLE default\", unsupportted file" << endl;
                 return 1;
             }
+                        
             cd_scaler[n_cd_scaler-1].tablename = "default";
             //cout << cd_scaler[n_cd_scaler-1].dataname << " " << cd_scaler[n_cd_scaler-1].datatype << endl;
             
