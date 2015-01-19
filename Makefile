@@ -6,7 +6,7 @@ SOURCES   = readvtklis.cpp readvtk.cpp readlis.cpp fop.cpp
 OBJECTS   = $(SOURCES:.cpp=.o)
 INCL      = readvtk.h readlis.h fop.h
 
-CXXFLAGS  = #-I/opt/local/include/gcc48
+CXXFLAGS  = -std=c++11 #-I/opt/local/include/gcc48
 LDFLAGS   = #-L/opt/local/lib/gcc48
 LIBS      = -lm
 
