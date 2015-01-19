@@ -27,13 +27,22 @@ public:
     // in fact, now we are only dealing with float type
     
     // constructor and destructor
-    CellData_Scaler();
+    CellData_Scaler(int *dimensions_been_told);
     ~CellData_Scaler();
     
     // construct data
-    int Initialize_Data();
+    int Initialize_Data(int *dimensions_been_told);
+    /* types should be read from right to left. For example, this is (starting from the rightmost *) a pointer to a constant pointer to an int.
+     int * const *x;
+     so here, (int * & dimension) is correct order, otherwise, (int & * dimension) would be a pointer to a reference, which is not possible.
+     ...passing a pointer is easier, passing a reference to a pointer comes across error while binding a tempoaray to the reference, which I can't understand for now
+     */
+    
     // read scaler data
     int Read_Scaler_Data(string filename);
+    
+    // free data memory
+    int Free_Data();
 };
 
 class CellData_Vector{
@@ -47,11 +56,17 @@ public:
     // in fact, now we are only dealing with float type
     
     // constructor and destructor
-    CellData_Vector();
+    CellData_Vector(int *dimensions_been_told);
     ~CellData_Vector();
+    
+    // construct data
+    int Initialize_Data(int *dimensions_been_told);
     
     // read vector data
     int Read_Vector_Data(string filename);
+    
+    // free data memory
+    int Free_Data();
     
 };
 

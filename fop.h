@@ -21,6 +21,7 @@
 #include <cmath>
 #include <unistd.h>
 #include <ctime>
+#include <cassert>
 
 using namespace::std;
 
