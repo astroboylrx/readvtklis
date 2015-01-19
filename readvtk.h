@@ -13,7 +13,7 @@
 
 /********** vtk file format **********/
 // due to the need for high performance, we use pointer based multi-dimensional arrays here
-class CellData_Scaler{
+class CellData_Scalar{
 private:
     
 public:
@@ -27,8 +27,8 @@ public:
     // in fact, now we are only dealing with float type
     
     // constructor and destructor
-    CellData_Scaler(int *dimensions_been_told);
-    ~CellData_Scaler();
+    CellData_Scalar(int *dimensions_been_told);
+    ~CellData_Scalar();
     
     // construct data
     int Initialize_Data(int *dimensions_been_told);
@@ -38,8 +38,8 @@ public:
      ...passing a pointer is easier, passing a reference to a pointer comes across error while binding a tempoaray to the reference, which I can't understand for now
      */
     
-    // read scaler data
-    int Read_Scaler_Data(string filename);
+    // read scalar data
+    int Read_Scalar_Data(string filename);
     
     // free data memory
     int Free_Data();
@@ -90,7 +90,7 @@ public:
     long n_CellData; // number of CELL_DATA, should be equal to the product of dimensions
     long n_PointData;
     // in fact, now we are only dealing with CELL_DATA
-    vector<CellData_Scaler> cd_scaler;
+    vector<CellData_Scalar> cd_scalar;
     vector<CellData_Vector> cd_vector;
     
     // constructor and destructor
@@ -99,6 +99,9 @@ public:
     
     // read header and record data position
     int Read_Header_Record_Pos(string filename);
+    
+    // read data
+    int Read_Data(string filename);
     
 };
 

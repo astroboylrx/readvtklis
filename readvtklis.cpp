@@ -25,7 +25,7 @@ int main(int argc, const char * argv[]) {
 
     fio->print_stars("Begin to Process Data");
     for (int i = 0 ; i <= (fio->end_no - fio->start_no); i++) {
-        
+        cout << "file number: " << fio->start_no+i << endl;
         pl->ReadLis(fio->lis_filenames[i]);
         cout << pl->ScaleHeight() << endl;
 #ifndef RESIZE_LIST
@@ -35,23 +35,9 @@ int main(int argc, const char * argv[]) {
             cout << "Having problem reading header..." << endl;
             exit(1);
         }
-        vf->cd_scaler[0].Read_Scaler_Data(fio->vtk_filenames[i]);
-        vf->cd_scaler[1].Read_Scaler_Data(fio->vtk_filenames[i]);
-        
-        float temp = 0;
-        for (int i = 0; i != vf->dimensions[2]; i++) {
-            for (int j = 0; j != vf->dimensions[1]; j++) {
-                for (int k = 0; k != vf->dimensions[0]; k++) {
-                    if (vf->cd_scaler[1].data[i][j][k] > temp) {
-                        temp = vf->cd_scaler[1].data[i][j][k];
-                    }
-                }
-            }
-        }
-        cout << "max of p density: " << temp << endl;
-        
+        vf->Read_Data(fio->vtk_filenames[i]);
     }
-    
+    fio->print_stars("Finishing Program...");
     delete fio;
     delete pl;
     delete vf;

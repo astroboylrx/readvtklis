@@ -9,36 +9,36 @@
 #include "readvtk.h"
 
 /*************************************/
-/*********CellData_Scaler*************/
+/*********CellData_Scalar*************/
 /*************************************/
 
 /********** Overload != for dimension comparison **********/
-inline bool operator!=(int (&dimensions)[3], CellData_Scaler &cd_scaler)
+inline bool operator!=(int (&dimensions)[3], CellData_Scalar &cd_scalar)
 {
-    if (dimensions[2] != cd_scaler.dimensions[2]) {
+    if (dimensions[2] != cd_scalar.dimensions[2]) {
         return true;
-    } else if (dimensions[1] != cd_scaler.dimensions[1]) {
+    } else if (dimensions[1] != cd_scalar.dimensions[1]) {
         return true;
-    } else if (dimensions[0] != cd_scaler.dimensions[0]) {
+    } else if (dimensions[0] != cd_scalar.dimensions[0]) {
         return true;
     }
     return false;
 }
 
 /********** Constructor **********/
-CellData_Scaler::CellData_Scaler(int *dimensions_been_told)
+CellData_Scalar::CellData_Scalar(int *dimensions_been_told)
 {
     Initialize_Data(dimensions_been_told);
 }
 
 /********** Destructor **********/
-CellData_Scaler::~CellData_Scaler()
+CellData_Scalar::~CellData_Scalar()
 {
     ;
 }
 
 /********** Construct data **********/
-int CellData_Scaler::Initialize_Data(int *dimensions_been_told)
+int CellData_Scalar::Initialize_Data(int *dimensions_been_told)
 {
     dimensions[0] = dimensions_been_told[0];
     dimensions[1] = dimensions_been_told[1];
@@ -56,8 +56,8 @@ int CellData_Scaler::Initialize_Data(int *dimensions_been_told)
     return 0;
 }
 
-/********** Read scaler data **********/
-int CellData_Scaler::Read_Scaler_Data(string filename)
+/********** Read scalar data **********/
+int CellData_Scalar::Read_Scalar_Data(string filename)
 {
     ifstream file (filename.c_str(), ios::binary);
     file.seekg(pos, ios::beg);
@@ -67,7 +67,19 @@ int CellData_Scaler::Read_Scaler_Data(string filename)
     for (int i = 0; i != dimensions[2]; i++) {
         for (int j = 0; j != dimensions[1]; j++) {
             for (int k = 0; k != dimensions[0]; k++) {
-                file.read((char *)(&data[i][j][k]), sizeof(float));
+                unsigned char temp[sizeof(float)];
+                file.read(reinterpret_cast<char *>(temp), sizeof(float));
+                unsigned char t;
+                t = temp[0];
+                temp[0] = temp[3];
+                temp[3] = t;
+                t = temp[1];
+                temp[1] = temp[2];
+                temp[2] = t;
+                data[i][j][k] = reinterpret_cast<float&>(temp);
+                // You can read it directly due to Endianness
+                // Big Endian should be converted to samll endian
+                //file.read((char *)(&data[i][j][k]), sizeof(float));
                 //fread(&data[i][j][k], sizeof(float), 1, fp);
             }
         }
@@ -78,7 +90,7 @@ int CellData_Scaler::Read_Scaler_Data(string filename)
 }
 
 /********** Free data memory **********/
-int CellData_Scaler::Free_Data()
+int CellData_Scalar::Free_Data()
 {
     for (int i = 0; i != dimensions[2]; i++) {
         for (int j = 0; j != dimensions[1]; j++) {
@@ -140,6 +152,7 @@ int CellData_Vector::Initialize_Data(int *dimensions_been_told)
     return 0;
 }
 
+/********** Free data **********/
 int CellData_Vector::Free_Data()
 {
     for (int i = 0; i != dimensions[2]; i++) {
@@ -155,7 +168,7 @@ int CellData_Vector::Free_Data()
     return 0;
 }
 
-/********** Read scaler data **********/
+/********** Read scalar data **********/
 int CellData_Vector::Read_Vector_Data(string filename)
 {
     ifstream file (filename.c_str(), ios::binary);
@@ -163,7 +176,19 @@ int CellData_Vector::Read_Vector_Data(string filename)
     for (int i = 0; i != dimensions[2]; i++) {
         for (int j = 0; j != dimensions[1]; j++) {
             for (int k = 0; k != dimensions[0]; k++) {
-                file.read((char *)(data[i][j][k]), 3*sizeof(float));
+                for (int l = 0; l != 3; l++) {
+                    unsigned char temp[sizeof(float)];
+                    file.read(reinterpret_cast<char *>(temp), sizeof(float));
+                    unsigned char t;
+                    t = temp[0];
+                    temp[0] = temp[3];
+                    temp[3] = t;
+                    t = temp[1];
+                    temp[1] = temp[2];
+                    temp[2] = t;
+                    data[i][j][k][l] = reinterpret_cast<float&>(temp);
+                }
+                //file.read((char *)(data[i][j][k]), 3*sizeof(float));
             }
         }
     }
@@ -184,12 +209,12 @@ VtkFile::VtkFile()
 /********** Destructor **********/
 VtkFile::~VtkFile()
 {
-    if (cd_scaler.size() > 0) {
-        for (int i = 0; i != cd_scaler.size(); i++) {
-            cd_scaler[i].Free_Data();
+    if (cd_scalar.size() > 0) {
+        for (int i = 0; i != cd_scalar.size(); i++) {
+            cd_scalar[i].Free_Data();
         }
-        vector<CellData_Scaler> temp;
-        cd_scaler.swap(temp);
+        vector<CellData_Scalar> temp;
+        cd_scalar.swap(temp);
     }
     if (cd_vector.size() > 0) {
         for (int i = 0; i != cd_vector.size(); i++) {
@@ -305,51 +330,49 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     }
     //cout << n_CellData << endl;
     
-    int n_cd_scaler = 0, n_cd_vector = 0;
+    int n_cd_scalar = 0, n_cd_vector = 0;
     //long filepos1, filepos2;
     while (!file.eof()) {
         getline(file, tempstring, ' ');
         if (tempstring.compare("SCALARS") == 0) {
-            n_cd_scaler++;
+            n_cd_scalar++;
             // if vector has elements, no need to push_back a new one
-            if (cd_scaler.size() >= n_cd_scaler) {
-                if (dimensions != cd_scaler[n_cd_scaler-1]) {
-                    cd_scaler[n_cd_scaler-1].Initialize_Data(dimensions);
+            if (cd_scalar.size() >= n_cd_scalar) {
+                if (dimensions != cd_scalar[n_cd_scalar-1]) {
+                    cd_scalar[n_cd_scalar-1].Initialize_Data(dimensions);
                 }
             } else {
-                // create a new CellData_Scaler
-                cd_scaler.push_back(CellData_Scaler(dimensions));
+                // create a new CellData_Scalar
+                cd_scalar.push_back(CellData_Scalar(dimensions));
             }
             // fetch data from file to it
-            getline(file, cd_scaler[n_cd_scaler-1].dataname, ' ');
+            getline(file, cd_scalar[n_cd_scalar-1].dataname, ' ');
             getline(file, tempstring);
             size_t ws_pos = tempstring.find_first_of(' ');
             // in case of the existence of numComp
             if (ws_pos != string::npos) {
                 istringstream iss;
                 iss.str(tempstring);
-                iss >> cd_scaler[n_cd_scaler-1].datatype >> std::ws >> cd_scaler[n_cd_scaler-1].numcomp;
+                iss >> cd_scalar[n_cd_scalar-1].datatype >> std::ws >> cd_scalar[n_cd_scalar-1].numcomp;
             } else {
-                cd_scaler[n_cd_scaler-1].datatype = tempstring;
-                cd_scaler[n_cd_scaler-1].numcomp = 1;
+                cd_scalar[n_cd_scalar-1].datatype = tempstring;
+                cd_scalar[n_cd_scalar-1].numcomp = 1;
             }
-            if (cd_scaler[n_cd_scaler-1].datatype.compare("float") != 0) {
+            if (cd_scalar[n_cd_scalar-1].datatype.compare("float") != 0) {
                 cout << "Expected float format, found " << tempstring << endl;
                 return 1;
             }
             
             // final check
             getline(file, tempstring);
-            cout << "check " << tempstring.size() << "; last one is " << tempstring.back() << endl;
             if (tempstring.compare("LOOKUP_TABLE default") != 0) {
                 cout << "Expected \"LOOKUP_TABLE default\", unsupportted file" << endl;
                 return 1;
             }
-                        
-            cd_scaler[n_cd_scaler-1].tablename = "default";
-            //cout << cd_scaler[n_cd_scaler-1].dataname << " " << cd_scaler[n_cd_scaler-1].datatype << endl;
             
-            cd_scaler[n_cd_scaler-1].pos = file.tellg();
+            cd_scalar[n_cd_scalar-1].tablename = "default";
+            cout << "Found scalar " << cd_scalar[n_cd_scalar-1].dataname << " " << cd_scalar[n_cd_scalar-1].datatype << endl;
+            cd_scalar[n_cd_scalar-1].pos = file.tellg();
             file.seekg(sizeof(float)*n_CellData, file.cur);
             // for debug
             /*
@@ -367,18 +390,17 @@ int VtkFile::Read_Header_Record_Pos(string filename)
                     cd_vector[n_cd_vector-1].Initialize_Data(dimensions);
                 }
             } else {
-                // create a new CellData_Scaler
+                // create a new CellData_Scalar
                 cd_vector.push_back(CellData_Vector(dimensions));
             }
             // fetch data from file to it
             getline(file, cd_vector[n_cd_vector-1].dataname, ' ');
             getline(file, cd_vector[n_cd_vector-1].datatype);
-            //cout << cd_vector[n_cd_vector-1].dataname << " " << cd_vector[n_cd_vector-1].datatype << endl;
+            cout << "Found vector " << cd_vector[n_cd_vector-1].dataname << " " << cd_vector[n_cd_vector-1].datatype << endl;
             
             cd_vector[n_cd_vector-1].pos = file.tellg();
             //cout << cd_vector[n_cd_vector-1].pos << endl;
             file.seekg(sizeof(float)*n_CellData*3, file.cur);
-
             // for debug
             /*
             filepos1 = file.tellg();
@@ -400,4 +422,15 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     return 0;
 }
 
+/********** Read data **********/
+int VtkFile::Read_Data(string filename)
+{
+    for (int i = 0; i != cd_scalar.size(); i++) {
+        cd_scalar[i].Read_Scalar_Data(filename);
+    }
+    for (int i = 0; i != cd_vector.size(); i++) {
+        cd_vector[i].Read_Vector_Data(filename);
+    }
+    return 0;
+}
 
