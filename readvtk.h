@@ -101,7 +101,7 @@ public:
     ~VtkFile();
     
     // construct coordinate grid
-    int Construct_Coor();
+    int Construct_Coor(int *dimensions_been_told);
     
     // read header and record data position
     int Read_Header_Record_Pos(string filename);

@@ -59,7 +59,6 @@ int main(int argc, const char * argv[]) {
 #ifndef ENABLE_MPI
         //vf->Print_File_Info();
 #endif
-        vf->Construct_Coor();
         vf->Read_Data(fio->vtk_filenames[i]);
         vf->Calculate_Mass_Find_Max();
 
@@ -97,7 +96,7 @@ int main(int argc, const char * argv[]) {
             cout << "time = " << fio->orbit_time[i] << "; max_rho_par = " << fio->max_rho_par[i] << "; Hp = " << fio->Hp[i] << endl;
         }
          */
-        fio->print_stars("Master: Finishing Program\n");
+        fio->print_stars("Master: Finishing Program");
 #ifdef ENABLE_MPI
     }
 #endif
@@ -111,7 +110,9 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
     mpi_end_t = MPI::Wtime();
     if (myMPI->myrank == myMPI->master) {
+#endif
         cout << "Master: Elapsed time (secs) is "
+#ifdef ENABLE_MPI
         << mpi_end_t - mpi_begin_t
 #else
         << elapsed_secs

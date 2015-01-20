@@ -43,7 +43,6 @@ int CellData_Scalar::Initialize_Data(int *dimensions_been_told)
     dimensions[2] = dimensions_been_told[2];
     dimensions[1] = dimensions_been_told[1];
     dimensions[0] = dimensions_been_told[0];
-    data = NULL;
     // store in x, then y, then stack them as z direction
     data = new float**[dimensions[2]];
     for (int i = 0; i != dimensions[2]; i++) {
@@ -52,7 +51,8 @@ int CellData_Scalar::Initialize_Data(int *dimensions_been_told)
             data[i][j] = new float[dimensions[0]];
         }
     }
-    data[0][0][0] = 0;
+    
+    //data[0][0][0] = 0;
     return 0;
 }
 
@@ -206,6 +206,19 @@ int CellData_Vector::Read_Vector_Data(string filename)
 /************VtkFile******************/
 /*************************************/
 
+/********** Overload != for dimension comparison **********/
+inline bool operator!=(int (&dimensions)[3], VtkFile &vf)
+{
+    if (dimensions[2] != vf.dimensions[2]) {
+        return true;
+    } else if (dimensions[1] != vf.dimensions[1]) {
+        return true;
+    } else if (dimensions[0] != vf.dimensions[0]) {
+        return true;
+    }
+    return false;
+}
+
 /********** Constructor **********/
 VtkFile::VtkFile()
 {
@@ -245,22 +258,24 @@ VtkFile::~VtkFile()
 }
 
 /********** Construct coordinate grid **********/
-int VtkFile::Construct_Coor()
+int VtkFile::Construct_Coor(int *dimensions_been_told)
 {
     // actually, here what we construct is the center coordinate of each cell, along [z][y][x], from ORIGIN
-    
-    cell_center = new double***[dimensions[2]];
-    for (int i = 0; i != dimensions[2]; i++) {
-        cell_center[i] = new double**[dimensions[1]];
-        for (int j = 0; j != dimensions[1]; j++) {
-            cell_center[i][j] = new double*[dimensions[0]];
-            for (int k = 0; k != dimensions[0]; k++) {
-                cell_center[i][j][k] = new double[3];
-                cell_center[i][j][k][0] = origin[0]+spacing[0]*(k+0.5);
-                cell_center[i][j][k][1] = origin[1]+spacing[1]*(j+0.5);
-                cell_center[i][j][k][2] = origin[2]+spacing[2]*(i+0.5);
+    if (cell_center == NULL || dimensions_been_told != dimensions) {
+        cell_center = new double***[dimensions[2]];
+        for (int i = 0; i != dimensions[2]; i++) {
+            cell_center[i] = new double**[dimensions[1]];
+            for (int j = 0; j != dimensions[1]; j++) {
+                cell_center[i][j] = new double*[dimensions[0]];
+                for (int k = 0; k != dimensions[0]; k++) {
+                    cell_center[i][j][k] = new double[3];
+                    cell_center[i][j][k][0] = origin[0]+spacing[0]*(k+0.5);
+                    cell_center[i][j][k][1] = origin[1]+spacing[1]*(j+0.5);
+                    cell_center[i][j][k][2] = origin[2]+spacing[2]*(i+0.5);
+                }
             }
         }
+
     }
     return 0;
 }
@@ -371,19 +386,26 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     //cout << "CELL_DATA " << n_CellData << endl;
     
     int n_cd_scalar = 0, n_cd_vector = 0;
+    if (cell_center == NULL || dimensions != *this) {
+        Construct_Coor(dimensions);
+    }
     //long filepos1, filepos2;
     while (!file.eof()) {
         getline(file, tempstring, ' ');
         if (tempstring.compare("SCALARS") == 0) {
-            n_cd_scalar++;
+            n_cd_scalar++;// cout << "n_cd_scalar=" << n_cd_scalar << endl;
             // if vector has elements, no need to push_back a new one
             if (cd_scalar.size() >= n_cd_scalar) {
                 if (dimensions != cd_scalar[n_cd_scalar-1]) {
+                    cd_scalar[n_cd_scalar-1].Free_Data();
                     cd_scalar[n_cd_scalar-1].Initialize_Data(dimensions);
+                    //cout << "Real new data" << endl;
                 }
+                //cout << "Initialize_Data" << endl;
             } else {
                 // create a new CellData_Scalar
                 cd_scalar.push_back(CellData_Scalar(dimensions));
+                //cout << "Push_back" << endl;
             }
             // fetch data from file to it
             getline(file, cd_scalar[n_cd_scalar-1].dataname, ' ');
@@ -427,6 +449,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
             // if vector has elements, no need to push_back a new one
             if (cd_vector.size() >= n_cd_vector) {
                 if (dimensions != cd_vector[n_cd_vector-1]) {
+                    cd_vector[n_cd_vector-1].Free_Data();
                     cd_vector[n_cd_vector-1].Initialize_Data(dimensions);
                 }
             } else {
