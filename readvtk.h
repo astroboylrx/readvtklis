@@ -92,8 +92,9 @@ public:
     // in fact, now we are only dealing with CELL_DATA
     vector<CellData_Scalar> cd_scalar;
     vector<CellData_Vector> cd_vector;
-    // total gas mass and particle mass, maximum
-    double m_gas, m_par, max_mg, max_mp;
+    // relative total gas mass and particle mass
+    // and maximum density of gas and par(rescaled)
+    double m_gas, m_par, max_rho_gas, max_rho_par;
     
     // constructor and destructor
     VtkFile();

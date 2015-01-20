@@ -497,6 +497,8 @@ int VtkFile::Calculate_Mass_Find_Max()
 {
     // here we use the specific features of Athena output
     // i.e. the first scalar is density, and then  particle_density
+    // and we assume the volume of one spacing cube is 1, so
+    // the total mass = total density*1
     if (cd_scalar.size() != 2) {
         cout << "The size of Scalar vector is wrong." << endl;
         return 1;
@@ -516,10 +518,10 @@ int VtkFile::Calculate_Mass_Find_Max()
         }
         if (it->dataname.compare("density") == 0) {
             m_gas = m_temp;
-            max_mg = maximum;
+            max_rho_gas = maximum;
         } else if (it->dataname.compare("particle_density") == 0) {
             m_par = m_temp;
-            max_mp = maximum;
+            max_rho_par = maximum;
         } else {
             cout << "Unkonwn data name: " << it->dataname << endl;
         }

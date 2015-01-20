@@ -48,6 +48,11 @@ public:
     // the start number and the end number to process
     int start_no, end_no;
     
+    // time, H_p, max_mp
+    double *orbit_time, *Hp, *max_rho_par;
+    // total particle to gas mass ratio
+    const float mratio = 0.02;
+    
     // constructor and destructor
     FileIO(int argc, const char * argv[]);
     ~FileIO();
@@ -57,6 +62,9 @@ public:
     
     // print stars contain info
     int print_stars(string info);
+    
+    // output data to file
+    int output_data();
 
 };
 

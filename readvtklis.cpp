@@ -25,6 +25,7 @@ int main(int argc, const char * argv[]) {
 
     fio->print_stars("Begin to Process Data");
     for (int i = 0 ; i <= (fio->end_no - fio->start_no); i++) {
+        // vtk part
         cout << "\nReading " << fio->vtk_filenames[i].substr(fio->vtk_filenames[i].find_last_of("/\\")+1) << endl;
         
         if (vf->Read_Header_Record_Pos(fio->vtk_filenames[i])) {
@@ -36,19 +37,21 @@ int main(int argc, const char * argv[]) {
         vf->Read_Data(fio->vtk_filenames[i]);
         vf->Calculate_Mass_Find_Max();
         
-        cout << "m_gas = " << vf->m_gas << ", m_par = " << vf->m_par << ", max_mg = " << vf->max_mg << ", max_mp = " << vf->max_mp << endl;
-        
-        
-        
         cout << "\nReading " << fio->lis_filenames[i].substr(fio->lis_filenames[i].find_last_of("/\\")+1) << endl;
-        
+        // lis part
         pl->ReadLis(fio->lis_filenames[i]);
-        cout << pl->ScaleHeight() << endl;
+        
+        // recording data
+        fio->orbit_time[i] = vf->time;
+        // rescale the total mass of particles to 0.02 gas mass, so this density is relative to gas density 1
+        fio->max_rho_par[i] = vf->max_rho_par*fio->mratio*vf->m_gas/vf->m_par;
+        fio->Hp[i] = pl->ScaleHeight();
 #ifndef RESIZE_LIST
         pl->InitializeList();
 #endif
-
     }
+    fio->output_data();
+    
     fio->print_stars("Finishing Program...");
     delete fio;
     delete pl;

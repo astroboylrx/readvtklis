@@ -112,6 +112,9 @@ FileIO::FileIO(int argc, const char * argv[])
             abort();
         }
     }
+    orbit_time = new double[end_no-start_no+1];
+    Hp = new double[end_no-start_no+1];
+    max_rho_par = new double[end_no-start_no+1];
 }
 
 /********** Generate file name in order **********/
@@ -148,4 +151,37 @@ FileIO::~FileIO()
      vector<T>().swap(x);   // clear x reallocating
      In Mac OS, using Xcode, test verifies that clear() won't guarantee the free of memory.
      */
+    delete [] orbit_time;
+    delete [] Hp;
+    delete [] max_rho_par;
+    
+}
+
+/********** Output data to file **********/
+int FileIO::output_data()
+{
+    // shouldn't happen
+    if (output_path_name.length() == 0) {
+        cout << "Error: No output path/name. " << endl;
+        return 1;
+    }
+    ofstream file;
+    file.open(output_path_name.c_str(), ofstream::out);
+    if (!file.is_open()) {
+        cout << "Failed to open " << output_path_name << endl;
+        return 1;
+    }
+    file << setw(15) << setfill(' ') << "orbit_time";
+    file << setw(15) << setfill(' ') << "max_rho_par";
+    file << setw(15) << setfill(' ') << "H_p";
+    file << endl;
+    for (int i = 0; i != end_no-start_no+1; i++) {
+        file << setw(15) << scientific << orbit_time[i];
+        file << setw(15) << scientific << max_rho_par[i];
+        file << setw(15) << scientific << Hp[i];
+        file << endl;
+    }
+    file.close();
+    
+    return 0;
 }
