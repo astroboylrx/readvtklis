@@ -228,6 +228,7 @@ VtkFile::VtkFile()
 /********** Destructor **********/
 VtkFile::~VtkFile()
 {
+    /*
     if (cd_scalar.size() > 0) {
         for (int i = 0; i != cd_scalar.size(); i++) {
             cd_scalar[i].Free_Data();
@@ -254,6 +255,7 @@ VtkFile::~VtkFile()
         }
         delete [] cell_center;
     }
+     */
     
 }
 

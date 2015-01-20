@@ -100,11 +100,11 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
     }
 #endif
-    
+    /*
     delete fio;
     delete pl;
     delete vf;
-    
+    */
     end_t = clock();
     elapsed_secs = double(end_t - begin_t) / CLOCKS_PER_SEC;
 #ifdef ENABLE_MPI
@@ -121,11 +121,12 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
     }
     myMPI->Finalize();
-
+    /*
     delete [] orbit_time;
     delete [] max_rho_par;
     delete [] Hp;
     delete myMPI;
+     */
 #endif
     return 0;
 }
