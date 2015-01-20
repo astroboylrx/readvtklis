@@ -15,11 +15,12 @@ using namespace std;
 int main(int argc, const char * argv[]) {
     
     clock_t begin_t, end_t;
-    double elapsed_secs;
+    double elapsed_secs, mpi_begin_t, mpi_end_t;
     begin_t = clock();
 #ifdef ENABLE_MPI
     MPI_info *myMPI = new MPI_info;
     myMPI->Initialize(argc, argv);
+    mpi_begin_t = MPI::Wtime();
 #endif
     FileIO *fio = new FileIO(argc, argv);
     fio->Generate_Filename();
@@ -108,8 +109,15 @@ int main(int argc, const char * argv[]) {
     end_t = clock();
     elapsed_secs = double(end_t - begin_t) / CLOCKS_PER_SEC;
 #ifdef ENABLE_MPI
+    mpi_end_t = MPI::Wtime();
     if (myMPI->myrank == myMPI->master) {
-        cout << "Master: Elapsed time (secs) is " << elapsed_secs << endl;
+        cout << "Master: Elapsed time (secs) is "
+        << mpi_end_t - mpi_begin_t
+#else
+        << elapsed_secs
+#endif
+        << endl;
+#ifdef ENABLE_MPI
     }
     myMPI->Finalize();
 
