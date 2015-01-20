@@ -6,7 +6,7 @@ SOURCES   = readvtklis.cpp readvtk.cpp readlis.cpp fop.cpp
 OBJECTS   = $(SOURCES:.cpp=.o)
 INCL      = readvtk.h readlis.h fop.h
 
-CXXFLAGS  = -std=c++11 -I/uaopt/openmpi/1.8.1/include
+CXXFLAGS  = -I/uaopt/openmpi/1.8.1/include #-std=c++11 
 LDFLAGS   = -L/uaopt/openmpi/1.8.1/lib
 LIBS      = -lm -lmpi_cxx -lmpi
 
