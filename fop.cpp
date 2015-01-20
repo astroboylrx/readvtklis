@@ -122,7 +122,7 @@ FileIO::FileIO(int argc, const char * argv[])
 /********** Generate file name in order **********/
 int FileIO::Generate_Filename()
 {
-    if (data_path.back() != '/') {
+    if (*data_path.rbegin() != '/') {
         data_path.push_back('/');
     }
     for (int i = start_no; i <= end_no; i++) {
