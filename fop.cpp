@@ -28,24 +28,24 @@ FileIO::FileIO(int argc, const char * argv[])
         cout << "Example: ./readvtklis -i comb -b Cout -s all -f 0:100 -o result.txt" << endl;
         exit(1);
     } else {
-        print_stars("Check Path");
+        //print_stars("Check Path");
         while ((temp = getopt(argc, (char **)argv, "i:b:s:f:o:")) != -1) {
             switch (temp) {
                 case 'i': {
                     data_path.assign(optarg);
-                    cout << "data_path is " << data_path << endl;
+                    //cout << "data_path is " << data_path << endl;
                     iflag = 1;
                     break;
                 }
                 case 'b': {
                     data_basename.assign(optarg);
-                    cout << "data_basename is " << data_basename << endl;
+                    //cout << "data_basename is " << data_basename << endl;
                     bflag = 1;
                     break;
                 }
                 case 's': {
                     post_name.assign(optarg);
-                    cout << "post_name is " << post_name << endl;
+                    //cout << "post_name is " << post_name << endl;
                     sflag = 1;
                     break;
                 }
@@ -65,13 +65,14 @@ FileIO::FileIO(int argc, const char * argv[])
                         cout << "The end number should be larger than the start number. (Auto fix to start number + 1)." << endl;
                         end_no += start_no;
                     }
-                    cout << "start_no=" << start_no << ", end_no=" << end_no << endl;
+                    //cout << "start_no=" << start_no << ", end_no=" << end_no << endl;
+                    n_file = end_no - start_no + 1;
                     fflag = 1;
                     break;
                 }
                 case 'o': {
                     output_path_name.assign(optarg);
-                    cout << "output_path_name is " << output_path_name << endl;
+                    //cout << "output_path_name is " << output_path_name << endl;
                     oflag = 1;
                     break;
                 }
@@ -130,14 +131,34 @@ int FileIO::Generate_Filename()
         lis_filenames.push_back(data_path+data_basename+'.'+file_no+'.'+post_name+".lis");
         vtk_filenames.push_back(data_path+data_basename+'.'+file_no+".vtk");
     }
+    /*
     print_stars("Check Filenames");
     cout << "We generate " << lis_filenames.size() << " lis_filenames in total." << endl;
     cout << "The first one is " << *lis_filenames.begin() << endl;
     cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
     cout << "The first one is " << *vtk_filenames.begin() << endl;
+     */
     
     return 0;
 }
+
+/********** Check path and filename **********/
+int FileIO::Check_Path_Filename()
+{
+    print_stars("Check Path");
+    cout << "data_path is " << data_path << endl;
+    cout << "data_basename is " << data_basename << endl;
+    cout << "post_name is " << post_name << endl;
+    cout << "start_no=" << start_no << ", end_no=" << end_no << endl;
+    cout << "output_path_name is " << output_path_name << endl;
+    print_stars("Check Filenames");
+    cout << "We generate " << lis_filenames.size() << " lis_filenames in total." << endl;
+    cout << "The first one is " << *lis_filenames.begin() << endl;
+    cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
+    cout << "The first one is " << *vtk_filenames.begin() << endl;
+    return 0;
+}
+
 
 /********** Destructor **********/
 FileIO::~FileIO()

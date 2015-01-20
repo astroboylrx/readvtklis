@@ -411,7 +411,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
             }
             
             cd_scalar[n_cd_scalar-1].tablename = "default";
-            cout << "Found scalar " << cd_scalar[n_cd_scalar-1].dataname << " " << cd_scalar[n_cd_scalar-1].datatype << endl;
+            //cout << "Found scalar " << cd_scalar[n_cd_scalar-1].dataname << " " << cd_scalar[n_cd_scalar-1].datatype << endl;
             cd_scalar[n_cd_scalar-1].pos = file.tellg();
             file.seekg(sizeof(float)*n_CellData, file.cur);
             // for debug
@@ -436,7 +436,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
             // fetch data from file to it
             getline(file, cd_vector[n_cd_vector-1].dataname, ' ');
             getline(file, cd_vector[n_cd_vector-1].datatype);
-            cout << "Found vector " << cd_vector[n_cd_vector-1].dataname << " " << cd_vector[n_cd_vector-1].datatype << endl;
+            //cout << "Found vector " << cd_vector[n_cd_vector-1].dataname << " " << cd_vector[n_cd_vector-1].datatype << endl;
             
             cd_vector[n_cd_vector-1].pos = file.tellg();
             //cout << cd_vector[n_cd_vector-1].pos << endl;
