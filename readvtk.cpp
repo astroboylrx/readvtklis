@@ -40,9 +40,9 @@ CellData_Scalar::~CellData_Scalar()
 /********** Construct data **********/
 int CellData_Scalar::Initialize_Data(int *dimensions_been_told)
 {
-    dimensions[0] = dimensions_been_told[0];
-    dimensions[1] = dimensions_been_told[1];
     dimensions[2] = dimensions_been_told[2];
+    dimensions[1] = dimensions_been_told[1];
+    dimensions[0] = dimensions_been_told[0];
     data = NULL;
     // store in x, then y, then stack them as z direction
     data = new float**[dimensions[2]];
@@ -99,6 +99,9 @@ int CellData_Scalar::Free_Data()
         delete [] data[i];
     }
     delete [] data;
+    dimensions[0] = 0;
+    dimensions[1] = 0;
+    dimensions[2] = 0;
     return 0;
 }
 
@@ -109,11 +112,11 @@ int CellData_Scalar::Free_Data()
 /********** Overload != for dimension comparison **********/
 inline bool operator!=(int (&dimensions)[3], CellData_Vector &cd_vector)
 {
-    if (dimensions[0] != cd_vector.dimensions[0]) {
+    if (dimensions[2] != cd_vector.dimensions[2]) {
         return true;
     } else if (dimensions[1] != cd_vector.dimensions[1]) {
         return true;
-    } else if (dimensions[2] != cd_vector.dimensions[2]) {
+    } else if (dimensions[0] != cd_vector.dimensions[0]) {
         return true;
     }
     return false;
@@ -134,9 +137,9 @@ CellData_Vector::~CellData_Vector()
 /********** Construct data **********/
 int CellData_Vector::Initialize_Data(int *dimensions_been_told)
 {
-    dimensions[0] = dimensions_been_told[0];
-    dimensions[1] = dimensions_been_told[1];
     dimensions[2] = dimensions_been_told[2];
+    dimensions[1] = dimensions_been_told[1];
+    dimensions[0] = dimensions_been_told[0];
     data = NULL;
     // store in x, y and then stack them in z direction
     data = new float***[dimensions[2]];
@@ -165,6 +168,9 @@ int CellData_Vector::Free_Data()
         delete [] data[i];
     }
     delete [] data;
+    dimensions[0] = 0;
+    dimensions[1] = 0;
+    dimensions[2] = 0;
     return 0;
 }
 
@@ -223,6 +229,40 @@ VtkFile::~VtkFile()
         vector<CellData_Vector> temp;
         cd_vector.swap(temp);
     }
+    if (cell_center != NULL) {
+        for (int i = 0; i != dimensions[2]; i++) {
+            for (int j = 0; j != dimensions[1]; j++) {
+                for (int k = 0; k != dimensions[0]; k++) {
+                    delete [] cell_center[i][j][k];
+                }
+                delete [] cell_center[i][j];
+            }
+            delete [] cell_center[i];
+        }
+        delete [] cell_center;
+    }
+    
+}
+
+/********** Construct coordinate grid **********/
+int VtkFile::Construct_Coor()
+{
+    // actually, here what we construct is the center coordinate of each cell, along [z][y][x], from ORIGIN
+    
+    cell_center = new double***[dimensions[2]];
+    for (int i = 0; i != dimensions[2]; i++) {
+        cell_center[i] = new double**[dimensions[1]];
+        for (int j = 0; j != dimensions[1]; j++) {
+            cell_center[i][j] = new double*[dimensions[0]];
+            for (int k = 0; k != dimensions[0]; k++) {
+                cell_center[i][j][k] = new double[3];
+                cell_center[i][j][k][0] = origin[0]+spacing[0]*(k+0.5);
+                cell_center[i][j][k][1] = origin[1]+spacing[1]*(j+0.5);
+                cell_center[i][j][k][2] = origin[2]+spacing[2]*(i+0.5);
+            }
+        }
+    }
+    return 0;
 }
 
 /********** Read header and record data position **********/
@@ -256,7 +296,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         cout << "Unsopported file format: " << FileFormat << endl;
         return 1;
     }
-    //cout << FileFormat << endl;
+    //cout << "File format: " << FileFormat << endl;
     
     getline(file, DatasetStructure);
     if (DatasetStructure.compare("DATASET STRUCTURED_POINTS") != 0) {
@@ -287,7 +327,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         cout << "No dimensions info: " << endl;
         return 1;
     }
-    //cout << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << endl;
+    //cout << "DIMENSIONS " << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << endl;
     
     getline(file, tempstring, ' ');
     if (tempstring.compare("ORIGIN") == 0) {
@@ -300,7 +340,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         cout << "No origin info: " << endl;
         return 1;
     }
-    //cout << origin[0] << " " << origin[1] << " " << origin[2] << endl;
+    //cout << "ORIGIN " << origin[0] << " " << origin[1] << " " << origin[2] << endl;
     
     getline(file, tempstring, ' ');
     if (tempstring.compare("SPACING") == 0) {
@@ -313,7 +353,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         cout << "No spacing info: " << endl;
         return 1;
     }
-    //cout << spacing[0] << " " << spacing[1] << " " << spacing[2] << endl;
+    //cout << "SPACING " << spacing[0] << " " << spacing[1] << " " << spacing[2] << endl;
     getline(file, tempstring, ' ');
     if (tempstring.compare("CELL_DATA") == 0) {
         istringstream iss;
@@ -328,7 +368,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         cout << "No info about the number of CELL_DATA" << endl;
         return 1;
     }
-    //cout << n_CellData << endl;
+    //cout << "CELL_DATA " << n_CellData << endl;
     
     int n_cd_scalar = 0, n_cd_vector = 0;
     //long filepos1, filepos2;
@@ -430,6 +470,59 @@ int VtkFile::Read_Data(string filename)
     }
     for (int i = 0; i != cd_vector.size(); i++) {
         cd_vector[i].Read_Vector_Data(filename);
+    }
+    return 0;
+}
+
+/********** Print file info **********/
+int VtkFile::Print_File_Info()
+{
+    if (Version.length() == 0) {
+        cout << "No file info for now" << endl;
+        return 1;
+    }
+    cout << "\nVersion: " << Version << endl;
+    cout << setprecision(6) << scientific << "time: " << time << endl;
+    cout << "File format: " << FileFormat << endl;
+    cout << DatasetStructure << endl;
+    cout << "DIMENSIONS " << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << endl;
+    cout << "ORIGIN " << origin[0] << " " << origin[1] << " " << origin[2] << endl;
+    cout << "SPACING " << spacing[0] << " " << spacing[1] << " " << spacing[2] << endl;
+    cout << "CELL_DATA " << n_CellData << endl;
+    return 0;
+}
+
+/********** Calculate mass and find maximum **********/
+int VtkFile::Calculate_Mass_Find_Max()
+{
+    // here we use the specific features of Athena output
+    // i.e. the first scalar is density, and then  particle_density
+    if (cd_scalar.size() != 2) {
+        cout << "The size of Scalar vector is wrong." << endl;
+        return 1;
+    }
+    for (vector<CellData_Scalar>::iterator it = cd_scalar.begin(); it != cd_scalar.end(); it++) {
+        double m_temp = 0, maximum = 0, tempdata;
+        for (int k = 0; k != dimensions[2]; k++) {
+            for (int j = 0; j != dimensions[1]; j++) {
+                for (int i = 0; i != dimensions[0]; i++) {
+                    tempdata = it->data[i][j][k];
+                    m_temp += tempdata;
+                    if (tempdata > maximum) {
+                        maximum = tempdata;
+                    }
+                }
+            }
+        }
+        if (it->dataname.compare("density") == 0) {
+            m_gas = m_temp;
+            max_mg = maximum;
+        } else if (it->dataname.compare("particle_density") == 0) {
+            m_par = m_temp;
+            max_mp = maximum;
+        } else {
+            cout << "Unkonwn data name: " << it->dataname << endl;
+        }
     }
     return 0;
 }

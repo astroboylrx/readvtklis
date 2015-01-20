@@ -86,16 +86,21 @@ public:
     // ORIGIN x y z
     // SPACING s_x s_y s_z
     int dimensions[3];
-    double origin[3], spacing[3];
+    double origin[3], spacing[3], ****cell_center; // cell center coor
     long n_CellData; // number of CELL_DATA, should be equal to the product of dimensions
     long n_PointData;
     // in fact, now we are only dealing with CELL_DATA
     vector<CellData_Scalar> cd_scalar;
     vector<CellData_Vector> cd_vector;
+    // total gas mass and particle mass, maximum
+    double m_gas, m_par, max_mg, max_mp;
     
     // constructor and destructor
     VtkFile();
     ~VtkFile();
+    
+    // construct coordinate grid
+    int Construct_Coor();
     
     // read header and record data position
     int Read_Header_Record_Pos(string filename);
@@ -103,6 +108,11 @@ public:
     // read data
     int Read_Data(string filename);
     
+    // print file info
+    int Print_File_Info();
+    
+    // calculate mass and find maximum
+    int Calculate_Mass_Find_Max();
 };
 
 
