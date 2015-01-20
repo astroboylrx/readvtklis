@@ -304,7 +304,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         size_t time_pos = Header.find("time= ");
         // stod() reads to the end of the number, so we can ignore those afterwards
         // time = stod(Header.substr(time_pos+6));
-        time = strtod((Header.substr(time_pos+6)).c_str(), NULL);
+        time = strtod((Header.substr(time_pos+6, 12)).c_str(), NULL);
     }
     //cout << setprecision(6) << scientific << "time: " << time << endl;
     
