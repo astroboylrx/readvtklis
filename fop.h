@@ -99,7 +99,7 @@ public:
     // time, H_p, max_mp
     double *orbit_time, *Hp, *max_rho_par;
     // total particle to gas mass ratio
-    const float mratio = 0.02;
+    float mratio;
     
     // constructor and destructor
     FileIO(int argc, const char * argv[]);

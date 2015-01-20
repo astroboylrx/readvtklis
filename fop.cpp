@@ -21,6 +21,7 @@ int FileIO::print_stars(string info)
 /********** Constructor **********/
 FileIO::FileIO(int argc, const char * argv[])
 {
+    mratio = 0.02;
     int temp;
     int iflag = 0, bflag = 0, sflag = 0, fflag = 0, oflag = 0;
     if (argc < 11) {
