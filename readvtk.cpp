@@ -533,7 +533,7 @@ int VtkFile::Calculate_Mass_Find_Max()
         for (int k = 0; k != dimensions[2]; k++) {
             for (int j = 0; j != dimensions[1]; j++) {
                 for (int i = 0; i != dimensions[0]; i++) {
-                    tempdata = it->data[i][j][k];
+                    tempdata = it->data[k][j][i];
                     m_temp += tempdata;
                     if (tempdata > maximum) {
                         maximum = tempdata;
