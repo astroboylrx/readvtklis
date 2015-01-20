@@ -192,7 +192,7 @@ int FileIO::output_data()
         cout << "Failed to open " << output_path_name << endl;
         return 1;
     }
-    file << setw(15) << setfill(' ') << "orbit_time";
+    file << setw(15) << setfill(' ') << "#orbit_time";
     file << setw(15) << setfill(' ') << "max_rho_par";
     file << setw(15) << setfill(' ') << "H_p";
     file << endl;
