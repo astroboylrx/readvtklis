@@ -74,12 +74,13 @@ int main(int argc, const char * argv[]) {
         // recording data
 #ifdef ENABLE_MPI
         orbit_time[i] = vf->time;
-        max_rho_par[i] = vf->max_rho_par*fio->mratio*vf->m_gas/vf->m_par;
+        max_rho_par[i] = vf->max_rho_par; //*fio->mratio*vf->m_gas/vf->m_par;
         Hp[i] = pl->ScaleHeight();
 #else
         fio->orbit_time[i] = vf->time;
-        // rescale the total mass of particles to 0.02 gas mass, so this density is relative to gas density 1
-        fio->max_rho_par[i] = vf->max_rho_par*fio->mratio*vf->m_gas/vf->m_par;
+        // wrong: rescale the total mass of particles to 0.02 gas mass, so this density is relative to gas density 1
+        // the gas in the box is not the total gas, so it's not 0.02
+        fio->max_rho_par[i] = vf->max_rho_par; //*fio->mratio*vf->m_gas/vf->m_par;
         fio->Hp[i] = pl->ScaleHeight();
 #endif
 #ifndef RESIZE_LIST
