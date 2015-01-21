@@ -37,6 +37,12 @@ int main(int argc, const char * argv[]) {
     double *orbit_time = new double[fio->n_file];
     double *max_rho_par = new double[fio->n_file];
     double *Hp = new double[fio->n_file];
+    for (int i = 0; i != fio->n_file; i++) {
+        // initialize if you don't assign all of them values but use them for calculation
+        orbit_time[i] = 0;
+        max_rho_par[i] = 0;
+        Hp[i] = 0;
+    }
     myMPI->Barrier();
     // for debug
     //cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << endl;
