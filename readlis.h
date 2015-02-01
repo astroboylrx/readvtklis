@@ -46,6 +46,8 @@ public:
     float ScaleHeight();
     // free List to control memory
     int InitializeList();
+    // print basic info
+    int PrintInfo();
 };
 
 

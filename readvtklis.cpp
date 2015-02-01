@@ -12,36 +12,46 @@
 
 using namespace std;
 
+// global variables
+#ifdef ENABLE_MPI
+MPI_info *myMPI = new MPI_info;
+#endif
+FileIO *fio = new FileIO;
+
 int main(int argc, const char * argv[]) {
     
     clock_t begin_t, end_t;
     double elapsed_secs, mpi_begin_t, mpi_end_t;
     begin_t = clock();
 #ifdef ENABLE_MPI
-    MPI_info *myMPI = new MPI_info;
     myMPI->Initialize(argc, argv);
     mpi_begin_t = MPI::Wtime();
 #endif
-    FileIO *fio = new FileIO(argc, argv);
+    fio->Initialize(argc, argv);
     fio->Generate_Filename();
     ParticleList *pl = new ParticleList;
     VtkFile *vf = new VtkFile;
+
 #ifdef ENABLE_MPI
     if (myMPI->myrank == myMPI->master) {
 #endif
-        fio->Check_Path_Filename();
-        fio->print_stars("Master: Begin to Process Data");
+        fio->Check_Input_Path_Filename();
+        fio->Print_Stars("Master: Begin to Process Data");
 #ifdef ENABLE_MPI
     }
     myMPI->Determine_Loop(fio->n_file);
+    
+    // we need local variables to record data and then MPI_Allreduce
     double *orbit_time = new double[fio->n_file];
     double *max_rho_par = new double[fio->n_file];
     double *Hp = new double[fio->n_file];
+    long *n_par = new long[fio->n_file];
     for (int i = 0; i != fio->n_file; i++) {
         // initialize if you don't assign all of them values but use them for calculation
         orbit_time[i] = 0;
         max_rho_par[i] = 0;
         Hp[i] = 0;
+        n_par[i] = 0;
     }
     myMPI->Barrier();
     // for debug
@@ -56,7 +66,7 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
         << "Processor " << myMPI->myrank << ": "
 #endif
-        << "Reading " << fio->data_basename+"." << setw(4) << setfill('0') << i+fio->start_no << endl;
+        << "Reading " << fio->data_basename+"." << setw(4) << setfill('0') << i+fio->start_no << endl; //" " << fio->ParNum_flag << fio->RhoParMax_flag << fio->HeiPar_flag << endl;
         
         if (vf->Read_Header_Record_Pos(fio->vtk_filenames[i])) {
             cout << "Having problem reading header..." << endl;
@@ -65,23 +75,38 @@ int main(int argc, const char * argv[]) {
 #ifndef ENABLE_MPI
         //vf->Print_File_Info();
 #endif
-        vf->Read_Data(fio->vtk_filenames[i]);
-        vf->Calculate_Mass_Find_Max();
-
-        // lis part
-        pl->ReadLis(fio->lis_filenames[i]);
-        
+        if (fio->RhoParMax_flag) {
+            vf->Read_Data(fio->vtk_filenames[i]);
+            vf->Calculate_Mass_Find_Max();
+        }
+        if (fio->ParNum_flag || fio->HeiPar_flag) {
+            // lis part
+            pl->ReadLis(fio->lis_filenames[i]);
+        }
+                
         // recording data
 #ifdef ENABLE_MPI
         orbit_time[i] = vf->time;
-        max_rho_par[i] = vf->max_rho_par; //*fio->mratio*vf->m_gas/vf->m_par;
-        Hp[i] = pl->ScaleHeight();
+        if (fio->ParNum_flag) {
+            n_par[i] = pl->n;
+        }
+        if (fio->RhoParMax_flag) {
+            max_rho_par[i] = vf->max_rho_par;
+        }
+        if (fio->HeiPar_flag) {
+            Hp[i] = pl->ScaleHeight();
+        }
 #else
         fio->orbit_time[i] = vf->time;
-        // wrong: rescale the total mass of particles to 0.02 gas mass, so this density is relative to gas density 1
-        // the gas in the box is not the total gas, so it's not 0.02
-        fio->max_rho_par[i] = vf->max_rho_par; //*fio->mratio*vf->m_gas/vf->m_par;
-        fio->Hp[i] = pl->ScaleHeight();
+        if (fio->ParNum_flag) {
+            fio->n_par[i] = pl->n;
+        }
+        if (fio->RhoParMax_flag) {
+            fio->max_rho_par[i] = vf->max_rho_par;
+        }
+        if (fio->HeiPar_flag) {
+            fio->Hp[i] = pl->ScaleHeight();
+        }
 #endif
 #ifndef RESIZE_LIST
         pl->InitializeList();
@@ -91,19 +116,27 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
     myMPI->Barrier();
     MPI::COMM_WORLD.Allreduce(orbit_time, fio->orbit_time, fio->n_file, MPI::DOUBLE, MPI::SUM);
-    MPI::COMM_WORLD.Allreduce(max_rho_par, fio->max_rho_par, fio->n_file, MPI::DOUBLE, MPI::SUM);
-    MPI::COMM_WORLD.Allreduce(Hp, fio->Hp, fio->n_file, MPI::DOUBLE, MPI::SUM);
+    if (fio->ParNum_flag) {
+        MPI::COMM_WORLD.Allreduce(n_par, fio->n_par, fio->n_file, MPI::LONG, MPI::SUM);
+    }
+    if (fio->RhoParMax_flag) {
+        MPI::COMM_WORLD.Allreduce(max_rho_par, fio->max_rho_par, fio->n_file, MPI::DOUBLE, MPI::SUM);
+    }
+    if (fio->HeiPar_flag) {
+        MPI::COMM_WORLD.Allreduce(Hp, fio->Hp, fio->n_file, MPI::DOUBLE, MPI::SUM);
+    }
+    
     cout << "Processor " << myMPI->myrank << ": I'm done." << endl;
     myMPI->Barrier();
     if (myMPI->myrank == myMPI->master) {
 #endif
-        fio->output_data();
+        fio->Output_Data();
         /*
         for (int i = 0; i != fio->n_file; i++) {
             cout << "time = " << fio->orbit_time[i] << "; max_rho_par = " << fio->max_rho_par[i] << "; Hp = " << fio->Hp[i] << endl;
         }
          */
-        fio->print_stars("Master: Finishing Program");
+        fio->Print_Stars("Master: Finishing Program");
 #ifdef ENABLE_MPI
     }
 #endif

@@ -9,7 +9,7 @@
 #include "fop.h"
 
 /********** Print stars contain info **********/
-int FileIO::print_stars(string info)
+int FileIO::Print_Stars(string info)
 {   cout << endl;
     cout << setw(10) << setfill('*') << "*";
     cout << " " << info << " ";
@@ -18,36 +18,102 @@ int FileIO::print_stars(string info)
     return 0;
 }
 
+/********** Print usage **********/
+int FileIO::Print_Usage(const char *progname)
+{
+    cout << "USAGE: " << progname << " -i <data_path> -b <data_basename> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--Parnum --RhoParMax --HeiPar]\n" << endl;
+    cout << "Example: ./readvtklis -i comb -b Cout -s all -f 0:100 -o result.txt --ParNum" << endl;
+    return 0;
+}
+
 /********** Constructor **********/
-FileIO::FileIO(int argc, const char * argv[])
+FileIO::FileIO()
+{
+    ;
+}
+
+int FileIO::Initialize(int argc, const char * argv[])
 {
     mratio = 0.02;
     int temp;
-    int iflag = 0, bflag = 0, sflag = 0, fflag = 0, oflag = 0;
-    if (argc < 11) {
-        cout << "USAGE: " << argv[0] << " -i <data_path> -b <data_basename> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name>\n" << endl;
-        cout << "Example: ./readvtklis -i comb -b Cout -s all -f 0:100 -o result.txt" << endl;
+    // initialize flags
+    ParNum_flag = 0;
+    RhoParMax_flag = 0;
+    HeiPar_flag = 0;
+    
+    //Specifying the expected options
+    static struct option long_options[] = {
+        // These options set a flag
+        {"ParNum", no_argument, &ParNum_flag, 1},
+        {"RhoParMax", no_argument, &RhoParMax_flag, 1},
+        {"HeiPar", no_argument, &HeiPar_flag, 1},
+        // These options don't set a flag
+        {"input", required_argument, 0, 'i'},
+        {"basename", required_argument, 0, 'b'},
+        {"postname", required_argument, 0, 's'},
+        {"filenumber", required_argument, 0, 'f'},
+        {"output", required_argument, 0, 'o'},
+        // End
+        {0,0,0,0}
+    };
+    
+    if (argc < 12) {
+#ifdef ENABLE_MPI
+        if (myMPI->myrank == myMPI->master) {
+#endif
+            Print_Usage(argv[0]);
+#ifdef ENABLE_MPI
+        }
+#endif
         exit(1);
     } else {
-        //print_stars("Check Path");
-        while ((temp = getopt(argc, (char **)argv, "i:b:s:f:o:")) != -1) {
+        /* for debug
+#ifdef ENABLE_MPI
+        if (myMPI->myrank == myMPI->master) {
+#endif
+            cout << "argc = " << argc << endl;
+            for (int i = 0; i != argc; i++) {
+                cout << "argv[" << i << "]: " << argv[i] << endl;
+            }
+#ifdef ENABLE_MPI
+        }
+#endif
+         */
+
+        while (1) {
+            // getopt_long stores the option
+            int option_index = 0;
+            temp = getopt_long(argc, (char *const *)argv, "i:b:s:f:o:", long_options, &option_index);
+            if (temp == -1) {
+                break;
+            }
+            
             switch (temp) {
+                case 0: {
+                    // if this option set a flag, do nothing else now
+                    if (long_options[option_index].flag != 0) {
+                        break;
+                    }
+                    cout << "option " << long_options[option_index].name;
+                    if (optarg) {
+                        cout << " with arg " << optarg;
+                    }
+                    cout << endl;
+                    break;
+                }
                 case 'i': {
                     data_path.assign(optarg);
                     //cout << "data_path is " << data_path << endl;
-                    iflag = 1;
                     break;
                 }
                 case 'b': {
                     data_basename.assign(optarg);
                     //cout << "data_basename is " << data_basename << endl;
-                    bflag = 1;
                     break;
                 }
                 case 's': {
                     post_name.assign(optarg);
                     //cout << "post_name is " << post_name << endl;
-                    sflag = 1;
                     break;
                 }
                 case 'f': {
@@ -68,55 +134,63 @@ FileIO::FileIO(int argc, const char * argv[])
                     }
                     //cout << "start_no=" << start_no << ", end_no=" << end_no << endl;
                     n_file = end_no - start_no + 1;
-                    fflag = 1;
                     break;
                 }
                 case 'o': {
                     output_path_name.assign(optarg);
                     //cout << "output_path_name is " << output_path_name << endl;
-                    oflag = 1;
                     break;
                 }
                 case '?': {
-                    if (optopt == 'i' || optopt == 'b' || optopt == 's' || optopt == 'f' || optopt == 'o')
-                        fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-                    else if (isprint (optopt))
-                        fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-                    else
-                        fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+#ifdef ENABLE_MPI
+                    if (myMPI->myrank == myMPI->master) {
+#endif
+                        if (optopt == 'i' || optopt == 'b' || optopt == 's' || optopt == 'f' || optopt == 'o')
+                            fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+                        else if (isprint (optopt))
+                            fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                        else
+                            fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+#ifdef ENABLE_MPI
+                    }
+#endif
                     exit(2);
                 }
                 default: {
-                    cout << "Argument wrong." << endl;
+#ifdef ENABLE_MPI
+                    if (myMPI->myrank == myMPI->master) {
+#endif
+                        cout << temp << endl;
+                        cout << "Argument wrong." << endl;
+#ifdef ENABLE_MPI
+                    }
+#endif
                     abort();
                 }
             }
         }
-        // Since argc needs to > 11, so the five IF statements should not be called at all.
-        if (iflag == 0) {
-            cout << "We need data_path. Abort." << endl;
-            abort();
+#ifdef ENABLE_MPI
+        if (myMPI->myrank == myMPI->master) {
+#endif
+            // print any remaining command line arguments (not options)
+            if (optind < argc) {
+                cout << "Non-option ARGV-elements: ";
+                while (optind < argc) {
+                    cout << argv[optind++];
+                }
+                cout << endl;
+            }
+#ifdef ENABLE_MPI
         }
-        if (bflag == 0) {
-            cout << "We need data_basename. Abort." << endl;
-            abort();
-        }
-        if (sflag == 0) {
-            cout << "We need post_name. Abort." << endl;
-            abort();
-        }
-        if (fflag == 0) {
-            cout << "We need file range. Abort." << endl;
-            abort();
-        }
-        if (oflag == 0) {
-            cout << "We need output_path_name. Abort." << endl;
-            abort();
-        }
+#endif
+        
     }
     orbit_time = new double[end_no-start_no+1];
-    Hp = new double[end_no-start_no+1];
+    n_par = new long[end_no-start_no+1];
     max_rho_par = new double[end_no-start_no+1];
+    Hp = new double[end_no-start_no+1];
+
+    return 0;
 }
 
 /********** Generate file name in order **********/
@@ -133,30 +207,46 @@ int FileIO::Generate_Filename()
         vtk_filenames.push_back(data_path+data_basename+'.'+file_no+".vtk");
     }
     /*
-    print_stars("Check Filenames");
-    cout << "We generate " << lis_filenames.size() << " lis_filenames in total." << endl;
-    cout << "The first one is " << *lis_filenames.begin() << endl;
-    cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
-    cout << "The first one is " << *vtk_filenames.begin() << endl;
+     Print_Stars("Check Filenames");
+     cout << "We generate " << lis_filenames.size() << " lis_filenames in total." << endl;
+     cout << "The first one is " << *lis_filenames.begin() << endl;
+     cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
+     cout << "The first one is " << *vtk_filenames.begin() << endl;
      */
     
     return 0;
 }
 
 /********** Check path and filename **********/
-int FileIO::Check_Path_Filename()
+int FileIO::Check_Input_Path_Filename()
 {
-    print_stars("Check Path");
+    Print_Stars("Check Path");
     cout << "data_path is " << data_path << endl;
     cout << "data_basename is " << data_basename << endl;
     cout << "post_name is " << post_name << endl;
     cout << "start_no=" << start_no << ", end_no=" << end_no << endl;
     cout << "output_path_name is " << output_path_name << endl;
-    print_stars("Check Filenames");
+    Print_Stars("Check Filenames");
     cout << "We generate " << lis_filenames.size() << " lis_filenames in total." << endl;
     cout << "The first one is " << *lis_filenames.begin() << endl;
     cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
     cout << "The first one is " << *vtk_filenames.begin() << endl;
+    Print_Stars("Check Output");
+    if (ParNum_flag || RhoParMax_flag || HeiPar_flag) {
+        cout << "Output includes: " << endl;
+        if (ParNum_flag) {
+            cout << "particle numbers" << endl;
+        }
+        if (RhoParMax_flag) {
+            cout << "Max particle density" << endl;
+        }
+        if (HeiPar_flag) {
+            cout << "Particle scale height" << endl;
+        }
+    } else {
+        cout << "Need output choices." << endl;
+        exit(1);
+    }
     return 0;
 }
 
@@ -180,7 +270,7 @@ FileIO::~FileIO()
 }
 
 /********** Output data to file **********/
-int FileIO::output_data()
+int FileIO::Output_Data()
 {
     // shouldn't happen
     if (output_path_name.length() == 0) {
@@ -194,13 +284,27 @@ int FileIO::output_data()
         return 1;
     }
     file << setw(15) << setfill(' ') << "#orbit_time";
-    file << setw(15) << setfill(' ') << "max_rho_par";
-    file << setw(15) << setfill(' ') << "H_p";
+    if (ParNum_flag) {
+        file << setw(15) << setfill(' ') << "n_par";
+    }
+    if (RhoParMax_flag) {
+        file << setw(15) << setfill(' ') << "max_rho_par";
+    }
+    if (HeiPar_flag) {
+        file << setw(15) << setfill(' ') << "H_p";
+    }
     file << endl;
     for (int i = 0; i != end_no-start_no+1; i++) {
         file << setw(15) << scientific << orbit_time[i];
-        file << setw(15) << scientific << max_rho_par[i];
-        file << setw(15) << scientific << Hp[i];
+        if (ParNum_flag) {
+            file << setw(15) << n_par[i];
+        }
+        if (RhoParMax_flag) {
+            file << setw(15) << scientific << max_rho_par[i];
+        }
+        if (HeiPar_flag) {
+            file << setw(15) << scientific << Hp[i];
+        }
         file << endl;
     }
     file.close();

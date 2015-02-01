@@ -20,6 +20,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <unistd.h>
+#include <getopt.h>
 #include <ctime>
 #include <cassert>
 #include <algorithm>
@@ -96,28 +97,41 @@ public:
     // the start number and the end number to process
     int start_no, end_no, n_file;
     
-    // time, H_p, max_mp
+    // input flag, no argument
+    int ParNum_flag, // total particle number
+        RhoParMax_flag, // maximum of particle density
+        HeiPar_flag, // particle scale height
+        //New_flag, // example of new flag
+        UselessEnd_flag; // just in order to add flag conveniently
+    // time, H_p, max_mp, n_par
     double *orbit_time, *Hp, *max_rho_par;
+    long *n_par;
     // total particle to gas mass ratio
     float mratio;
     
     // constructor and destructor
-    FileIO(int argc, const char * argv[]);
+    FileIO();
     ~FileIO();
+    
+    // initialize
+    int Initialize(int argc, const char * argv[]);
     
     // generate file name in order
     int Generate_Filename();
     
     // check path and filename
-    int Check_Path_Filename();
+    int Check_Input_Path_Filename();
     
     // print stars contain info
-    int print_stars(string info);
+    int Print_Stars(string info);
     
     // output data to file
-    int output_data();
+    int Output_Data();
+    
+    // print usage
+    int Print_Usage(const char *progname);
 
 };
-
+extern FileIO *fio;
 
 #endif /* defined(__readvtklis__fop__) */

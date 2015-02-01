@@ -33,7 +33,9 @@ int ParticleList::ReadLis(string filename)
         file.read((char *)(&time), sizeof(float));
         file.read((char *)(&dt), sizeof(float));
         file.read((char *)(&n), sizeof(long));
-        
+        if (fio->ParNum_flag == 1 && fio->RhoParMax_flag == 0) {
+            return 0;
+        }
 #ifdef RESERVE_PUSH_BACK
         /*** reserve and push_back ***/
         List.reserve(n);
@@ -124,6 +126,20 @@ int ParticleList::InitializeList()
     List.swap(temp);
     return 0;
 }
+
+/********** Print basic info **********/
+int ParticleList::PrintInfo()
+{
+    cout << "N_par = " << n << endl;
+    cout << "N_par_type = " << ntype << endl;
+    cout << "Mass of particles:" << endl;
+    for (int i = 0; i != ntype; i++) {
+        cout << typeinfo[i] << endl;
+    }
+    
+    return 0;
+}
+
 
 /********** Destructor **********/
 ParticleList::~ParticleList()
