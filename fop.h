@@ -30,19 +30,25 @@ using namespace::std;
 
 #define ENABLE_MPI
 
-// After tests, reserve and push_back is fastest
 //#define RESERVE_PUSH_BACK
 //#define FROM_ARRAY_TO_VECTOR
 #define RESIZE_LIST
 
 #ifdef ENABLE_MPI
+/*! \class MPI_info
+ *  \brief wrapper of MPI routines
+ */
 class MPI_info {
 private:
     
 public:
-    int numprocs, myrank, master;
-    int loop_begin, loop_end, loop_offset;
+    int numprocs;                                   /*!< number of processor */
+    int myrank;                                     /*!< rank of cpu */
+    int master;                                     /*!< rank of master cpu */
+    int loop_begin, loop_end, loop_offset;          /*!< begin/end/offset of loop */
     
+    /*! \fn int Initialize(int argc, const char * argv[])
+     *  \brief MPI initializaion */
     int Initialize(int argc, const char * argv[]) {
         MPI::Init(argc, (char **&)argv);
         numprocs = MPI::COMM_WORLD.Get_size();
@@ -53,6 +59,9 @@ public:
         loop_offset = numprocs;
         return 0;
     }
+    
+    /*! \fn int Determine_Loop(int n_file)
+     *  \brief determine the begin/end/offset for loop */
     int Determine_Loop(int n_file) {
         if (n_file < numprocs) {
             if (myrank > n_file - 1) {
@@ -67,10 +76,16 @@ public:
         }
         return 0;
     }
+    
+    /*! \fn int Barrier()
+     *  \brief wrapper of MPI Barrier */
     int Barrier() {
         MPI::COMM_WORLD.Barrier();
         return 0;
     }
+    
+    /*! \fn int Finalize()
+     *  \brief wrapper of MPI Finalize() */
     int Finalize() {
         MPI::Finalize();
         return 0;
@@ -80,57 +95,62 @@ public:
 extern MPI_info *myMPI; // declaration is in main function
 #endif
 
+/*! \class FileIO
+ *  \brief Information about I/O
+ */
 class FileIO {
 private:
     
 public:
-    // all sorts of path and name
-    string data_path;
-    string data_basename;
-    string post_name;
-    string output_path_name;
+    string data_path;                               /*!< data path for read */
+    string data_basename;                           /*!< the basename for data file */
+    string post_name;                               /*!< the post name for data file */
+    string output_path_name;                        /*!< the name for output file */
     
-    // lis and vtk filenames
-    vector<string> lis_filenames;
-    vector<string> vtk_filenames;
+    vector<string> lis_filenames;                   /*!< the vecotr for lis filenames */
+    vector<string> vtk_filenames;                   /*!< the vector for vtk filenames */
     
-    // the start number and the end number to process
-    int start_no, end_no, n_file;
+    int start_no, end_no;                           /*!< the start_number/end_number for file */
+    int n_file;                                     /*!< the number of file */
     
-    // input flag, no argument
-    int ParNum_flag, // total particle number
-        RhoParMax_flag, // maximum of particle density
-        HeiPar_flag, // particle scale height
-        //New_flag, // example of new flag
-        UselessEnd_flag; // just in order to add flag conveniently
+    int ParNum_flag,                                /*!< flag: total particle number */
+        RhoParMax_flag,                             /*!< flag: maximum of particle density */
+        HeiPar_flag,                                /*!< flag: particle scale height */
+        //New_flag,                                 /*!< flag: example of new flag */
+        UselessEnd_flag;                            /*!< flag: just in order to add flag conveniently */
     // time, H_p, max_mp, n_par
-    double *orbit_time, *Hp, *max_rho_par;
-    long *n_par;
-    // total particle to gas mass ratio
-    float mratio;
+    double *orbit_time;                             /*!< the orbital time */
+    double *Hp;                                     /*!< the scale height of particles */
+    double *max_rho_par;                            /*!< the max density of particles */
+    long *n_par;                                    /*!< the number of particles */
+    float mratio;                                   /*!< total particle to gas mass ratio */
     
-    // constructor and destructor
-    FileIO();
-    ~FileIO();
+    FileIO();                                       /*!< constructor */
+    ~FileIO();                                      /*!< destructor */
     
-    // initialize
+    /*! \fn int Initialize(int argc, const char * argv[])
+     *  \brief initialization */
     int Initialize(int argc, const char * argv[]);
     
-    // generate file name in order
+    /*! \fn int Generate_Filename()
+     *  \brief generate filenames for processing */
     int Generate_Filename();
     
-    // check path and filename
+    /*! \fn int Check_Input_Path_Filename()
+     *  \brief check path and filename */
     int Check_Input_Path_Filename();
     
-    // print stars contain info
+    /*! \fn int Print_Stars(string info)
+     *  \brief print stars with info */
     int Print_Stars(string info);
-    
-    // output data to file
+
+    /*! \fn int Output_Data()
+     *  \brief output data */
     int Output_Data();
     
-    // print usage
+    /*! \fn int Print_Usage(const char *progname)
+     *  \brief print usage */
     int Print_Usage(const char *progname);
-
 };
 extern FileIO *fio;
 

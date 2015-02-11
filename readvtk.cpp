@@ -38,6 +38,8 @@ CellData_Scalar::~CellData_Scalar()
 }
 
 /********** Construct data **********/
+/*! \fn int Initialize_Data(int *dimensions_been_told)
+ *  \brief initialize data */
 int CellData_Scalar::Initialize_Data(int *dimensions_been_told)
 {
     dimensions[2] = dimensions_been_told[2];
@@ -57,6 +59,8 @@ int CellData_Scalar::Initialize_Data(int *dimensions_been_told)
 }
 
 /********** Read scalar data **********/
+/*! \fn int Read_Scalar_Data(string filename)
+ *  \brief read scalar data */
 int CellData_Scalar::Read_Scalar_Data(string filename)
 {
     ifstream file (filename.c_str(), ios::binary);
@@ -90,6 +94,8 @@ int CellData_Scalar::Read_Scalar_Data(string filename)
 }
 
 /********** Free data memory **********/
+/*! \fn int Free_Data()
+ *  \brief free the data memory */
 int CellData_Scalar::Free_Data()
 {
     for (int i = 0; i != dimensions[2]; i++) {
@@ -135,6 +141,8 @@ CellData_Vector::~CellData_Vector()
 }
 
 /********** Construct data **********/
+/*! \fn int Initialize_Data(int *dimensions_been_told)
+ *  \brief initialize data */
 int CellData_Vector::Initialize_Data(int *dimensions_been_told)
 {
     dimensions[2] = dimensions_been_told[2];
@@ -156,6 +164,8 @@ int CellData_Vector::Initialize_Data(int *dimensions_been_told)
 }
 
 /********** Free data **********/
+/*! \fn int Free_Data()
+ *  \brief free the data memory */
 int CellData_Vector::Free_Data()
 {
     for (int i = 0; i != dimensions[2]; i++) {
@@ -175,6 +185,8 @@ int CellData_Vector::Free_Data()
 }
 
 /********** Read scalar data **********/
+/*! \fn int Read_Vector_Data(string filename)
+ *  \brief read vector data */
 int CellData_Vector::Read_Vector_Data(string filename)
 {
     ifstream file (filename.c_str(), ios::binary);
@@ -260,6 +272,8 @@ VtkFile::~VtkFile()
 }
 
 /********** Construct coordinate grid **********/
+/*! \fn int Construct_Coor(int *dimensions_been_told)
+ *  \brief consturct coordinate grid */
 int VtkFile::Construct_Coor(int *dimensions_been_told)
 {
     // actually, here what we construct is the center coordinate of each cell, along [z][y][x], from ORIGIN
@@ -283,6 +297,8 @@ int VtkFile::Construct_Coor(int *dimensions_been_told)
 }
 
 /********** Read header and record data position **********/
+/*! \fn int Read_Header_Record_Pos(string filename)
+ *  \brief read header and record data position */
 int VtkFile::Read_Header_Record_Pos(string filename)
 {
     string tempstring;
@@ -488,6 +504,8 @@ int VtkFile::Read_Header_Record_Pos(string filename)
 }
 
 /********** Read data **********/
+/*! \fn int Read_Data(string filename)
+ *  \brief read data */
 int VtkFile::Read_Data(string filename)
 {
     for (int i = 0; i != cd_scalar.size(); i++) {
@@ -500,6 +518,8 @@ int VtkFile::Read_Data(string filename)
 }
 
 /********** Print file info **********/
+/*! \fn int Print_File_Info()
+ *  \brief print file info */
 int VtkFile::Print_File_Info()
 {
     if (Version.length() == 0) {
@@ -518,6 +538,8 @@ int VtkFile::Print_File_Info()
 }
 
 /********** Calculate mass and find maximum **********/
+/*! \fn int Calculate_Mass_Find_Max()
+ \brief calculate mass and find maximum */
 int VtkFile::Calculate_Mass_Find_Max()
 {
     // here we use the specific features of Athena output

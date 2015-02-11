@@ -9,6 +9,8 @@
 #include "fop.h"
 
 /********** Print stars contain info **********/
+/*! \fn int Print_Stars(string info)
+ *  \brief print stars with info */
 int FileIO::Print_Stars(string info)
 {   cout << endl;
     cout << setw(10) << setfill('*') << "*";
@@ -19,6 +21,8 @@ int FileIO::Print_Stars(string info)
 }
 
 /********** Print usage **********/
+/*! \fn int Print_Usage(const char *progname)
+ *  \brief print usage */
 int FileIO::Print_Usage(const char *progname)
 {
     cout << "USAGE: " << progname << " -i <data_path> -b <data_basename> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--Parnum --RhoParMax --HeiPar]\n" << endl;
@@ -27,11 +31,16 @@ int FileIO::Print_Usage(const char *progname)
 }
 
 /********** Constructor **********/
+/*! \fn FileIO::FileIO()
+ *  \brief constructor */
 FileIO::FileIO()
 {
     ;
 }
 
+/********** Initialization **********/
+/*! \fn int Initialize(int argc, const char * argv[])
+ *  \brief initialization */
 int FileIO::Initialize(int argc, const char * argv[])
 {
     mratio = 0.02;
@@ -194,6 +203,8 @@ int FileIO::Initialize(int argc, const char * argv[])
 }
 
 /********** Generate file name in order **********/
+/*! \fn int Generate_Filename()
+ *  \brief generate filenames for processing */
 int FileIO::Generate_Filename()
 {
     if (*data_path.rbegin() != '/') {
@@ -218,6 +229,8 @@ int FileIO::Generate_Filename()
 }
 
 /********** Check path and filename **********/
+/*! \fn int Check_Input_Path_Filename()
+ *  \brief check path and filename */
 int FileIO::Check_Input_Path_Filename()
 {
     Print_Stars("Check Path");
@@ -252,6 +265,8 @@ int FileIO::Check_Input_Path_Filename()
 
 
 /********** Destructor **********/
+/*! \fn FileIO::~FileIO()
+ *  \brief destructor */
 FileIO::~FileIO()
 {
     vector<string> temp1, temp2;
@@ -270,6 +285,8 @@ FileIO::~FileIO()
 }
 
 /********** Output data to file **********/
+/*! \fn int Output_Data()
+ *  \brief output data */
 int FileIO::Output_Data()
 {
     // shouldn't happen

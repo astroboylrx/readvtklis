@@ -15,6 +15,8 @@ ParticleList::ParticleList()
 }
 
 /********** Read particle list from file **********/
+/*! \fn int ReadLis(string filename)
+ *  \brief Read particle list from file */
 int ParticleList::ReadLis(string filename)
 {
     ifstream file (filename.c_str(), ios::binary);
@@ -47,6 +49,7 @@ int ParticleList::ReadLis(string filename)
             for (int j = 0; j < 3; j++) {
                 file.read((char *)(&temp.v[j]), sizeof(float));
             }
+            
             file.read((char *)(&temp.rad), sizeof(float));
             file.read((char *)(&temp.mass), sizeof(float));
             file.read((char *)(&temp.pid), sizeof(long));
@@ -109,6 +112,8 @@ int ParticleList::ReadLis(string filename)
 }
 
 /********** Calculate the scale height of partiles **********/
+/*! \fn float ScaleHeight();
+ *  \brief calculate the scale height of partiles */
 float ParticleList::ScaleHeight()
 {
     float Hp = 0;
@@ -120,6 +125,8 @@ float ParticleList::ScaleHeight()
 }
 
 /********** Free List to control memory **********/
+/*! \fn int InitializeList()
+ *  \brief free List to control memory */
 int ParticleList::InitializeList()
 {
     vector<Particle> temp;
@@ -128,6 +135,8 @@ int ParticleList::InitializeList()
 }
 
 /********** Print basic info **********/
+/*! \fn int PrintInfo()
+ *  \brief print basic info */
 int ParticleList::PrintInfo()
 {
     cout << "N_par = " << n << endl;
