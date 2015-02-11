@@ -1,4 +1,4 @@
-CXX	  = g++
+CXX	  = mpicxx
 
 OPTIMIZE  = -O2 -m64 -Wall -g
 
@@ -6,8 +6,8 @@ SOURCES   = readvtklis.cpp readvtk.cpp readlis.cpp fop.cpp
 OBJECTS   = $(SOURCES:.cpp=.o)
 INCL      = readvtk.h readlis.h fop.h
 
-CXXFLAGS  = -std=c++11 #-I/opt/local/include/gcc48
-LDFLAGS   = #-L/opt/local/lib/gcc48
+CXXFLAGS  = -std=c++11 -I/opt/local/include/gcc49 -I/opt/local/include/mpich-mp
+LDFLAGS   = -L/opt/local/lib/gcc49 -L/opt/local/lib/mpich-mp
 LIBS      = -lm
 
 EXEC      = readvtklis
