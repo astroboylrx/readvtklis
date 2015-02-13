@@ -44,6 +44,7 @@ public:
     float x2dl, x2du;               /*!< lower/upper x2 range for data in this domain  */
     float x3dl, x3du;               /*!< lower/upper x3 range for data in this domain  */
     vector <Particle> List;         /*!< particle list vector */
+    long *CpuID_dist;               /*!< cpuid distribution array */
     
     ParticleList();                 /*!< constructor */
     ~ParticleList();                /*!< destructor */
@@ -63,6 +64,14 @@ public:
     /*! \fn int PrintInfo()
      *  \brief print basic info */
     int PrintInfo();
+    
+    /*! \fn int GetNumprocs()
+     *  \brief get the number of processors */
+    int GetNumprocs();
+    
+    /*! \fn int CpuID()
+     *  \brief reading the distribution of particles among cpus */
+    int CpuID();
 };
 
 

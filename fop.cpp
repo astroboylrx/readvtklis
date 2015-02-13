@@ -25,7 +25,7 @@ int FileIO::Print_Stars(string info)
  *  \brief print usage */
 int FileIO::Print_Usage(const char *progname)
 {
-    cout << "USAGE: " << progname << " -i <data_path> -b <data_basename> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--Parnum --RhoParMax --HeiPar]\n" << endl;
+    cout << "USAGE: " << progname << " -i <data_path> -b <data_basename> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --CpuID]\n" << endl;
     cout << "Example: ./readvtklis -i comb -b Cout -s all -f 0:100 -o result.txt --ParNum" << endl;
     return 0;
 }
@@ -49,6 +49,7 @@ int FileIO::Initialize(int argc, const char * argv[])
     ParNum_flag = 0;
     RhoParMax_flag = 0;
     HeiPar_flag = 0;
+    CpuID_flag = 0;
     
     //Specifying the expected options
     static struct option long_options[] = {
@@ -56,6 +57,7 @@ int FileIO::Initialize(int argc, const char * argv[])
         {"ParNum", no_argument, &ParNum_flag, 1},
         {"RhoParMax", no_argument, &RhoParMax_flag, 1},
         {"HeiPar", no_argument, &HeiPar_flag, 1},
+        {"CpuID", no_argument, &CpuID_flag, 1},
         // These options don't set a flag
         {"input", required_argument, 0, 'i'},
         {"basename", required_argument, 0, 'b'},
@@ -198,7 +200,8 @@ int FileIO::Initialize(int argc, const char * argv[])
     n_par = new long[end_no-start_no+1];
     max_rho_par = new double[end_no-start_no+1];
     Hp = new double[end_no-start_no+1];
-
+    CpuID_dist = new long*[end_no-start_no+1];
+    
     return 0;
 }
 
@@ -224,7 +227,13 @@ int FileIO::Generate_Filename()
      cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
      cout << "The first one is " << *vtk_filenames.begin() << endl;
      */
-    
+    if (CpuID_flag) {
+        if (output_path_name.length() == 0) {
+            cout << "Error: No output path/name. " << endl;
+            return 1;
+        }
+        output_cpuid_path_name = output_path_name.substr(0, output_path_name.find_last_of('.'))+"_CpuID.txt";
+    }
     return 0;
 }
 
@@ -245,7 +254,7 @@ int FileIO::Check_Input_Path_Filename()
     cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
     cout << "The first one is " << *vtk_filenames.begin() << endl;
     Print_Stars("Check Output");
-    if (ParNum_flag || RhoParMax_flag || HeiPar_flag) {
+    if (ParNum_flag || RhoParMax_flag || HeiPar_flag || CpuID_flag) {
         cout << "Output includes: " << endl;
         if (ParNum_flag) {
             cout << "particle numbers" << endl;
@@ -255,6 +264,9 @@ int FileIO::Check_Input_Path_Filename()
         }
         if (HeiPar_flag) {
             cout << "Particle scale height" << endl;
+        }
+        if (CpuID_flag) {
+            cout << "CPU ID" << endl;
         }
     } else {
         cout << "Need output choices." << endl;
@@ -296,10 +308,12 @@ int FileIO::Output_Data()
     }
     ofstream file;
     file.open(output_path_name.c_str(), ofstream::out);
+    
     if (!file.is_open()) {
         cout << "Failed to open " << output_path_name << endl;
         return 1;
     }
+    
     file << setw(15) << setfill(' ') << "#orbit_time";
     if (ParNum_flag) {
         file << setw(15) << setfill(' ') << "n_par";
@@ -326,5 +340,28 @@ int FileIO::Output_Data()
     }
     file.close();
     
+    // cpuid part
+    if (CpuID_flag) {
+        ofstream file_cpuid;
+        file_cpuid.open(output_cpuid_path_name.c_str(), ofstream::out);
+        if (!file_cpuid.is_open()) {
+            cout << "Failed to open " << output_cpuid_path_name << endl;
+            return 1;
+        }
+        file_cpuid << setw(15) << setfill(' ') << "#orbit_time";
+        for (int i = 0; i != n_cpu; i++) {
+            file_cpuid << setw(15) << "CPU"+to_string(i) << setfill(' ');
+        }
+        file_cpuid << endl;
+        for (int i = 0; i != end_no-start_no+1; i++) {
+            file_cpuid << setw(15) << scientific << orbit_time[i];
+            for (int j = 0; j != n_cpu; j++) {
+                file_cpuid << setw(15) << CpuID_dist[i][j];
+            }
+            file_cpuid << endl;
+        }
+        file_cpuid.close();
+    }
+
     return 0;
 }

@@ -28,7 +28,7 @@
 
 using namespace::std;
 
-#define ENABLE_MPI
+//#define ENABLE_MPI
 
 //#define RESERVE_PUSH_BACK
 //#define FROM_ARRAY_TO_VECTOR
@@ -106,16 +106,19 @@ public:
     string data_basename;                           /*!< the basename for data file */
     string post_name;                               /*!< the post name for data file */
     string output_path_name;                        /*!< the name for output file */
+    string output_cpuid_path_name;                  /*!< the name for cpuid output file */
     
     vector<string> lis_filenames;                   /*!< the vecotr for lis filenames */
     vector<string> vtk_filenames;                   /*!< the vector for vtk filenames */
     
     int start_no, end_no;                           /*!< the start_number/end_number for file */
     int n_file;                                     /*!< the number of file */
+    int n_cpu;                                      /*!< the number of processors */
     
     int ParNum_flag,                                /*!< flag: total particle number */
         RhoParMax_flag,                             /*!< flag: maximum of particle density */
         HeiPar_flag,                                /*!< flag: particle scale height */
+        CpuID_flag,                                 /*!< flag: particle's cpuid */
         //New_flag,                                 /*!< flag: example of new flag */
         UselessEnd_flag;                            /*!< flag: just in order to add flag conveniently */
     // time, H_p, max_mp, n_par
@@ -124,6 +127,7 @@ public:
     double *max_rho_par;                            /*!< the max density of particles */
     long *n_par;                                    /*!< the number of particles */
     float mratio;                                   /*!< total particle to gas mass ratio */
+    long **CpuID_dist;                                /*!< cpuid distribution */
     
     FileIO();                                       /*!< constructor */
     ~FileIO();                                      /*!< destructor */

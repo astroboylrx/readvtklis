@@ -35,7 +35,7 @@ int ParticleList::ReadLis(string filename)
         file.read((char *)(&time), sizeof(float));
         file.read((char *)(&dt), sizeof(float));
         file.read((char *)(&n), sizeof(long));
-        if (fio->ParNum_flag == 1 && fio->RhoParMax_flag == 0) {
+        if (fio->ParNum_flag == 1 && fio->RhoParMax_flag == 0 && fio->CpuID_flag == 0) {
             return 0;
         }
 #ifdef RESERVE_PUSH_BACK
@@ -146,6 +146,42 @@ int ParticleList::PrintInfo()
         cout << typeinfo[i] << endl;
     }
     
+    return 0;
+}
+
+/********** Get numprocs **********/
+/*! \fn int GetNumprocs()
+ *  \brief get the number of processors */
+int ParticleList::GetNumprocs()
+{
+    int n_cpu = 0;
+    // this is assuming each cpu contains particles, wrong idea
+    for (vector<Particle>::iterator it = List.begin(); it != List.end(); ++it) {
+        if (it->cpuid > n_cpu) {
+            n_cpu = it->cpuid;
+        }
+    }
+    return n_cpu+1;
+}
+
+
+
+
+/********** Count CpuID **********/
+/*! \fn int ParticleList::CpuID()
+ *  \brief reading the distribution of particles among cpus */
+int ParticleList::CpuID()
+{
+    if (CpuID_dist != NULL) {
+        delete [] CpuID_dist;
+    }
+    CpuID_dist = new long[fio->n_cpu];
+    for (int i = 0; i != fio->n_cpu; i++) {
+        CpuID_dist[i] = 0;
+    }
+    for (vector<Particle>::iterator it = List.begin(); it != List.end(); ++it) {
+        CpuID_dist[it->cpuid]++;
+    }
     return 0;
 }
 

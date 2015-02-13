@@ -46,6 +46,7 @@ int main(int argc, const char * argv[]) {
     double *max_rho_par = new double[fio->n_file];
     double *Hp = new double[fio->n_file];
     long *n_par = new long[fio->n_file];
+    long **cpuid_dist = new long*[fio->n_file];
     for (int i = 0; i != fio->n_file; i++) {
         // initialize if you don't assign all of them values but use them for calculation
         orbit_time[i] = 0;
@@ -79,11 +80,11 @@ int main(int argc, const char * argv[]) {
             vf->Read_Data(fio->vtk_filenames[i]);
             vf->Calculate_Mass_Find_Max();
         }
-        if (fio->ParNum_flag || fio->HeiPar_flag) {
+        if (fio->ParNum_flag || fio->HeiPar_flag || fio->CpuID_flag) {
             // lis part
             pl->ReadLis(fio->lis_filenames[i]);
+            fio->n_cpu = pl->GetNumprocs();
         }
-        
                 
         // recording data
 #ifdef ENABLE_MPI
@@ -97,6 +98,10 @@ int main(int argc, const char * argv[]) {
         if (fio->HeiPar_flag) {
             Hp[i] = pl->ScaleHeight();
         }
+        if (fio->CpuID_flag) {
+            pl->CpuID();
+            cpuid_dist[i] = pl->CpuID_dist;
+        }
 #else
         fio->orbit_time[i] = vf->time;
         if (fio->ParNum_flag) {
@@ -108,6 +113,11 @@ int main(int argc, const char * argv[]) {
         if (fio->HeiPar_flag) {
             fio->Hp[i] = pl->ScaleHeight();
         }
+        if (fio->CpuID_flag) {
+            pl->CpuID();
+            fio->CpuID_dist[i] = pl->CpuID_dist;
+        }
+
 #endif
 #ifndef RESIZE_LIST
         pl->InitializeList();
@@ -125,6 +135,9 @@ int main(int argc, const char * argv[]) {
     }
     if (fio->HeiPar_flag) {
         MPI::COMM_WORLD.Allreduce(Hp, fio->Hp, fio->n_file, MPI::DOUBLE, MPI::SUM);
+    }
+    if (fio->CpuID_flag) {
+        MPI::COMM_WORLD.Allreduce(cpuid_dist, fio->CpuID_dist, fio->n_file*fio->n_cpu, MPI::LONG, MPI::SUM);
     }
     
     cout << "Processor " << myMPI->myrank << ": I'm done." << endl;
