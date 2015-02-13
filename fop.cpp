@@ -350,7 +350,9 @@ int FileIO::Output_Data()
         }
         file_cpuid << setw(15) << setfill(' ') << "#orbit_time";
         for (int i = 0; i != n_cpu; i++) {
-            file_cpuid << setw(15) << "CPU"+to_string(i) << setfill(' ');
+            std::stringstream temp_out;
+            temp_out << i;
+            file_cpuid << setw(15) << "CPU"+temp_out.str() << setfill(' ');
         }
         file_cpuid << endl;
         for (int i = 0; i != end_no-start_no+1; i++) {
