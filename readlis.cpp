@@ -172,9 +172,11 @@ int ParticleList::GetNumprocs()
  *  \brief reading the distribution of particles among cpus */
 int ParticleList::CpuID()
 {
+    /* memory leak??
     if (CpuID_dist != NULL) {
         delete [] CpuID_dist;
     }
+     */
     CpuID_dist = new long[fio->n_cpu];
     for (int i = 0; i != fio->n_cpu; i++) {
         CpuID_dist[i] = 0;

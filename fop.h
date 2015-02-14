@@ -28,7 +28,7 @@
 
 using namespace::std;
 
-//#define ENABLE_MPI
+#define ENABLE_MPI
 
 //#define RESERVE_PUSH_BACK
 //#define FROM_ARRAY_TO_VECTOR

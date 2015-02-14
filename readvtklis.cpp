@@ -53,10 +53,14 @@ int main(int argc, const char * argv[]) {
         max_rho_par[i] = 0;
         Hp[i] = 0;
         n_par[i] = 0;
+        cpuid_dist[i] = new long[fio->n_cpu];
+        for (int j = 0; j != fio->n_cpu; j++) {
+            cpuid_dist[i][j] = 0;
+        }
     }
     myMPI->Barrier();
     // for debug
-    //cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << endl;
+    cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << endl;
 
     for (int i = myMPI->loop_begin ; i <= myMPI->loop_end; i += myMPI->loop_offset) {
 #else
@@ -83,7 +87,6 @@ int main(int argc, const char * argv[]) {
         if (fio->ParNum_flag || fio->HeiPar_flag || fio->CpuID_flag) {
             // lis part
             pl->ReadLis(fio->lis_filenames[i]);
-            fio->n_cpu = pl->GetNumprocs();
         }
                 
         // recording data
@@ -100,6 +103,7 @@ int main(int argc, const char * argv[]) {
         }
         if (fio->CpuID_flag) {
             pl->CpuID();
+            delete [] cpuid_dist[i];
             cpuid_dist[i] = pl->CpuID_dist;
         }
 #else
@@ -137,7 +141,14 @@ int main(int argc, const char * argv[]) {
         MPI::COMM_WORLD.Allreduce(Hp, fio->Hp, fio->n_file, MPI::DOUBLE, MPI::SUM);
     }
     if (fio->CpuID_flag) {
-        MPI::COMM_WORLD.Allreduce(cpuid_dist, fio->CpuID_dist, fio->n_file*fio->n_cpu, MPI::LONG, MPI::SUM);
+        for (int i = 0; i != fio->n_file; i++) {
+            fio->CpuID_dist[i] = new long[fio->n_cpu];
+            for (int j = 0; j != fio->n_cpu; j++) {
+                fio->CpuID_dist[i][j] = 0;
+            }
+            MPI::COMM_WORLD.Allreduce(cpuid_dist[i], fio->CpuID_dist[i], fio->n_cpu, MPI::LONG, MPI::SUM);
+        }
+        
     }
     
     cout << "Processor " << myMPI->myrank << ": I'm done." << endl;
@@ -155,6 +166,7 @@ int main(int argc, const char * argv[]) {
     }
 #endif
     
+    // have bugs when I delete fio and pl, don't know why
     delete fio;
     delete pl;
     delete vf;
@@ -179,6 +191,7 @@ int main(int argc, const char * argv[]) {
     delete [] orbit_time;
     delete [] max_rho_par;
     delete [] Hp;
+    delete [] cpuid_dist;
     delete myMPI;
     
 #endif

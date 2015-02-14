@@ -25,8 +25,8 @@ int FileIO::Print_Stars(string info)
  *  \brief print usage */
 int FileIO::Print_Usage(const char *progname)
 {
-    cout << "USAGE: " << progname << " -i <data_path> -b <data_basename> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --CpuID]\n" << endl;
-    cout << "Example: ./readvtklis -i comb -b Cout -s all -f 0:100 -o result.txt --ParNum" << endl;
+    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --CpuID]\n" << endl;
+    cout << "Example: ./readvtklis -c 16 -i comb -b Cout -s all -f 0:100 -o result.txt --ParNum" << endl;
     return 0;
 }
 
@@ -64,6 +64,7 @@ int FileIO::Initialize(int argc, const char * argv[])
         {"postname", required_argument, 0, 's'},
         {"filenumber", required_argument, 0, 'f'},
         {"output", required_argument, 0, 'o'},
+        {"ncpu", required_argument, 0, 'c'},
         // End
         {0,0,0,0}
     };
@@ -94,7 +95,7 @@ int FileIO::Initialize(int argc, const char * argv[])
         while (1) {
             // getopt_long stores the option
             int option_index = 0;
-            temp = getopt_long(argc, (char *const *)argv, "i:b:s:f:o:", long_options, &option_index);
+            temp = getopt_long(argc, (char *const *)argv, "i:b:s:f:o:c:", long_options, &option_index);
             if (temp == -1) {
                 break;
             }
@@ -125,6 +126,13 @@ int FileIO::Initialize(int argc, const char * argv[])
                 case 's': {
                     post_name.assign(optarg);
                     //cout << "post_name is " << post_name << endl;
+                    break;
+                }
+                case 'c': {
+                    istringstream ifs;
+                    ifs.str(optarg);
+                    ifs >> n_cpu;
+                    //cout << "numproc is " << n_cpu << endl;
                     break;
                 }
                 case 'f': {
@@ -242,12 +250,13 @@ int FileIO::Generate_Filename()
  *  \brief check path and filename */
 int FileIO::Check_Input_Path_Filename()
 {
-    Print_Stars("Check Path");
+    Print_Stars("Check Input");
     cout << "data_path is " << data_path << endl;
     cout << "data_basename is " << data_basename << endl;
     cout << "post_name is " << post_name << endl;
     cout << "start_no=" << start_no << ", end_no=" << end_no << endl;
     cout << "output_path_name is " << output_path_name << endl;
+    cout << "n_cpu is " << n_cpu << endl;
     Print_Stars("Check Filenames");
     cout << "We generate " << lis_filenames.size() << " lis_filenames in total." << endl;
     cout << "The first one is " << *lis_filenames.begin() << endl;
@@ -293,7 +302,15 @@ FileIO::~FileIO()
     delete [] orbit_time;
     delete [] Hp;
     delete [] max_rho_par;
-    
+    /* memory problem, don't know why
+    if (CpuID_flag) {
+        for (int i = 0; i != n_file; i++) {
+            delete [] CpuID_dist[i];
+        }
+        delete [] CpuID_dist;
+    }
+     */
+
 }
 
 /********** Output data to file **********/
