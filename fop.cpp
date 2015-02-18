@@ -497,7 +497,6 @@ int FileIO::Output_Data()
             file_SigmaParY << setw(15) << scientific << orbit_time[i];
         }
         file_SigmaParY << endl;
-        cout << "dimension[0] = " << dimensions[0] << endl;
         for (int i = 0; i != dimensions[0]; i++) {
             file_SigmaParY << setw(15) << scientific << ccx[i];
             for (int j = 0; j != n_file; j++) {
