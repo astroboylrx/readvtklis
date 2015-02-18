@@ -99,11 +99,13 @@ public:
     int dimensions[3];                          /*!< the number of cells in each dimension */
     double origin[3];                           /*!< the coordinate of origin point */
     double spacing[3];                          /*!< the spacing of coordinate */
+    double cell_volume;                         /*!< the cell volume */
     double ****cell_center;                     /*!< the coordinate cell center */
     long n_CellData;                            /*!< number of CELL_DATA, should be equal to the product of dimensions */
     // in fact, now we are only dealing with CELL_DATA
     vector<CellData_Scalar> cd_scalar;          /*!< vector of cell data */
     vector<CellData_Vector> cd_vector;          /*!< vector of vector data */
+    double Sigma_gas_0;                         /*!< initial column density of gas */
     double m_gas;                               /*!< total gas mass */
     double m_par;                               /*!< total particle mass */
     double max_rho_gas;                         /*!< maximum density of gas */

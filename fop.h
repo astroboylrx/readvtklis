@@ -47,49 +47,38 @@ public:
     int master;                                     /*!< rank of master cpu */
     int loop_begin, loop_end, loop_offset;          /*!< begin/end/offset of loop */
     
+    // below is the varialbes used for MPI_Allreduce
+    double *orbit_time;                             /*!< orbit time */
+    double *max_rho_par;                            /*!< max par density */
+    double *Hp;                                     /*!< par scale height */
+    long *n_par;                                    /*!< number of par */
+    long **cpuid_dist;                              /*!< cpuid distribution */
+    double **Sigma_par_y;                           /*!< sigma_p averaged over y */
+    
     /*! \fn int Initialize(int argc, const char * argv[])
      *  \brief MPI initializaion */
-    int Initialize(int argc, const char * argv[]) {
-        MPI::Init(argc, (char **&)argv);
-        numprocs = MPI::COMM_WORLD.Get_size();
-        myrank = MPI::COMM_WORLD.Get_rank();
-        master = 0;
-        loop_begin = myrank;
-        loop_end = myrank;
-        loop_offset = numprocs;
-        return 0;
-    }
+    int Initialize(int argc, const char * argv[]);
     
     /*! \fn int Determine_Loop(int n_file)
      *  \brief determine the begin/end/offset for loop */
-    int Determine_Loop(int n_file) {
-        if (n_file < numprocs) {
-            if (myrank > n_file - 1) {
-                loop_end = -1;
-            }
-            loop_offset = 1;
-        } else {
-            // in order to let master processor become available
-            // in fact, no special effect, just for future dev
-            loop_begin = numprocs - 1 - myrank;
-            loop_end = n_file - 1;
-        }
-        return 0;
-    }
+    int Determine_Loop(int n_file);
     
     /*! \fn int Barrier()
      *  \brief wrapper of MPI Barrier */
-    int Barrier() {
-        MPI::COMM_WORLD.Barrier();
-        return 0;
-    }
+    int Barrier();
     
     /*! \fn int Finalize()
      *  \brief wrapper of MPI Finalize() */
-    int Finalize() {
-        MPI::Finalize();
-        return 0;
-    }
+    int Finalize();
+    
+    /*! \fn int NewVars(int n_file, int n_cpu)
+     *  \brief Allocate space for vars for MPI_Allreduce */
+    int NewVars(int n_file, int n_cpu);
+    
+    /*! \fn ~MPI_info()
+     *  \brief destructor */
+    ~MPI_info();
+    
 };
 
 extern MPI_info *myMPI; // declaration is in main function
@@ -107,6 +96,7 @@ public:
     string post_name;                               /*!< the post name for data file */
     string output_path_name;                        /*!< the name for output file */
     string output_cpuid_path_name;                  /*!< the name for cpuid output file */
+    string output_sigma_path_name;                  /*!< the name for output of <Sigma_par>_y */
     
     vector<string> lis_filenames;                   /*!< the vecotr for lis filenames */
     vector<string> vtk_filenames;                   /*!< the vector for vtk filenames */
@@ -119,15 +109,23 @@ public:
         RhoParMax_flag,                             /*!< flag: maximum of particle density */
         HeiPar_flag,                                /*!< flag: particle scale height */
         CpuID_flag,                                 /*!< flag: particle's cpuid */
+        SigmaParY_flag,                             /*!< flag: particle column density averaged over azimuth */
         //New_flag,                                 /*!< flag: example of new flag */
         UselessEnd_flag;                            /*!< flag: just in order to add flag conveniently */
-    // time, H_p, max_mp, n_par
+    // after adding a flag:
+    // MPI_info: add the var in MPI_info, add new statement in NewVars(), add delete in ~MPI_info()
+    // FileIO: add var in option and new statement in Initialize(), add if statement in Check_Input_Path_Filename(), add delete in ~FileIO(), add output in Output_Data()
+    //
+    float mratio;                                   /*!< total particle to gas mass ratio */
     double *orbit_time;                             /*!< the orbital time */
     double *Hp;                                     /*!< the scale height of particles */
     double *max_rho_par;                            /*!< the max density of particles */
     long *n_par;                                    /*!< the number of particles */
-    float mratio;                                   /*!< total particle to gas mass ratio */
-    long **CpuID_dist;                                /*!< cpuid distribution */
+    long **CpuID_dist;                              /*!< cpuid distribution */
+    double **Sigma_par_y;                           /*!< <Sigma_par>_y */
+    int dimensions[3];                              /*!< the number of cells in each dimension */
+    double spacing[3];                              /*!< the spacing of coordinate */
+    double *ccx, *ccy, *ccz;                        /*!< cell center coordinates for plots */
     
     FileIO();                                       /*!< constructor */
     ~FileIO();                                      /*!< destructor */

@@ -291,7 +291,18 @@ int VtkFile::Construct_Coor(int *dimensions_been_told)
                 }
             }
         }
-
+        fio->ccz = new double[dimensions[2]];
+        for (int k = 0; k != dimensions[2]; k++) {
+            fio->ccz[k] = origin[2]+spacing[2]*(k+0.5);
+        }
+        fio->ccy = new double[dimensions[1]];
+        for (int j = 0; j != dimensions[1]; j++) {
+            fio->ccy[j] = origin[1]+spacing[1]*(j+0.5);
+        }
+        fio->ccx = new double[dimensions[0]];
+        for (int i = 0; i != dimensions[0]; i++) {
+            fio->ccx[i] = origin[0]+spacing[0]*(i+0.5);
+        }
     }
     return 0;
 }
@@ -301,6 +312,7 @@ int VtkFile::Construct_Coor(int *dimensions_been_told)
  *  \brief read header and record data position */
 int VtkFile::Read_Header_Record_Pos(string filename)
 {
+    Sigma_gas_0 = 2.50662827463100050241576528481;
     string tempstring;
     ifstream file (filename.c_str(), ios::in);
     if (!file.is_open()) {
@@ -347,6 +359,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         //We want to store the number of grid cells, not the number of grid cell corners
         for (int i = 0; i != 3; i++) {
             dimensions[i]--;
+            fio->dimensions[i] = dimensions[i];
         }
         /* alternative:
         getline(file, tempstring, ' ');
@@ -381,7 +394,10 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         getline(file, tempstring);
         iss.str(tempstring);
         iss >> spacing[0] >> spacing[1] >> spacing[2];
-        
+        cell_volume = spacing[0] * spacing[1] * spacing[2];
+        fio->spacing[0] = spacing[0];
+        fio->spacing[1] = spacing[1];
+        fio->spacing[2] = spacing[2];
     } else {
         cout << "No spacing info: " << endl;
         return 1;
@@ -564,10 +580,10 @@ int VtkFile::Calculate_Mass_Find_Max()
             }
         }
         if (it->dataname.compare("density") == 0) {
-            m_gas = m_temp;
+            m_gas = m_temp*cell_volume;
             max_rho_gas = maximum;
         } else if (it->dataname.compare("particle_density") == 0) {
-            m_par = m_temp;
+            m_par = m_temp*cell_volume;
             max_rho_par = maximum;
         } else {
             cout << "Unkonwn data name: " << it->dataname << endl;

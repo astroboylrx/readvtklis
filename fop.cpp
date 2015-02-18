@@ -8,6 +8,96 @@
 
 #include "fop.h"
 
+#ifdef ENABLE_MPI
+/********** Initialization **********/
+/*! \fn int Initialize(int argc, const char * argv[])
+ *  \brief MPI initializaion */
+int MPI_info::Initialize(int argc, const char * argv[])
+{
+    MPI::Init(argc, (char **&)argv);
+    numprocs = MPI::COMM_WORLD.Get_size();
+    myrank = MPI::COMM_WORLD.Get_rank();
+    master = 0;
+    loop_begin = myrank;
+    loop_end = myrank;
+    loop_offset = numprocs;
+    return 0;
+}
+
+/********** Determine loop parameter **********/
+/*! \fn int Determine_Loop(int n_file)
+ *  \brief determine the begin/end/offset for loop */
+int MPI_info::Determine_Loop(int n_file) {
+    if (n_file < numprocs) {
+        if (myrank > n_file - 1) {
+            loop_end = -1;
+        }
+        loop_offset = 1;
+    } else {
+        // in order to let master processor become available
+        // in fact, no special effect, just for future dev
+        loop_begin = numprocs - 1 - myrank;
+        loop_end = n_file - 1;
+    }
+    return 0;
+}
+
+/********** Barrier **********/
+/*! \fn int Barrier()
+ *  \brief wrapper of MPI Barrier */
+int MPI_info::Barrier() {
+    MPI::COMM_WORLD.Barrier();
+    return 0;
+}
+
+/********** Finalization **********/
+/*! \fn int Finalize()
+ *  \brief wrapper of MPI Finalize() */
+int MPI_info::Finalize() {
+    MPI::Finalize();
+    return 0;
+}
+
+/********** New vars for MPI_Allreduce **********/
+/*! \fn int NewVars(int n_file, int n_cpu)
+ *  \brief Allocate space for vars for MPI_Allreduce */
+int MPI_info::NewVars(int n_file, int n_cpu)
+{
+    orbit_time = new double[fio->n_file];
+    max_rho_par = new double[fio->n_file];
+    Hp = new double[fio->n_file];
+    n_par = new long[fio->n_file];
+    cpuid_dist = new long*[fio->n_file];
+    Sigma_par_y = new double*[fio->n_file];
+    for (int i = 0; i != fio->n_file; i++) {
+        // initialize if you don't assign all of them values but use them for calculation
+        orbit_time[i] = 0;
+        max_rho_par[i] = 0;
+        Hp[i] = 0;
+        n_par[i] = 0;
+        cpuid_dist[i] = new long[fio->n_cpu];
+        for (int j = 0; j != fio->n_cpu; j++) {
+            cpuid_dist[i][j] = 0;
+        }
+    }
+    return 0;
+}
+
+/********** Destructor **********/
+/*! \fn ~MPI_info()
+ *  \brief destructor */
+MPI_info::~MPI_info()
+{
+    delete [] orbit_time;
+    delete [] max_rho_par;
+    delete [] Hp;
+    delete [] cpuid_dist;
+    delete [] Sigma_par_y;
+}
+
+#endif // ENABLE_MPI
+
+
 /********** Print stars contain info **********/
 /*! \fn int Print_Stars(string info)
  *  \brief print stars with info */
@@ -25,7 +115,7 @@ int FileIO::Print_Stars(string info)
  *  \brief print usage */
 int FileIO::Print_Usage(const char *progname)
 {
-    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --CpuID]\n" << endl;
+    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --CpuID --SigmaParY]\n" << endl;
     cout << "Example: ./readvtklis -c 16 -i comb -b Cout -s all -f 0:100 -o result.txt --ParNum" << endl;
     return 0;
 }
@@ -58,6 +148,7 @@ int FileIO::Initialize(int argc, const char * argv[])
         {"RhoParMax", no_argument, &RhoParMax_flag, 1},
         {"HeiPar", no_argument, &HeiPar_flag, 1},
         {"CpuID", no_argument, &CpuID_flag, 1},
+        {"SigmaParY", no_argument, &SigmaParY_flag, 1},
         // These options don't set a flag
         {"input", required_argument, 0, 'i'},
         {"basename", required_argument, 0, 'b'},
@@ -164,7 +255,7 @@ int FileIO::Initialize(int argc, const char * argv[])
 #ifdef ENABLE_MPI
                     if (myMPI->myrank == myMPI->master) {
 #endif
-                        if (optopt == 'i' || optopt == 'b' || optopt == 's' || optopt == 'f' || optopt == 'o')
+                        if (optopt == 'i' || optopt == 'b' || optopt == 's' || optopt == 'f' || optopt == 'o' || optopt == 'c')
                             fprintf (stderr, "Option -%c requires an argument.\n", optopt);
                         else if (isprint (optopt))
                             fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -204,11 +295,12 @@ int FileIO::Initialize(int argc, const char * argv[])
 #endif
         
     }
-    orbit_time = new double[end_no-start_no+1];
-    n_par = new long[end_no-start_no+1];
-    max_rho_par = new double[end_no-start_no+1];
-    Hp = new double[end_no-start_no+1];
-    CpuID_dist = new long*[end_no-start_no+1];
+    orbit_time = new double[n_file];
+    n_par = new long[n_file];
+    max_rho_par = new double[n_file];
+    Hp = new double[n_file];
+    CpuID_dist = new long*[n_file];
+    Sigma_par_y = new double*[n_file];
     
     return 0;
 }
@@ -235,12 +327,15 @@ int FileIO::Generate_Filename()
      cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
      cout << "The first one is " << *vtk_filenames.begin() << endl;
      */
+    if (output_path_name.length() == 0) {
+        cout << "Error: No output path/name. " << endl;
+        return 1;
+    }
     if (CpuID_flag) {
-        if (output_path_name.length() == 0) {
-            cout << "Error: No output path/name. " << endl;
-            return 1;
-        }
         output_cpuid_path_name = output_path_name.substr(0, output_path_name.find_last_of('.'))+"_CpuID.txt";
+    }
+    if (SigmaParY_flag) {
+        output_sigma_path_name = output_path_name.substr(0, output_path_name.find_last_of('.'))+"_SigmaParY.txt";
     }
     return 0;
 }
@@ -263,7 +358,7 @@ int FileIO::Check_Input_Path_Filename()
     cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
     cout << "The first one is " << *vtk_filenames.begin() << endl;
     Print_Stars("Check Output");
-    if (ParNum_flag || RhoParMax_flag || HeiPar_flag || CpuID_flag) {
+    if (ParNum_flag || RhoParMax_flag || HeiPar_flag || CpuID_flag || SigmaParY_flag) {
         cout << "Output includes: " << endl;
         if (ParNum_flag) {
             cout << "particle numbers" << endl;
@@ -276,6 +371,9 @@ int FileIO::Check_Input_Path_Filename()
         }
         if (CpuID_flag) {
             cout << "CPU ID" << endl;
+        }
+        if (SigmaParY_flag) {
+            cout << "<Sigma_p>_y" << endl;
         }
     } else {
         cout << "Need output choices." << endl;
@@ -302,6 +400,8 @@ FileIO::~FileIO()
     delete [] orbit_time;
     delete [] Hp;
     delete [] max_rho_par;
+    delete [] CpuID_dist;
+    
     /* memory problem, don't know why
     if (CpuID_flag) {
         for (int i = 0; i != n_file; i++) {
@@ -310,7 +410,7 @@ FileIO::~FileIO()
         delete [] CpuID_dist;
     }
      */
-
+    delete [] Sigma_par_y;
 }
 
 /********** Output data to file **********/
@@ -342,7 +442,7 @@ int FileIO::Output_Data()
         file << setw(15) << setfill(' ') << "H_p";
     }
     file << endl;
-    for (int i = 0; i != end_no-start_no+1; i++) {
+    for (int i = 0; i != n_file; i++) {
         file << setw(15) << scientific << orbit_time[i];
         if (ParNum_flag) {
             file << setw(15) << n_par[i];
@@ -359,27 +459,52 @@ int FileIO::Output_Data()
     
     // cpuid part
     if (CpuID_flag) {
-        ofstream file_cpuid;
-        file_cpuid.open(output_cpuid_path_name.c_str(), ofstream::out);
-        if (!file_cpuid.is_open()) {
+        ofstream file_CpuID;
+        file_CpuID.open(output_cpuid_path_name.c_str(), ofstream::out);
+        if (!file_CpuID.is_open()) {
             cout << "Failed to open " << output_cpuid_path_name << endl;
             return 1;
         }
-        file_cpuid << setw(15) << setfill(' ') << "#orbit_time";
+        file_CpuID << setw(15) << setfill(' ') << "#orbit_time";
         for (int i = 0; i != n_cpu; i++) {
             std::stringstream temp_out;
             temp_out << i;
-            file_cpuid << setw(15) << "CPU"+temp_out.str() << setfill(' ');
+            file_CpuID << setw(15) << "CPU"+temp_out.str() << setfill(' ');
         }
-        file_cpuid << endl;
-        for (int i = 0; i != end_no-start_no+1; i++) {
-            file_cpuid << setw(15) << scientific << orbit_time[i];
+        file_CpuID << endl;
+        for (int i = 0; i != n_file; i++) {
+            file_CpuID << setw(15) << scientific << orbit_time[i];
             for (int j = 0; j != n_cpu; j++) {
-                file_cpuid << setw(15) << CpuID_dist[i][j];
+                file_CpuID << setw(15) << CpuID_dist[i][j];
             }
-            file_cpuid << endl;
+            file_CpuID << endl;
         }
-        file_cpuid.close();
+        file_CpuID.close();
+    }
+    
+    // <Sigma_p>_y part
+    if (SigmaParY_flag) {
+        ofstream file_SigmaParY;
+        file_SigmaParY.open(output_sigma_path_name.c_str(), ofstream::out);
+        if (!file_SigmaParY.is_open()) {
+            cout << "Failed to open " << output_sigma_path_name << endl;
+            return 1;
+        }
+        file_SigmaParY << setw(15) << setfill(' ') << "#The first row of data is orbit time. The first column is x (radial direction) coordinate. Others is data.";
+        file_SigmaParY << endl;
+        file_SigmaParY << setw(15) << setfill(' ') << " ";
+        for (int i = 0; i != n_file; i++) {
+            file_SigmaParY << setw(15) << scientific << orbit_time[i];
+        }
+        file_SigmaParY << endl;
+        for (int i = 0; i != dimensions[0]; i++) {
+            file_SigmaParY << setw(15) << scientific << ccx[i];
+            for (int j = 0; j != n_file; j++) {
+                file_SigmaParY << setw(15) << Sigma_par_y[j][i];
+            }
+            file_SigmaParY << endl;
+        }
+        file_SigmaParY.close();
     }
 
     return 0;

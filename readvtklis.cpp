@@ -40,24 +40,7 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
     }
     myMPI->Determine_Loop(fio->n_file);
-    
-    // we need local variables to record data and then MPI_Allreduce
-    double *orbit_time = new double[fio->n_file];
-    double *max_rho_par = new double[fio->n_file];
-    double *Hp = new double[fio->n_file];
-    long *n_par = new long[fio->n_file];
-    long **cpuid_dist = new long*[fio->n_file];
-    for (int i = 0; i != fio->n_file; i++) {
-        // initialize if you don't assign all of them values but use them for calculation
-        orbit_time[i] = 0;
-        max_rho_par[i] = 0;
-        Hp[i] = 0;
-        n_par[i] = 0;
-        cpuid_dist[i] = new long[fio->n_cpu];
-        for (int j = 0; j != fio->n_cpu; j++) {
-            cpuid_dist[i][j] = 0;
-        }
-    }
+    myMPI->NewVars(fio->n_file, fio->n_cpu);
     myMPI->Barrier();
     // for debug
     cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << endl;
@@ -77,12 +60,23 @@ int main(int argc, const char * argv[]) {
             cout << "Having problem reading header..." << endl;
             exit(1);
         }
-#ifndef ENABLE_MPI
+#ifdef ENABLE_MPI
+        if (i == myMPI->loop_begin && fio->SigmaParY_flag) {
+            for (int j = 0; j != fio->n_file; j++) {
+                myMPI->Sigma_par_y[j] = new double[vf->dimensions[0]];
+                for (int k = 0; k != vf->dimensions[0]; k++) {
+                    myMPI->Sigma_par_y[j][k] = 0;
+                }
+            }
+        }
+#else
         //vf->Print_File_Info();
 #endif
-        if (fio->RhoParMax_flag) {
+        if (fio->RhoParMax_flag || fio->SigmaParY_flag) {
             vf->Read_Data(fio->vtk_filenames[i]);
             vf->Calculate_Mass_Find_Max();
+            //cout << "m_gas = " << vf->m_gas << "; m_par = " << vf->m_par << endl;
+            // I have checked the total gas mass and par mass, which is corresponding to mratio = 0.02
         }
         if (fio->ParNum_flag || fio->HeiPar_flag || fio->CpuID_flag) {
             // lis part
@@ -91,21 +85,32 @@ int main(int argc, const char * argv[]) {
                 
         // recording data
 #ifdef ENABLE_MPI
-        orbit_time[i] = vf->time;
+        myMPI->orbit_time[i] = vf->time;
         if (fio->ParNum_flag) {
-            n_par[i] = pl->n;
+            myMPI->n_par[i] = pl->n;
         }
         if (fio->RhoParMax_flag) {
-            max_rho_par[i] = vf->max_rho_par;
+            myMPI->max_rho_par[i] = vf->max_rho_par;
         }
         if (fio->HeiPar_flag) {
-            Hp[i] = pl->ScaleHeight();
+            myMPI->Hp[i] = pl->ScaleHeight();
         }
         if (fio->CpuID_flag) {
             pl->CpuID();
-            delete [] cpuid_dist[i];
-            cpuid_dist[i] = pl->CpuID_dist;
+            delete [] myMPI->cpuid_dist[i];
+            myMPI->cpuid_dist[i] = pl->CpuID_dist;
         }
+        if (fio->SigmaParY_flag) {
+            for (int ix = 0; ix != vf->dimensions[0]; ix++) {
+                for (int iz = 0; iz != vf->dimensions[2]; iz++) {
+                    for (int iy = 0; iy != vf->dimensions[1]; iy++) {
+                        myMPI->Sigma_par_y[i][ix] += vf->cd_scalar[1].data[iz][iy][ix] * vf->cell_volume;
+                    }
+                }
+                myMPI->Sigma_par_y[i][ix] /= (vf->Sigma_gas_0 * vf->spacing[0] * vf->spacing[1] * vf->dimensions[1]);
+            }
+        }
+        
 #else
         fio->orbit_time[i] = vf->time;
         if (fio->ParNum_flag) {
@@ -121,6 +126,18 @@ int main(int argc, const char * argv[]) {
             pl->CpuID();
             fio->CpuID_dist[i] = pl->CpuID_dist;
         }
+        if (fio->SigmaParY_flag) {
+            fio->Sigma_par_y[i] = new double[vf->dimensions[0]];
+            for (int ix = 0; ix != vf->dimensions[0]; ix++) {
+                fio->Sigma_par_y[i][ix] = 0;
+                for (int iz = 0; iz != vf->dimensions[2]; iz++) {
+                    for (int iy = 0; iy != vf->dimensions[1]; iy++) {
+                        fio->Sigma_par_y[i][ix] += vf->cd_scalar[1].data[iz][iy][ix] * vf->cell_volume;
+                    }
+                }
+                fio->Sigma_par_y[i][ix] /= (vf->Sigma_gas_0 * vf->spacing[0] * vf->spacing[1] * vf->dimensions[1]);
+            }
+        }
 
 #endif
 #ifndef RESIZE_LIST
@@ -130,25 +147,27 @@ int main(int argc, const char * argv[]) {
     
 #ifdef ENABLE_MPI
     myMPI->Barrier();
-    MPI::COMM_WORLD.Allreduce(orbit_time, fio->orbit_time, fio->n_file, MPI::DOUBLE, MPI::SUM);
+    MPI::COMM_WORLD.Allreduce(myMPI->orbit_time, fio->orbit_time, fio->n_file, MPI::DOUBLE, MPI::SUM);
     if (fio->ParNum_flag) {
-        MPI::COMM_WORLD.Allreduce(n_par, fio->n_par, fio->n_file, MPI::LONG, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(myMPI->n_par, fio->n_par, fio->n_file, MPI::LONG, MPI::SUM);
     }
     if (fio->RhoParMax_flag) {
-        MPI::COMM_WORLD.Allreduce(max_rho_par, fio->max_rho_par, fio->n_file, MPI::DOUBLE, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(myMPI->max_rho_par, fio->max_rho_par, fio->n_file, MPI::DOUBLE, MPI::SUM);
     }
     if (fio->HeiPar_flag) {
-        MPI::COMM_WORLD.Allreduce(Hp, fio->Hp, fio->n_file, MPI::DOUBLE, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(myMPI->Hp, fio->Hp, fio->n_file, MPI::DOUBLE, MPI::SUM);
     }
     if (fio->CpuID_flag) {
         for (int i = 0; i != fio->n_file; i++) {
             fio->CpuID_dist[i] = new long[fio->n_cpu];
-            for (int j = 0; j != fio->n_cpu; j++) {
-                fio->CpuID_dist[i][j] = 0;
-            }
-            MPI::COMM_WORLD.Allreduce(cpuid_dist[i], fio->CpuID_dist[i], fio->n_cpu, MPI::LONG, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->cpuid_dist[i], fio->CpuID_dist[i], fio->n_cpu, MPI::LONG, MPI::SUM);
         }
-        
+    }
+    if (fio->SigmaParY_flag) {
+        for (int i = 0; i != fio->n_file; i++) {
+            fio->Sigma_par_y[i] = new double[vf->dimensions[0]];
+            MPI::COMM_WORLD.Allreduce(myMPI->Sigma_par_y[i], fio->Sigma_par_y[i], vf->dimensions[0], MPI::DOUBLE, MPI::SUM);
+        }
     }
     
     cout << "Processor " << myMPI->myrank << ": I'm done." << endl;
@@ -187,11 +206,7 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
     }
     myMPI->Finalize();
-    
-    delete [] orbit_time;
-    delete [] max_rho_par;
-    delete [] Hp;
-    delete [] cpuid_dist;
+
     delete myMPI;
     
 #endif
