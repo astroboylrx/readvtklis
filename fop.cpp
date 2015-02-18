@@ -492,7 +492,7 @@ int FileIO::Output_Data()
         }
         file_SigmaParY << setw(15) << setfill(' ') << "#The first row of data is orbit time. The first column is x (radial direction) coordinate. Others is data.";
         file_SigmaParY << endl;
-        file_SigmaParY << setw(15) << setfill(' ') << " ";
+        file_SigmaParY << setw(15) << setfill(' ') << 0.0;
         for (int i = 0; i != n_file; i++) {
             file_SigmaParY << setw(15) << scientific << orbit_time[i];
         }
