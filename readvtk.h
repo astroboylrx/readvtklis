@@ -131,8 +131,12 @@ public:
     int Print_File_Info();
     
     /*! \fn int Calculate_Mass_Find_Max()
-        \brief calculate mass and find maximum */
+     *  \brief calculate mass and find maximum */
     int Calculate_Mass_Find_Max();
+    
+    /*! \fn int Calculate_Vturb_Gas(double *Vturb_gas, float ****V_gas_0)
+     *  \brief calculate gas turbulence velocity relative to initial state */
+    int Calculate_Vturb_Gas(double *Vturb_gas, float ****V_gas_0);
 };
 
 #endif /* defined(__readvtklis__readvtk__) */

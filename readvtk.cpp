@@ -592,3 +592,30 @@ int VtkFile::Calculate_Mass_Find_Max()
     return 0;
 }
 
+/********** Calculate gas turbulence velocity **********/
+/*! \fn int Calculate_Vturb_Gas(double ****Vturb_gas, double ****V_gas_0)
+ *  \brief calculate gas turbulence velocity relative to initial state */
+int VtkFile::Calculate_Vturb_Gas(double *Vturb_gas, float ****V_gas_0)
+{
+    double temp_rho_gas, temp_momentum, temp_Vturb, temp_Vturb_x;
+    for (int i = 0; i != dimensions[2]; i++) {
+        temp_rho_gas = 0;
+        temp_momentum = 0;
+        for (int j = 0; j != dimensions[1]; j++) {
+            for (int k = 0; k != dimensions[0]; k++) {
+                temp_rho_gas += cd_scalar[0].data[i][j][k];
+                temp_Vturb = 0;
+                for (int l = 0; l != 3; l++) {
+                    temp_Vturb_x = cd_vector[0].data[i][j][k][l]/cd_scalar[0].data[i][j][k] - V_gas_0[i][j][k][l];
+                    temp_Vturb += temp_Vturb_x * temp_Vturb_x;
+                }
+                temp_momentum += cd_scalar[0].data[i][j][k] * sqrt(temp_Vturb);
+            }
+        }
+        Vturb_gas[i] = temp_momentum/temp_rho_gas;
+    }
+    
+    return 0;
+}
+
+

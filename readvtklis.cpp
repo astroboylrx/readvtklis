@@ -44,7 +44,35 @@ int main(int argc, const char * argv[]) {
     myMPI->Barrier();
     // for debug
     cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << endl;
-
+    
+    // for reading V_gas_0
+    if (fio->VturbGas_flag) {
+        
+        //if (myMPI->myrank == myMPI->master) {
+            if (vf->Read_Header_Record_Pos(fio->vtk_filenames[0])) {
+                cout << "Having problem reading header..." << endl;
+                exit(1);
+            }
+            vf->Read_Data(fio->vtk_filenames[0]);
+            fio->V_gas_0 = new float***[vf->dimensions[2]];
+            for (int i = 0; i != vf->dimensions[2]; i++) {
+                fio->V_gas_0[i] = new float**[vf->dimensions[1]];
+                for (int j = 0; j != vf->dimensions[1]; j++) {
+                    fio->V_gas_0[i][j] = new float*[vf->dimensions[0]];
+                    for (int k = 0; k != vf->dimensions[0]; k++) {
+                        fio->V_gas_0[i][j][k] = new float[3];
+                        for (int l = 0; l != 3; l++) {
+                            fio->V_gas_0[i][j][k][l] = vf->cd_vector[0].data[i][j][k][l]/vf->cd_scalar[0].data[i][j][k];;
+                        }
+                    }
+                }
+            }
+        //} else {
+            
+        //}
+        myMPI->Barrier();
+    }
+    
     for (int i = myMPI->loop_begin ; i <= myMPI->loop_end; i += myMPI->loop_offset) {
 #else
     for (int i = 0; i < fio->n_file; i++) {
@@ -61,18 +89,32 @@ int main(int argc, const char * argv[]) {
             exit(1);
         }
 #ifdef ENABLE_MPI
-        if (i == myMPI->loop_begin && fio->SigmaParY_flag) {
-            for (int j = 0; j != fio->n_file; j++) {
-                myMPI->Sigma_par_y[j] = new double[vf->dimensions[0]];
-                for (int k = 0; k != vf->dimensions[0]; k++) {
-                    myMPI->Sigma_par_y[j][k] = 0;
+        // some setup in first step
+        // since some initialization happens inside the loop
+        // we require n_file should larger than numprocs
+        if (i == myMPI->loop_begin) {
+            if (fio->SigmaParY_flag) {
+                for (int j = 0; j != fio->n_file; j++) {
+                    myMPI->Sigma_par_y[j] = new double[vf->dimensions[0]];
+                    for (int k = 0; k != vf->dimensions[0]; k++) {
+                        myMPI->Sigma_par_y[j][k] = 0;
+                    }
                 }
             }
+            if (fio->VturbGas_flag) {
+                for (int j = 0; j != fio->n_file; j++) {
+                    myMPI->Vturb_gas[j] = new double[vf->dimensions[2]];
+                    for (int k = 0; k != vf->dimensions[2]; k++) {
+                        myMPI->Vturb_gas[j][k] = 0;
+                    }
+                }
+            }
+            
         }
 #else
         //vf->Print_File_Info();
 #endif
-        if (fio->RhoParMax_flag || fio->SigmaParY_flag) {
+        if (fio->RhoParMax_flag || fio->SigmaParY_flag || fio->VturbGas_flag) {
             vf->Read_Data(fio->vtk_filenames[i]);
             vf->Calculate_Mass_Find_Max();
             //cout << "m_gas = " << vf->m_gas << "; m_par = " << vf->m_par << endl;
@@ -93,7 +135,7 @@ int main(int argc, const char * argv[]) {
             myMPI->max_rho_par[i] = vf->max_rho_par;
         }
         if (fio->HeiPar_flag) {
-            myMPI->Hp[i] = pl->ScaleHeight();
+            pl->ScaleHeight(myMPI->Hp[i], myMPI->Hp_in1sigma[i]);
         }
         if (fio->CpuID_flag) {
             pl->CpuID();
@@ -110,6 +152,9 @@ int main(int argc, const char * argv[]) {
                 myMPI->Sigma_par_y[i][ix] /= (vf->Sigma_gas_0 * vf->spacing[0] * vf->spacing[1] * vf->dimensions[1]);
             }
         }
+        if (fio->VturbGas_flag) {
+            vf->Calculate_Vturb_Gas(myMPI->Vturb_gas[i], fio->V_gas_0);
+        }
         
 #else
         fio->orbit_time[i] = vf->time;
@@ -120,7 +165,7 @@ int main(int argc, const char * argv[]) {
             fio->max_rho_par[i] = vf->max_rho_par;
         }
         if (fio->HeiPar_flag) {
-            fio->Hp[i] = pl->ScaleHeight();
+            pl->ScaleHeight(fio->Hp[i], fio->Hp_in1sigma[i]);
         }
         if (fio->CpuID_flag) {
             pl->CpuID();
@@ -137,6 +182,46 @@ int main(int argc, const char * argv[]) {
                 }
                 fio->Sigma_par_y[i][ix] /= (vf->Sigma_gas_0 * vf->spacing[0] * vf->spacing[1] * vf->dimensions[1]);
             }
+        }
+        
+        // for temp output test
+        /*
+        ofstream file_ccpos;
+        string file_ccpos_name = fio->output_path_name;
+        file_ccpos.open((file_ccpos_name.append(to_string(i))).c_str(), ofstream::out);
+        if (!file_ccpos.is_open()) {
+            cout << "Failed to open " << (char)i+fio->output_path_name.c_str() << endl;
+            return 1;
+        }
+        int temp_z = 32;
+        for (int j = 0; j != fio->dimensions[1]; j++) {
+            for (int k = 0; k != fio->dimensions[0]; k++) {
+                file_ccpos << setw(15) << scientific << vf->cd_vector[0].data[temp_z][k][j][2]/vf->cd_scalar[0].data[k][j][temp_z];
+            }
+            file_ccpos << endl;
+        }
+        file_ccpos.close();
+         */
+        if (fio->VturbGas_flag) {
+            if (i == 0) {
+                if (fio->VturbGas_flag) {
+                    fio->V_gas_0 = new float***[vf->dimensions[2]];
+                    for (int i = 0; i != vf->dimensions[2]; i++) {
+                        fio->V_gas_0[i] = new float**[vf->dimensions[1]];
+                        for (int j = 0; j != vf->dimensions[1]; j++) {
+                            fio->V_gas_0[i][j] = new float*[vf->dimensions[0]];
+                            for (int k = 0; k != vf->dimensions[0]; k++) {
+                                fio->V_gas_0[i][j][k] = new float[3];
+                                for (int l = 0; l != 3; l++) {
+                                    fio->V_gas_0[i][j][k][l] = vf->cd_vector[0].data[i][j][k][l]/vf->cd_scalar[0].data[i][j][k];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            fio->Vturb_gas[i] = new double[vf->dimensions[2]];
+            vf->Calculate_Vturb_Gas(fio->Vturb_gas[i], fio->V_gas_0);
         }
 
 #endif
@@ -156,6 +241,7 @@ int main(int argc, const char * argv[]) {
     }
     if (fio->HeiPar_flag) {
         MPI::COMM_WORLD.Allreduce(myMPI->Hp, fio->Hp, fio->n_file, MPI::DOUBLE, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(myMPI->Hp_in1sigma, fio->Hp_in1sigma, fio->n_file, MPI::DOUBLE, MPI::SUM);
     }
     if (fio->CpuID_flag) {
         for (int i = 0; i != fio->n_file; i++) {
@@ -169,7 +255,12 @@ int main(int argc, const char * argv[]) {
             MPI::COMM_WORLD.Allreduce(myMPI->Sigma_par_y[i], fio->Sigma_par_y[i], vf->dimensions[0], MPI::DOUBLE, MPI::SUM);
         }
     }
-    
+    if (fio->VturbGas_flag) {
+        for (int i = 0; i != fio->n_file; i++) {
+            fio->Vturb_gas[i] = new double[vf->dimensions[2]];
+            MPI::COMM_WORLD.Allreduce(myMPI->Vturb_gas[i], fio->Vturb_gas[i], vf->dimensions[2], MPI::DOUBLE, MPI::SUM);
+        }
+    }
     cout << "Processor " << myMPI->myrank << ": I'm done." << endl;
     myMPI->Barrier();
     if (myMPI->myrank == myMPI->master) {

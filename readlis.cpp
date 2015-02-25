@@ -35,7 +35,7 @@ int ParticleList::ReadLis(string filename)
         file.read((char *)(&time), sizeof(float));
         file.read((char *)(&dt), sizeof(float));
         file.read((char *)(&n), sizeof(long));
-        if (fio->ParNum_flag == 1 && fio->RhoParMax_flag == 0 && fio->CpuID_flag == 0) {
+        if (fio->ParNum_flag == 1 && fio->HeiPar_flag == 0 && fio->CpuID_flag == 0) {
             return 0;
         }
 #ifdef RESERVE_PUSH_BACK
@@ -112,16 +112,33 @@ int ParticleList::ReadLis(string filename)
 }
 
 /********** Calculate the scale height of partiles **********/
-/*! \fn float ScaleHeight();
+/*! \fn float ScaleHeight(double &Hp, double &Hp_in1sigma);
  *  \brief calculate the scale height of partiles */
-float ParticleList::ScaleHeight()
+int ParticleList::ScaleHeight(double &Hp, double &Hp_in1sigma)
 {
-    float Hp = 0;
-    for (vector<Particle>::iterator it = List.begin(); it != List.end(); ++it) {
-        Hp += it->x[2]*it->x[2];
+    double one_sigma = 0.682689492137;
+    vector<float> par_z;
+    par_z.resize(List.size());
+    Hp = 0;
+    for (long i = 0; i != List.size(); i++) {
+        Hp += List[i].x[2]*List[i].x[2];
+        par_z[i] = List[i].x[2];
     }
     Hp = sqrt(Hp/n);
-    return Hp;
+    
+    sort(par_z.begin(), par_z.end());
+    vector<float> par_z_reverse(par_z);
+    sort(par_z_reverse.begin(), par_z_reverse.end(), std::greater<double>());
+    while ((par_z.size()+par_z_reverse.size()-List.size())/((double)List.size()) > one_sigma) {
+        if (par_z.back() > fabs(par_z_reverse.back())) {
+            par_z.pop_back();
+        } else {
+            par_z_reverse.pop_back();
+        }
+    }
+    Hp_in1sigma = par_z.back()?: par_z.back() > fabs(par_z_reverse.back());
+    
+    return 0;
 }
 
 /********** Free List to control memory **********/

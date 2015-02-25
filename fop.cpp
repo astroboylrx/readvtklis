@@ -66,14 +66,17 @@ int MPI_info::NewVars(int n_file, int n_cpu)
     orbit_time = new double[fio->n_file];
     max_rho_par = new double[fio->n_file];
     Hp = new double[fio->n_file];
+    Hp_in1sigma = new double[fio->n_file];
     n_par = new long[fio->n_file];
     cpuid_dist = new long*[fio->n_file];
     Sigma_par_y = new double*[fio->n_file];
+    Vturb_gas = new double*[fio->n_file];
     for (int i = 0; i != fio->n_file; i++) {
         // initialize if you don't assign all of them values but use them for calculation
         orbit_time[i] = 0;
         max_rho_par[i] = 0;
         Hp[i] = 0;
+        Hp_in1sigma[0] = 0;
         n_par[i] = 0;
         cpuid_dist[i] = new long[fio->n_cpu];
         for (int j = 0; j != fio->n_cpu; j++) {
@@ -91,8 +94,10 @@ MPI_info::~MPI_info()
     delete [] orbit_time;
     delete [] max_rho_par;
     delete [] Hp;
+    delete [] Hp_in1sigma;
     delete [] cpuid_dist;
     delete [] Sigma_par_y;
+    delete [] Vturb_gas;
 }
 
 #endif // ENABLE_MPI
@@ -115,8 +120,8 @@ int FileIO::Print_Stars(string info)
  *  \brief print usage */
 int FileIO::Print_Usage(const char *progname)
 {
-    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --CpuID --SigmaParY]\n" << endl;
-    cout << "Example: ./readvtklis -c 16 -i comb -b Cout -s all -f 0:100 -o result.txt --ParNum" << endl;
+    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --CpuID --SigmaParY --VturbGas]\n" << endl;
+    cout << "Example: ./readvtklis -c 16 -i comb -b Cout -s all -f 0:100 -o result.txt --ParNum --VturbGas" << endl;
     return 0;
 }
 
@@ -140,6 +145,8 @@ int FileIO::Initialize(int argc, const char * argv[])
     RhoParMax_flag = 0;
     HeiPar_flag = 0;
     CpuID_flag = 0;
+    SigmaParY_flag = 0;
+    VturbGas_flag = 0;
     
     //Specifying the expected options
     static struct option long_options[] = {
@@ -149,6 +156,7 @@ int FileIO::Initialize(int argc, const char * argv[])
         {"HeiPar", no_argument, &HeiPar_flag, 1},
         {"CpuID", no_argument, &CpuID_flag, 1},
         {"SigmaParY", no_argument, &SigmaParY_flag, 1},
+        {"VturbGas", no_argument, &VturbGas_flag, 1},
         // These options don't set a flag
         {"input", required_argument, 0, 'i'},
         {"basename", required_argument, 0, 'b'},
@@ -299,8 +307,10 @@ int FileIO::Initialize(int argc, const char * argv[])
     n_par = new long[n_file];
     max_rho_par = new double[n_file];
     Hp = new double[n_file];
+    Hp_in1sigma = new double[n_file];
     CpuID_dist = new long*[n_file];
     Sigma_par_y = new double*[n_file];
+    Vturb_gas = new double*[n_file];
     
     return 0;
 }
@@ -337,6 +347,9 @@ int FileIO::Generate_Filename()
     if (SigmaParY_flag) {
         output_sigma_path_name = output_path_name.substr(0, output_path_name.find_last_of('.'))+"_SigmaParY.txt";
     }
+    if (VturbGas_flag) {
+        output_vturbg_path_name = output_path_name.substr(0, output_path_name.find_last_of('.'))+"_VturbGas.txt";
+    }
     return 0;
 }
 
@@ -358,7 +371,7 @@ int FileIO::Check_Input_Path_Filename()
     cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
     cout << "The first one is " << *vtk_filenames.begin() << endl;
     Print_Stars("Check Output");
-    if (ParNum_flag || RhoParMax_flag || HeiPar_flag || CpuID_flag || SigmaParY_flag) {
+    if (ParNum_flag || RhoParMax_flag || HeiPar_flag || CpuID_flag || SigmaParY_flag || VturbGas_flag) {
         cout << "Output includes: " << endl;
         if (ParNum_flag) {
             cout << "particle numbers" << endl;
@@ -374,6 +387,9 @@ int FileIO::Check_Input_Path_Filename()
         }
         if (SigmaParY_flag) {
             cout << "<Sigma_p>_y" << endl;
+        }
+        if (VturbGas_flag) {
+            cout << "<V_turb_g>_xy" << endl;
         }
     } else {
         cout << "Need output choices." << endl;
@@ -399,6 +415,7 @@ FileIO::~FileIO()
      */
     delete [] orbit_time;
     delete [] Hp;
+    delete [] Hp_in1sigma;
     delete [] max_rho_par;
     delete [] CpuID_dist;
     
@@ -411,6 +428,7 @@ FileIO::~FileIO()
     }
      */
     delete [] Sigma_par_y;
+    delete [] Vturb_gas;
 }
 
 /********** Output data to file **********/
@@ -440,6 +458,7 @@ int FileIO::Output_Data()
     }
     if (HeiPar_flag) {
         file << setw(15) << setfill(' ') << "H_p";
+        file << setw(15) << setfill(' ') << "Hp_in1sigma";
     }
     file << endl;
     for (int i = 0; i != n_file; i++) {
@@ -452,6 +471,7 @@ int FileIO::Output_Data()
         }
         if (HeiPar_flag) {
             file << setw(15) << scientific << Hp[i];
+            file << setw(15) << scientific << Hp_in1sigma[i];
         }
         file << endl;
     }
@@ -505,6 +525,30 @@ int FileIO::Output_Data()
             file_SigmaParY << endl;
         }
         file_SigmaParY.close();
+    }
+    
+    if (VturbGas_flag) {
+        ofstream file_VturbGas;
+        file_VturbGas.open(output_vturbg_path_name.c_str(), ofstream::out);
+        if (!file_VturbGas.is_open()) {
+            cout << "Failed to open " << output_vturbg_path_name << endl;
+            return 1;
+        }
+        file_VturbGas << setw(15) << setfill(' ') << "#The first row of data is orbit time. The first column is z (radial direction) coordinate. Others is data.";
+        file_VturbGas << endl;
+        file_VturbGas << setw(15) << setfill(' ') << 0.0;
+        for (int i = 0; i != n_file; i++) {
+            file_VturbGas << setw(15) << scientific << orbit_time[i];
+        }
+        file_VturbGas << endl;
+        for (int i = 0; i != dimensions[2]; i++) {
+            file_VturbGas << setw(15) << scientific << ccz[i];
+            for (int j = 0; j != n_file; j++) {
+                file_VturbGas << setw(15) << Vturb_gas[j][i];
+            }
+            file_VturbGas << endl;
+        }
+        file_VturbGas.close();
     }
 
     return 0;

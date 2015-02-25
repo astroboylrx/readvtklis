@@ -53,9 +53,9 @@ public:
      *  \brief Read particle list from file */
     int ReadLis(string filename);
     
-    /*! \fn float ScaleHeight();
+    /*! \fn int ScaleHeight(double &Hp, double &Hp_in1sigma);
      *  \brief calculate the scale height of partiles */
-    float ScaleHeight();
+    int ScaleHeight(double &Hp, double &Hp_in1sigma);
     
     /*! \fn int InitializeList()
      *  \brief free List to control memory */
