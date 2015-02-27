@@ -245,7 +245,7 @@ int FileIO::Generate_Filename()
         iof.output_sigma_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_MeanSigma.txt";
     }
     if (VpecG_flag) {
-        iof.output_vpecg_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_VturbGas.txt";
+        iof.output_vpecg_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_VpecG.txt";
     }
     if (VertRho_flag) {
         iof.output_vertrho_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_VertRho.txt";
