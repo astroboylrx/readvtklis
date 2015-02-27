@@ -45,16 +45,9 @@ int CellData_Scalar::Initialize_Data(int *dimensions_been_told)
     dimensions[2] = dimensions_been_told[2];
     dimensions[1] = dimensions_been_told[1];
     dimensions[0] = dimensions_been_told[0];
-    // store in x, then y, then stack them as z direction
-    data = new float**[dimensions[2]];
-    for (int i = 0; i != dimensions[2]; i++) {
-        data[i] = new float*[dimensions[1]];
-        for (int j = 0; j != dimensions[1]; j++) {
-            data[i][j] = new float[dimensions[0]];
-        }
-    }
     
-    //data[0][0][0] = 0;
+    data = allocate3d_scalar_array<float>(dimensions);
+
     return 0;
 }
 
@@ -98,13 +91,7 @@ int CellData_Scalar::Read_Scalar_Data(string filename)
  *  \brief free the data memory */
 int CellData_Scalar::Free_Data()
 {
-    for (int i = 0; i != dimensions[2]; i++) {
-        for (int j = 0; j != dimensions[1]; j++) {
-            delete [] data[i][j];
-        }
-        delete [] data[i];
-    }
-    delete [] data;
+    deallocate3d_scalar_array(data, dimensions);
     dimensions[0] = 0;
     dimensions[1] = 0;
     dimensions[2] = 0;
@@ -149,17 +136,9 @@ int CellData_Vector::Initialize_Data(int *dimensions_been_told)
     dimensions[1] = dimensions_been_told[1];
     dimensions[0] = dimensions_been_told[0];
     data = NULL;
-    // store in x, y and then stack them in z direction
-    data = new float***[dimensions[2]];
-    for (int i = 0; i != dimensions[2]; i++) {
-        data[i] = new float**[dimensions[1]];
-        for (int j = 0; j != dimensions[1]; j++) {
-            data[i][j] = new float*[dimensions[0]];
-            for (int k = 0; k != dimensions[0]; k++) {
-                data[i][j][k] = new float[3];
-            }
-        }
-    }
+    
+    data = allocate3d_vector_array<float>(dimensions);
+    
     return 0;
 }
 
@@ -168,16 +147,8 @@ int CellData_Vector::Initialize_Data(int *dimensions_been_told)
  *  \brief free the data memory */
 int CellData_Vector::Free_Data()
 {
-    for (int i = 0; i != dimensions[2]; i++) {
-        for (int j = 0; j != dimensions[1]; j++) {
-            for (int k = 0; k != dimensions[0]; k++) {
-                delete [] data[i][j][k];
-            }
-            delete [] data[i][j];
-        }
-        delete [] data[i];
-    }
-    delete [] data;
+    deallocate3d_vector_array(data, dimensions);
+    
     dimensions[0] = 0;
     dimensions[1] = 0;
     dimensions[2] = 0;
@@ -255,18 +226,7 @@ VtkFile::~VtkFile()
         vector<CellData_Vector> temp;
         cd_vector.swap(temp);
     }
-    if (cell_center != NULL) {
-        for (int i = 0; i != dimensions[2]; i++) {
-            for (int j = 0; j != dimensions[1]; j++) {
-                for (int k = 0; k != dimensions[0]; k++) {
-                    delete [] cell_center[i][j][k];
-                }
-                delete [] cell_center[i][j];
-            }
-            delete [] cell_center[i];
-        }
-        delete [] cell_center;
-    }
+    deallocate3d_vector_array(cell_center, dimensions);
      */
     
 }
@@ -276,34 +236,38 @@ VtkFile::~VtkFile()
  *  \brief consturct coordinate grid */
 int VtkFile::Construct_Coor(int *dimensions_been_told)
 {
+    cell_center = allocate3d_vector_array<double>(dimensions);
     // actually, here what we construct is the center coordinate of each cell, along [z][y][x], from ORIGIN
-    if (cell_center == NULL || dimensions_been_told != dimensions) {
-        cell_center = new double***[dimensions[2]];
-        for (int i = 0; i != dimensions[2]; i++) {
-            cell_center[i] = new double**[dimensions[1]];
-            for (int j = 0; j != dimensions[1]; j++) {
-                cell_center[i][j] = new double*[dimensions[0]];
-                for (int k = 0; k != dimensions[0]; k++) {
-                    cell_center[i][j][k] = new double[3];
-                    cell_center[i][j][k][0] = origin[0]+spacing[0]*(k+0.5);
-                    cell_center[i][j][k][1] = origin[1]+spacing[1]*(j+0.5);
-                    cell_center[i][j][k][2] = origin[2]+spacing[2]*(i+0.5);
-                }
+    
+    cell_center = allocate3d_vector_array<double>(dimensions);
+    for (int i = 0; i != dimensions[2]; i++) {
+        for (int j = 0; j != dimensions[1]; j++) {
+            for (int k = 0; k != dimensions[0]; k++) {
+                cell_center[i][j][k][0] = origin[0]+spacing[0]*(k+0.5);
+                cell_center[i][j][k][1] = origin[1]+spacing[1]*(j+0.5);
+                cell_center[i][j][k][2] = origin[2]+spacing[2]*(i+0.5);
             }
         }
-        fio->ccz = new double[dimensions[2]];
-        for (int k = 0; k != dimensions[2]; k++) {
-            fio->ccz[k] = origin[2]+spacing[2]*(k+0.5);
-        }
-        fio->ccy = new double[dimensions[1]];
-        for (int j = 0; j != dimensions[1]; j++) {
-            fio->ccy[j] = origin[1]+spacing[1]*(j+0.5);
-        }
-        fio->ccx = new double[dimensions[0]];
-        for (int i = 0; i != dimensions[0]; i++) {
-            fio->ccx[i] = origin[0]+spacing[0]*(i+0.5);
-        }
     }
+    //if (fio->paras.ccz == NULL) {
+    fio->paras.ccz = new double[dimensions[2]];
+    //}
+    for (int k = 0; k != dimensions[2]; k++) {
+        fio->paras.ccz[k] = origin[2]+spacing[2]*(k+0.5);
+    }
+    //if (fio->paras.ccy == NULL) {
+    fio->paras.ccy = new double[dimensions[1]];
+    //}
+    for (int j = 0; j != dimensions[1]; j++) {
+        fio->paras.ccy[j] = origin[1]+spacing[1]*(j+0.5);
+    }
+    //if (fio->paras.ccx == NULL) {
+    fio->paras.ccx = new double[dimensions[0]];
+    //}
+    for (int i = 0; i != dimensions[0]; i++) {
+        fio->paras.ccx[i] = origin[0]+spacing[0]*(i+0.5);
+    }
+    
     return 0;
 }
 
@@ -359,7 +323,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         //We want to store the number of grid cells, not the number of grid cell corners
         for (int i = 0; i != 3; i++) {
             dimensions[i]--;
-            fio->dimensions[i] = dimensions[i];
+            fio->paras.dimensions[i] = dimensions[i];
         }
         /* alternative:
         getline(file, tempstring, ' ');
@@ -395,9 +359,9 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         iss.str(tempstring);
         iss >> spacing[0] >> spacing[1] >> spacing[2];
         cell_volume = spacing[0] * spacing[1] * spacing[2];
-        fio->spacing[0] = spacing[0];
-        fio->spacing[1] = spacing[1];
-        fio->spacing[2] = spacing[2];
+        fio->paras.spacing[0] = spacing[0];
+        fio->paras.spacing[1] = spacing[1];
+        fio->paras.spacing[2] = spacing[2];
     } else {
         cout << "No spacing info: " << endl;
         return 1;
@@ -420,7 +384,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     //cout << "CELL_DATA " << n_CellData << endl;
     
     int n_cd_scalar = 0, n_cd_vector = 0;
-    if (cell_center == NULL || dimensions != *this) {
+    if (cell_center == NULL) {
         Construct_Coor(dimensions);
     }
     //long filepos1, filepos2;
@@ -581,10 +545,10 @@ int VtkFile::Calculate_Mass_Find_Max()
         }
         if (it->dataname.compare("density") == 0) {
             m_gas = m_temp*cell_volume;
-            max_rho_gas = maximum;
+            Max_Rhog = maximum;
         } else if (it->dataname.compare("particle_density") == 0) {
             m_par = m_temp*cell_volume;
-            max_rho_par = maximum;
+            Max_Rhop = maximum;
         } else {
             cout << "Unkonwn data name: " << it->dataname << endl;
         }
@@ -592,30 +556,74 @@ int VtkFile::Calculate_Mass_Find_Max()
     return 0;
 }
 
-/********** Calculate gas turbulence velocity **********/
-/*! \fn int Calculate_Vturb_Gas(double ****Vturb_gas, double ****V_gas_0)
- *  \brief calculate gas turbulence velocity relative to initial state */
-int VtkFile::Calculate_Vturb_Gas(double *Vturb_gas, float ****V_gas_0)
+/********** Calculate gas peculiar velocity **********/
+/*! \fn int VpecG(double *VpecGx)
+ *  \brief return gas peculiar velocity components averaged horizontally at each z, weighted by rho_g */
+int VtkFile::VpecG(double *VpecG)
 {
-    double temp_rho_gas, temp_momentum, temp_Vturb, temp_Vturb_x;
-    for (int i = 0; i != dimensions[2]; i++) {
-        temp_rho_gas = 0;
-        temp_momentum = 0;
-        for (int j = 0; j != dimensions[1]; j++) {
-            for (int k = 0; k != dimensions[0]; k++) {
-                temp_rho_gas += cd_scalar[0].data[i][j][k];
-                temp_Vturb = 0;
-                for (int l = 0; l != 3; l++) {
-                    temp_Vturb_x = cd_vector[0].data[i][j][k][l]/cd_scalar[0].data[i][j][k] - V_gas_0[i][j][k][l];
-                    temp_Vturb += temp_Vturb_x * temp_Vturb_x;
-                }
-                temp_momentum += cd_scalar[0].data[i][j][k] * sqrt(temp_Vturb);
+    double temp_rhog = 0, temp_momentum[3];
+    for (int iz = 0; iz != dimensions[2]; iz++) {
+        temp_rhog = 0;
+        temp_momentum[0] = 0; temp_momentum[1] = 0; temp_momentum[2] = 0;
+        for (int iy = 0; iy != dimensions[1]; iy++) {
+            for (int ix = 0; ix != dimensions[0]; ix++) {
+                temp_rhog += cd_scalar[0].data[iz][iy][ix];
+                temp_momentum[0] += cd_vector[0].data[iz][iy][ix][0];
+                temp_momentum[1] += cd_vector[0].data[iz][iy][ix][1];
+                temp_momentum[2] += cd_vector[0].data[iz][iy][ix][2];
             }
         }
-        Vturb_gas[i] = temp_momentum/temp_rho_gas;
+        VpecG[iz] = temp_momentum[0]/temp_rhog;
+        VpecG[iz+dimensions[2]] = temp_momentum[1]/temp_rhog;
+        VpecG[iz+2*dimensions[2]] = temp_momentum[2]/temp_rhog;
     }
-    
     return 0;
 }
+
+/********** Calculate mean column density **********/
+/*! \fn int MeanSigma(double *MeanSigma)
+ *  \brief calculate sigma_g and sigma_p averaged over y */
+int VtkFile::MeanSigma(double *MeanSigma)
+{
+    for (int ix = 0; ix != dimensions[0]; ix++) {
+        MeanSigma[ix] = 0;
+        MeanSigma[ix+dimensions[0]] = 0;
+        for (int iz = 0; iz != dimensions[2]; iz++) {
+            for (int iy = 0; iy != dimensions[1]; iy++) {
+                MeanSigma[ix] += cd_scalar[0].data[iz][iy][ix];
+                MeanSigma[ix+dimensions[0]] += cd_scalar[1].data[iz][iy][ix] * cell_volume;
+            }
+        }
+        MeanSigma[ix] /= Sigma_gas_0_inbox;
+        MeanSigma[ix+dimensions[0]] /= (Sigma_gas_0 * spacing[0] * spacing[1] * dimensions[1]);
+    }
+    return 0;
+}
+
+/********** Calculate vertical rho_g and rho_p **********/
+/*! \fn int VertRho(double *VertRho)
+ *  \brief calculate vertical rho_g and rho_p */
+int VtkFile::VertRho(double *VertRho)
+{
+    for (int iz = 0; iz != dimensions[2]; iz++) {
+        VertRho[iz] = 0;
+        VertRho[iz+dimensions[2]] = 0;
+        for (int iy = 0; iy != dimensions[1]; iy++) {
+            for (int ix = 0; ix != dimensions[0]; ix++) {
+                VertRho[iz] += cd_scalar[0].data[iz][iy][ix];
+                VertRho[iz+dimensions[2]] += cd_scalar[1].data[iz][iy][ix];
+            }
+        }
+        VertRho[iz] /= dimensions[0]*dimensions[1];
+        VertRho[iz+dimensions[2]] /= dimensions[0]*dimensions[1];
+    }
+    return 0;
+}
+
+
+
+
+
+
 
 

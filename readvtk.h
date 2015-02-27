@@ -9,6 +9,7 @@
 #ifndef __readvtklis__readvtk__
 #define __readvtklis__readvtk__
 
+#include "global.h"
 #include "fop.h"
 
 // Due to the need for high performance, we use pointer based multi-dimensional arrays here.
@@ -106,10 +107,11 @@ public:
     vector<CellData_Scalar> cd_scalar;          /*!< vector of cell data */
     vector<CellData_Vector> cd_vector;          /*!< vector of vector data */
     double Sigma_gas_0;                         /*!< initial column density of gas */
+    double Sigma_gas_0_inbox;                   /*!< initial column density of gas truncated by vertical box size */
     double m_gas;                               /*!< total gas mass */
     double m_par;                               /*!< total particle mass */
-    double max_rho_gas;                         /*!< maximum density of gas */
-    double max_rho_par;                         /*!< maximum density of particle */
+    double Max_Rhog;                         /*!< maximum density of gas */
+    double Max_Rhop;                         /*!< maximum density of particle */
     
     VtkFile();                                  /*!< constructor */
     ~VtkFile();                                 /*!< destructor */
@@ -134,9 +136,19 @@ public:
      *  \brief calculate mass and find maximum */
     int Calculate_Mass_Find_Max();
     
-    /*! \fn int Calculate_Vturb_Gas(double *Vturb_gas, float ****V_gas_0)
-     *  \brief calculate gas turbulence velocity relative to initial state */
-    int Calculate_Vturb_Gas(double *Vturb_gas, float ****V_gas_0);
+    /*! \fn int VpecG(double *VpecG)
+     *  \brief return gas peculiar velocity components averaged horizontally at each z, weighted by rho_g 
+     */
+    int VpecG(double *VpecG);
+    
+    /*! \fn int MeanSigma(double *MeanSigma)
+     *  \brief calculate sigma_g and sigma_p averaged over y */
+    int MeanSigma(double *MeanSigma);
+    
+    /*! \fn int VertRho(double *VertRho)
+     *  \brief calculate vertical rho_g and rho_p */
+    int VertRho(double *VertRho);
+    
 };
 
 #endif /* defined(__readvtklis__readvtk__) */

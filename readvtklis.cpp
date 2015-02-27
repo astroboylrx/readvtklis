@@ -6,6 +6,7 @@
 //  Copyright (c) 2015 Rixin Li. All rights reserved.
 //
 
+#include "global.h"
 #include "fop.h"
 #include "readlis.h"
 #include "readvtk.h"
@@ -40,39 +41,51 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
     }
     myMPI->Determine_Loop(fio->n_file);
-    myMPI->NewVars(fio->n_file, fio->n_cpu);
+    myMPI->paras.AllocateMemory(fio->n_file);
     myMPI->Barrier();
     // for debug
     cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << endl;
-    
-    // for reading V_gas_0
-    if (fio->VturbGas_flag) {
-        
-        //if (myMPI->myrank == myMPI->master) {
-            if (vf->Read_Header_Record_Pos(fio->vtk_filenames[0])) {
-                cout << "Having problem reading header..." << endl;
-                exit(1);
-            }
-            vf->Read_Data(fio->vtk_filenames[0]);
-            fio->V_gas_0 = new float***[vf->dimensions[2]];
+#endif
+    // for reading V_gas_0 if VpecG_flag is set
+    if (fio->VpecG_flag || fio->MeanSigma_flag || fio->VertRho_flag) {
+        if (vf->Read_Header_Record_Pos(fio->vtk_filenames[0])) {
+            cout << "Having problem reading header..." << endl;
+            exit(1);
+        }
+        vf->Read_Data(fio->vtk_filenames[0]);
+        if (fio->VertRho_flag) {
+            fio->paras.V_gas_0 = allocate3d_vector_array<float>(vf->dimensions);
             for (int i = 0; i != vf->dimensions[2]; i++) {
-                fio->V_gas_0[i] = new float**[vf->dimensions[1]];
                 for (int j = 0; j != vf->dimensions[1]; j++) {
-                    fio->V_gas_0[i][j] = new float*[vf->dimensions[0]];
                     for (int k = 0; k != vf->dimensions[0]; k++) {
-                        fio->V_gas_0[i][j][k] = new float[3];
                         for (int l = 0; l != 3; l++) {
-                            fio->V_gas_0[i][j][k][l] = vf->cd_vector[0].data[i][j][k][l]/vf->cd_scalar[0].data[i][j][k];;
+                            fio->paras.V_gas_0[i][j][k][l] = vf->cd_vector[0].data[i][j][k][l]/vf->cd_scalar[0].data[i][j][k];;
                         }
                     }
                 }
             }
-        //} else {
-            
-        //}
+        }
+        if (fio->MeanSigma_flag) {
+            vf->Sigma_gas_0_inbox = 0;
+            for (int ix = 0; ix != vf->dimensions[0]; ix++) {
+                double temp_sigma_gas_0_in_box = 0;
+                for (int iy = 0; iy != vf->dimensions[1]; iy++) {
+                    for (int iz = 0; iz != vf->dimensions[2]; iz++) {
+                        temp_sigma_gas_0_in_box += vf->cd_scalar[0].data[iz][iy][ix];
+                    }
+                }
+                vf->Sigma_gas_0_inbox += temp_sigma_gas_0_in_box;
+            }
+            vf->Sigma_gas_0_inbox /= vf->dimensions[0];
+        }
+        fio->paras.AllocateSubMemory(fio->n_file, vf->dimensions);
+#ifdef ENABLE_MPI
+        myMPI->paras.AllocateSubMemory(fio->n_file, vf->dimensions);
         myMPI->Barrier();
+#endif
+        
     }
-    
+#ifdef ENABLE_MPI
     for (int i = myMPI->loop_begin ; i <= myMPI->loop_end; i += myMPI->loop_offset) {
 #else
     for (int i = 0; i < fio->n_file; i++) {
@@ -82,7 +95,7 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
         << "Processor " << myMPI->myrank << ": "
 #endif
-        << "Reading " << fio->data_basename+"." << setw(4) << setfill('0') << i+fio->start_no << endl; //" " << fio->ParNum_flag << fio->RhoParMax_flag << fio->HeiPar_flag << endl;
+        << "Reading " << fio->iof.data_basename+"." << setw(4) << setfill('0') << i+fio->start_no << endl; //" " << fio->ParNum_flag << fio->RhoParMax_flag << fio->HeiPar_flag << endl;
         
         if (vf->Read_Header_Record_Pos(fio->vtk_filenames[i])) {
             cout << "Having problem reading header..." << endl;
@@ -91,98 +104,67 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
         // some setup in first step
         // since some initialization happens inside the loop
-        // we require n_file should larger than numprocs
+        // we may require n_file should larger than numprocs
         if (i == myMPI->loop_begin) {
-            if (fio->SigmaParY_flag) {
-                for (int j = 0; j != fio->n_file; j++) {
-                    myMPI->Sigma_par_y[j] = new double[vf->dimensions[0]];
-                    for (int k = 0; k != vf->dimensions[0]; k++) {
-                        myMPI->Sigma_par_y[j][k] = 0;
-                    }
-                }
-            }
-            if (fio->VturbGas_flag) {
-                for (int j = 0; j != fio->n_file; j++) {
-                    myMPI->Vturb_gas[j] = new double[vf->dimensions[2]];
-                    for (int k = 0; k != vf->dimensions[2]; k++) {
-                        myMPI->Vturb_gas[j][k] = 0;
-                    }
-                }
-            }
-            
+            ;
         }
 #else
         //vf->Print_File_Info();
 #endif
-        if (fio->RhoParMax_flag || fio->SigmaParY_flag || fio->VturbGas_flag) {
+        if (fio->RhoParMax_flag || fio->MeanSigma_flag || fio->VpecG_flag || fio->VertRho_flag) {
             vf->Read_Data(fio->vtk_filenames[i]);
             vf->Calculate_Mass_Find_Max();
             //cout << "m_gas = " << vf->m_gas << "; m_par = " << vf->m_par << endl;
             // I have checked the total gas mass and par mass, which is corresponding to mratio = 0.02
         }
-        if (fio->ParNum_flag || fio->HeiPar_flag || fio->CpuID_flag) {
+        if (fio->ParNum_flag || fio->HeiPar_flag) {
             // lis part
             pl->ReadLis(fio->lis_filenames[i]);
         }
                 
         // recording data
 #ifdef ENABLE_MPI
-        myMPI->orbit_time[i] = vf->time;
+        myMPI->paras.Otime[i] = vf->time;
         if (fio->ParNum_flag) {
-            myMPI->n_par[i] = pl->n;
+            myMPI->paras.N_par[i] = pl->n;
         }
         if (fio->RhoParMax_flag) {
-            myMPI->max_rho_par[i] = vf->max_rho_par;
+            myMPI->paras.Max_Rhop[i] = vf->Max_Rhop;
         }
         if (fio->HeiPar_flag) {
-            pl->ScaleHeight(myMPI->Hp[i], myMPI->Hp_in1sigma[i]);
+            pl->ScaleHeight(myMPI->paras.Hp[i], myMPI->paras.Hp_in1sigma[i]);
         }
-        if (fio->CpuID_flag) {
-            pl->CpuID();
-            delete [] myMPI->cpuid_dist[i];
-            myMPI->cpuid_dist[i] = pl->CpuID_dist;
+        if (fio->MeanSigma_flag) {
+            vf->MeanSigma(myMPI->paras.MeanSigma[i]);
         }
-        if (fio->SigmaParY_flag) {
-            for (int ix = 0; ix != vf->dimensions[0]; ix++) {
-                for (int iz = 0; iz != vf->dimensions[2]; iz++) {
-                    for (int iy = 0; iy != vf->dimensions[1]; iy++) {
-                        myMPI->Sigma_par_y[i][ix] += vf->cd_scalar[1].data[iz][iy][ix] * vf->cell_volume;
-                    }
-                }
-                myMPI->Sigma_par_y[i][ix] /= (vf->Sigma_gas_0 * vf->spacing[0] * vf->spacing[1] * vf->dimensions[1]);
-            }
+        if (fio->VpecG_flag) {
+            vf->VpecG(myMPI->paras.VpecG[i]);
         }
-        if (fio->VturbGas_flag) {
-            vf->Calculate_Vturb_Gas(myMPI->Vturb_gas[i], fio->V_gas_0);
+        if (fio->VertRho_flag) {
+            vf->VertRho(myMPI->paras.VertRho[i]);
         }
         
 #else
-        fio->orbit_time[i] = vf->time;
+        fio->paras.Otime[i] = vf->time;
         if (fio->ParNum_flag) {
-            fio->n_par[i] = pl->n;
+            fio->paras.N_par[i] = pl->n;
         }
         if (fio->RhoParMax_flag) {
-            fio->max_rho_par[i] = vf->max_rho_par;
+            fio->paras.Max_Rhop[i] = vf->Max_Rhop;
         }
         if (fio->HeiPar_flag) {
-            pl->ScaleHeight(fio->Hp[i], fio->Hp_in1sigma[i]);
+            pl->ScaleHeight(fio->paras.Hp[i], fio->paras.Hp_in1sigma[i]);
         }
-        if (fio->CpuID_flag) {
-            pl->CpuID();
-            fio->CpuID_dist[i] = pl->CpuID_dist;
+        if (fio->MeanSigma_flag) {
+            vf->MeanSigma(fio->paras.MeanSigma[i]);
         }
-        if (fio->SigmaParY_flag) {
-            fio->Sigma_par_y[i] = new double[vf->dimensions[0]];
-            for (int ix = 0; ix != vf->dimensions[0]; ix++) {
-                fio->Sigma_par_y[i][ix] = 0;
-                for (int iz = 0; iz != vf->dimensions[2]; iz++) {
-                    for (int iy = 0; iy != vf->dimensions[1]; iy++) {
-                        fio->Sigma_par_y[i][ix] += vf->cd_scalar[1].data[iz][iy][ix] * vf->cell_volume;
-                    }
-                }
-                fio->Sigma_par_y[i][ix] /= (vf->Sigma_gas_0 * vf->spacing[0] * vf->spacing[1] * vf->dimensions[1]);
-            }
+        if (fio->VpecG_flag) {
+            vf->VpecG(fio->paras.VpecG[i]);
         }
+        if (fio->VertRho_flag) {
+            vf->VertRho(fio->paras.VertRho[i]);
+        }
+        
         
         // for temp output test
         /*
@@ -202,27 +184,6 @@ int main(int argc, const char * argv[]) {
         }
         file_ccpos.close();
          */
-        if (fio->VturbGas_flag) {
-            if (i == 0) {
-                if (fio->VturbGas_flag) {
-                    fio->V_gas_0 = new float***[vf->dimensions[2]];
-                    for (int i = 0; i != vf->dimensions[2]; i++) {
-                        fio->V_gas_0[i] = new float**[vf->dimensions[1]];
-                        for (int j = 0; j != vf->dimensions[1]; j++) {
-                            fio->V_gas_0[i][j] = new float*[vf->dimensions[0]];
-                            for (int k = 0; k != vf->dimensions[0]; k++) {
-                                fio->V_gas_0[i][j][k] = new float[3];
-                                for (int l = 0; l != 3; l++) {
-                                    fio->V_gas_0[i][j][k][l] = vf->cd_vector[0].data[i][j][k][l]/vf->cd_scalar[0].data[i][j][k];
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            fio->Vturb_gas[i] = new double[vf->dimensions[2]];
-            vf->Calculate_Vturb_Gas(fio->Vturb_gas[i], fio->V_gas_0);
-        }
 
 #endif
 #ifndef RESIZE_LIST
@@ -232,33 +193,30 @@ int main(int argc, const char * argv[]) {
     
 #ifdef ENABLE_MPI
     myMPI->Barrier();
-    MPI::COMM_WORLD.Allreduce(myMPI->orbit_time, fio->orbit_time, fio->n_file, MPI::DOUBLE, MPI::SUM);
+    MPI::COMM_WORLD.Allreduce(myMPI->paras.Otime, fio->paras.Otime, fio->n_file, MPI::DOUBLE, MPI::SUM);
     if (fio->ParNum_flag) {
-        MPI::COMM_WORLD.Allreduce(myMPI->n_par, fio->n_par, fio->n_file, MPI::LONG, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(myMPI->paras.N_par, fio->paras.N_par, fio->n_file, MPI::LONG, MPI::SUM);
     }
     if (fio->RhoParMax_flag) {
-        MPI::COMM_WORLD.Allreduce(myMPI->max_rho_par, fio->max_rho_par, fio->n_file, MPI::DOUBLE, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(myMPI->paras.Max_Rhop, fio->paras.Max_Rhop, fio->n_file, MPI::DOUBLE, MPI::SUM);
     }
     if (fio->HeiPar_flag) {
-        MPI::COMM_WORLD.Allreduce(myMPI->Hp, fio->Hp, fio->n_file, MPI::DOUBLE, MPI::SUM);
-        MPI::COMM_WORLD.Allreduce(myMPI->Hp_in1sigma, fio->Hp_in1sigma, fio->n_file, MPI::DOUBLE, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(myMPI->paras.Hp, fio->paras.Hp, fio->n_file, MPI::DOUBLE, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(myMPI->paras.Hp_in1sigma, fio->paras.Hp_in1sigma, fio->n_file, MPI::DOUBLE, MPI::SUM);
     }
-    if (fio->CpuID_flag) {
+    if (fio->MeanSigma_flag) {
         for (int i = 0; i != fio->n_file; i++) {
-            fio->CpuID_dist[i] = new long[fio->n_cpu];
-            MPI::COMM_WORLD.Allreduce(myMPI->cpuid_dist[i], fio->CpuID_dist[i], fio->n_cpu, MPI::LONG, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.MeanSigma[i], fio->paras.MeanSigma[i], 2*vf->dimensions[0], MPI::DOUBLE, MPI::SUM);
         }
     }
-    if (fio->SigmaParY_flag) {
+    if (fio->VpecG_flag) {
         for (int i = 0; i != fio->n_file; i++) {
-            fio->Sigma_par_y[i] = new double[vf->dimensions[0]];
-            MPI::COMM_WORLD.Allreduce(myMPI->Sigma_par_y[i], fio->Sigma_par_y[i], vf->dimensions[0], MPI::DOUBLE, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.VpecG[i], fio->paras.VpecG[i], 3*vf->dimensions[2], MPI::DOUBLE, MPI::SUM);
         }
     }
-    if (fio->VturbGas_flag) {
+    if (fio->VertRho_flag) {
         for (int i = 0; i != fio->n_file; i++) {
-            fio->Vturb_gas[i] = new double[vf->dimensions[2]];
-            MPI::COMM_WORLD.Allreduce(myMPI->Vturb_gas[i], fio->Vturb_gas[i], vf->dimensions[2], MPI::DOUBLE, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.VertRho[i], fio->paras.VertRho[i], 2*vf->dimensions[2], MPI::DOUBLE, MPI::SUM);
         }
     }
     cout << "Processor " << myMPI->myrank << ": I'm done." << endl;
@@ -268,7 +226,7 @@ int main(int argc, const char * argv[]) {
         fio->Output_Data();
         /*
         for (int i = 0; i != fio->n_file; i++) {
-            cout << "time = " << fio->orbit_time[i] << "; max_rho_par = " << fio->max_rho_par[i] << "; Hp = " << fio->Hp[i] << endl;
+            cout << "time = " << fio->Otime[i] << "; Max_Rhop = " << fio->Max_Rhop[i] << "; Hp = " << fio->Hp[i] << endl;
         }
          */
         fio->Print_Stars("Master: Finishing Program");

@@ -9,8 +9,9 @@
 #ifndef __readvtklis__readlis__
 #define __readvtklis__readlis__
 
+#include "global.h"
 #include "fop.h"
-/********** Particle class **********/
+
 /*! \class Particle
  *  \brief Information about one single particle
  */
@@ -23,7 +24,6 @@ public:
     float x[3], v[3], rad, mass;    /*!< partile infomation */
 };
 
-/********** ParticleList class **********/
 /*! \class ParticleList
  *  \brief Information about the entire particle list
  */
@@ -44,7 +44,6 @@ public:
     float x2dl, x2du;               /*!< lower/upper x2 range for data in this domain  */
     float x3dl, x3du;               /*!< lower/upper x3 range for data in this domain  */
     vector <Particle> List;         /*!< particle list vector */
-    long *CpuID_dist;               /*!< cpuid distribution array */
     
     ParticleList();                 /*!< constructor */
     ~ParticleList();                /*!< destructor */
@@ -68,10 +67,7 @@ public:
     /*! \fn int GetNumprocs()
      *  \brief get the number of processors */
     int GetNumprocs();
-    
-    /*! \fn int CpuID()
-     *  \brief reading the distribution of particles among cpus */
-    int CpuID();
+
 };
 
 

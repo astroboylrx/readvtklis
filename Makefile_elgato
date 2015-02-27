@@ -2,9 +2,9 @@ CXX	  = /uaopt/openmpi/1.8.1/bin/mpicxx
 
 OPTIMIZE  = -O2 -m64 -Wall -g
 
-SOURCES   = readvtklis.cpp readvtk.cpp readlis.cpp fop.cpp
+SOURCES   = readvtklis.cpp readvtk.cpp readlis.cpp fop.cpp global.cpp
 OBJECTS   = $(SOURCES:.cpp=.o)
-INCL      = readvtk.h readlis.h fop.h
+INCL      = readvtk.h readlis.h fop.h global.h
 
 CXXFLAGS  = -I/uaopt/openmpi/1.8.1/include #-std=c++11 
 LDFLAGS   = -L/uaopt/openmpi/1.8.1/lib
