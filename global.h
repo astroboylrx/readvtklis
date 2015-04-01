@@ -142,6 +142,7 @@ public:
     double *Max_Rhop;                               /*!< max partical density */
     double *Hp;                                     /*!< par scale height */
     double *Hp_in1sigma;                            /*!< par scale height derived from Gaussian 1sigma range */
+    double *dSigma;                                 /*!< the change of gas surface density due to outflow */
     
     // output to result_MeanSigma.txt, first sigma_g and then sigma_p
     double **MeanSigma;                             /*!< sigma_g and sigma_p averaged over y */

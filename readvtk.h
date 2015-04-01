@@ -110,8 +110,9 @@ public:
     double Sigma_gas_0_inbox;                   /*!< initial column density of gas truncated by vertical box size */
     double m_gas;                               /*!< total gas mass */
     double m_par;                               /*!< total particle mass */
-    double Max_Rhog;                         /*!< maximum density of gas */
-    double Max_Rhop;                         /*!< maximum density of particle */
+    double Max_Rhog;                            /*!< maximum density of gas */
+    double Max_Rhop;                            /*!< maximum density of particle */
+    double dSigma;                              /*!< change of gas surface density due to outflow */
     
     VtkFile();                                  /*!< constructor */
     ~VtkFile();                                 /*!< destructor */
@@ -133,7 +134,7 @@ public:
     int Print_File_Info();
     
     /*! \fn int Calculate_Mass_Find_Max()
-     *  \brief calculate mass and find maximum */
+     *  \brief calculate mass and find maximum and mass loss */
     int Calculate_Mass_Find_Max();
     
     /*! \fn int VpecG(double *VpecG)

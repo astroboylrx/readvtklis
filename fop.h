@@ -47,6 +47,7 @@ public:
     int ParNum_flag,                                /*!< flag: total particle number */
         RhoParMax_flag,                             /*!< flag: maximum of particle density */
         HeiPar_flag,                                /*!< flag: particle scale height */
+        dSigma_flag,                                /*!< flag: change of gas surface density */
 
         MeanSigma_flag,                             /*!< flag: gas/particle column density averaged azimuthally and vertically */
         VpecG_flag,                                 /*!< flag: gas peculiar velocity components averaged equatorially, weighted by rho_g */

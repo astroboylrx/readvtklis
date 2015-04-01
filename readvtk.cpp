@@ -280,16 +280,16 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     string tempstring;
     ifstream file (filename.c_str(), ios::in);
     if (!file.is_open()) {
-        cout << "Failed to open " << filename << endl;
+        cout << "Failed to open " << filename << "\n";
         return 1;
     }
     
     getline(file, Version);
     if (Version.compare("# vtk DataFile Version 3.0") != 0 && Version.compare("# vtk DataFile Version 2.0") != 0) {
-        cout << "First line of " << filename << " is " << Version << endl;
+        cout << "First line of " << filename << " is " << Version << "\n";
         return 1;
     }
-    //cout << "Version: " << Version << endl;
+    //cout << "Version: " << Version << "\n";
     
     getline(file, Header);
     if (Header.find("CONSERVED") != string::npos) {
@@ -298,21 +298,21 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         // time = stod(Header.substr(time_pos+6));
         time = strtod((Header.substr(time_pos+6, 12)).c_str(), NULL);
     }
-    //cout << setprecision(6) << scientific << "time: " << time << endl;
+    //cout << setprecision(6) << scientific << "time: " << time << "\n";
     
     getline(file, FileFormat);
     if (FileFormat.compare("BINARY") != 0) {
-        cout << "Unsopported file format: " << FileFormat << endl;
+        cout << "Unsopported file format: " << FileFormat << "\n";
         return 1;
     }
-    //cout << "File format: " << FileFormat << endl;
+    //cout << "File format: " << FileFormat << "\n";
     
     getline(file, DatasetStructure);
     if (DatasetStructure.compare("DATASET STRUCTURED_POINTS") != 0) {
-        cout << "Unsopported dataset structure: " << DatasetStructure << endl;
+        cout << "Unsopported dataset structure: " << DatasetStructure << "\n";
         return 1;
     }
-    //cout << DatasetStructure << endl;
+    //cout << DatasetStructure << "\n";
     
     getline(file, tempstring, ' ');
     if (tempstring.compare("DIMENSIONS") == 0) {
@@ -334,10 +334,10 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         dimensions[2] = stoi(tempstring);
          */
     } else {
-        cout << "No dimensions info: " << endl;
+        cout << "No dimensions info: " << "\n";
         return 1;
     }
-    //cout << "DIMENSIONS " << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << endl;
+    //cout << "DIMENSIONS " << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << "\n";
     
     getline(file, tempstring, ' ');
     if (tempstring.compare("ORIGIN") == 0) {
@@ -347,10 +347,10 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         iss >> origin[0] >> origin[1] >> origin[2];
         
     } else {
-        cout << "No origin info: " << endl;
+        cout << "No origin info: " << "\n";
         return 1;
     }
-    //cout << "ORIGIN " << origin[0] << " " << origin[1] << " " << origin[2] << endl;
+    //cout << "ORIGIN " << origin[0] << " " << origin[1] << " " << origin[2] << "\n";
     
     getline(file, tempstring, ' ');
     if (tempstring.compare("SPACING") == 0) {
@@ -363,10 +363,10 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         fio->paras.spacing[1] = spacing[1];
         fio->paras.spacing[2] = spacing[2];
     } else {
-        cout << "No spacing info: " << endl;
+        cout << "No spacing info: " << "\n";
         return 1;
     }
-    //cout << "SPACING " << spacing[0] << " " << spacing[1] << " " << spacing[2] << endl;
+    //cout << "SPACING " << spacing[0] << " " << spacing[1] << " " << spacing[2] << "\n";
     getline(file, tempstring, ' ');
     if (tempstring.compare("CELL_DATA") == 0) {
         istringstream iss;
@@ -378,10 +378,10 @@ int VtkFile::Read_Header_Record_Pos(string filename)
             return 1;
         }
     } else {
-        cout << "No info about the number of CELL_DATA" << endl;
+        cout << "No info about the number of CELL_DATA" << "\n";
         return 1;
     }
-    //cout << "CELL_DATA " << n_CellData << endl;
+    //cout << "CELL_DATA " << n_CellData << "\n";
     
     int n_cd_scalar = 0, n_cd_vector = 0;
     if (cell_center == NULL) {
@@ -391,19 +391,19 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     while (!file.eof()) {
         getline(file, tempstring, ' ');
         if (tempstring.compare("SCALARS") == 0) {
-            n_cd_scalar++;// cout << "n_cd_scalar=" << n_cd_scalar << endl;
+            n_cd_scalar++;// cout << "n_cd_scalar=" << n_cd_scalar << "\n";
             // if vector has elements, no need to push_back a new one
             if (cd_scalar.size() >= n_cd_scalar) {
                 if (dimensions != cd_scalar[n_cd_scalar-1]) {
                     cd_scalar[n_cd_scalar-1].Free_Data();
                     cd_scalar[n_cd_scalar-1].Initialize_Data(dimensions);
-                    //cout << "Real new data" << endl;
+                    //cout << "Real new data" << "\n";
                 }
-                //cout << "Initialize_Data" << endl;
+                //cout << "Initialize_Data" << "\n";
             } else {
                 // create a new CellData_Scalar
                 cd_scalar.push_back(CellData_Scalar(dimensions));
-                //cout << "Push_back" << endl;
+                //cout << "Push_back" << "\n";
             }
             // fetch data from file to it
             getline(file, cd_scalar[n_cd_scalar-1].dataname, ' ');
@@ -419,19 +419,19 @@ int VtkFile::Read_Header_Record_Pos(string filename)
                 cd_scalar[n_cd_scalar-1].numcomp = 1;
             }
             if (cd_scalar[n_cd_scalar-1].datatype.compare("float") != 0) {
-                cout << "Expected float format, found " << tempstring << endl;
+                cout << "Expected float format, found " << tempstring << "\n";
                 return 1;
             }
             
             // final check
             getline(file, tempstring);
             if (tempstring.compare("LOOKUP_TABLE default") != 0) {
-                cout << "Expected \"LOOKUP_TABLE default\", unsupportted file" << endl;
+                cout << "Expected \"LOOKUP_TABLE default\", unsupportted file" << "\n";
                 return 1;
             }
             
             cd_scalar[n_cd_scalar-1].tablename = "default";
-            //cout << "Found scalar " << cd_scalar[n_cd_scalar-1].dataname << " " << cd_scalar[n_cd_scalar-1].datatype << endl;
+            //cout << "Found scalar " << cd_scalar[n_cd_scalar-1].dataname << " " << cd_scalar[n_cd_scalar-1].datatype << "\n";
             cd_scalar[n_cd_scalar-1].pos = file.tellg();
             file.seekg(sizeof(float)*n_CellData, file.cur);
             // for debug
@@ -439,7 +439,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
             filepos1 = file.tellg();
             file.seekg(0, ios::end);
             filepos2 = file.tellg();
-            cout << "distance to eof: " << filepos2 - filepos1 << "bytes" << endl;
+            cout << "distance to eof: " << filepos2 - filepos1 << "bytes" << "\n";
             file.seekg(filepos1, ios::beg);
              */
         } else if (tempstring.compare("VECTORS") == 0) {
@@ -457,23 +457,23 @@ int VtkFile::Read_Header_Record_Pos(string filename)
             // fetch data from file to it
             getline(file, cd_vector[n_cd_vector-1].dataname, ' ');
             getline(file, cd_vector[n_cd_vector-1].datatype);
-            //cout << "Found vector " << cd_vector[n_cd_vector-1].dataname << " " << cd_vector[n_cd_vector-1].datatype << endl;
+            //cout << "Found vector " << cd_vector[n_cd_vector-1].dataname << " " << cd_vector[n_cd_vector-1].datatype << "\n";
             
             cd_vector[n_cd_vector-1].pos = file.tellg();
-            //cout << cd_vector[n_cd_vector-1].pos << endl;
+            //cout << cd_vector[n_cd_vector-1].pos << "\n";
             file.seekg(sizeof(float)*n_CellData*3, file.cur);
             // for debug
             /*
             filepos1 = file.tellg();
             file.seekg(0, ios::end);
             filepos2 = file.tellg();
-            cout << "distance to eof: " << filepos2 - filepos1 << "bytes" << endl;
+            cout << "distance to eof: " << filepos2 - filepos1 << "bytes" << "\n";
             file.seekg(filepos1, ios::beg);
              */
         } else {
             // it seems vtk file has a new empty line in the end
             if (tempstring.length() != 0 ) {
-                cout << "No info about SCALARS or VECTORS, it is " << tempstring << tempstring.length() << endl;
+                cout << "No info about SCALARS or VECTORS, it is " << tempstring << tempstring.length() << "\n";
                 return 1;
             }
         }
@@ -503,23 +503,23 @@ int VtkFile::Read_Data(string filename)
 int VtkFile::Print_File_Info()
 {
     if (Version.length() == 0) {
-        cout << "No file info for now" << endl;
+        cout << "No file info for now" << "\n";
         return 1;
     }
-    cout << "\nVersion: " << Version << endl;
-    cout << setprecision(6) << scientific << "time: " << time << endl;
-    cout << "File format: " << FileFormat << endl;
-    cout << DatasetStructure << endl;
-    cout << "DIMENSIONS " << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << endl;
-    cout << "ORIGIN " << origin[0] << " " << origin[1] << " " << origin[2] << endl;
-    cout << "SPACING " << spacing[0] << " " << spacing[1] << " " << spacing[2] << endl;
-    cout << "CELL_DATA " << n_CellData << endl;
+    cout << "\nVersion: " << Version << "\n";
+    cout << setprecision(6) << scientific << "time: " << time << "\n";
+    cout << "File format: " << FileFormat << "\n";
+    cout << DatasetStructure << "\n";
+    cout << "DIMENSIONS " << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << "\n";
+    cout << "ORIGIN " << origin[0] << " " << origin[1] << " " << origin[2] << "\n";
+    cout << "SPACING " << spacing[0] << " " << spacing[1] << " " << spacing[2] << "\n";
+    cout << "CELL_DATA " << n_CellData << "\n";
     return 0;
 }
 
 /********** Calculate mass and find maximum **********/
 /*! \fn int Calculate_Mass_Find_Max()
- \brief calculate mass and find maximum */
+ \brief calculate mass and find maximum and mass loss */
 int VtkFile::Calculate_Mass_Find_Max()
 {
     // here we use the specific features of Athena output
@@ -527,7 +527,7 @@ int VtkFile::Calculate_Mass_Find_Max()
     // and we assume the volume of one spacing cube is 1, so
     // the total mass = total density*1
     if (cd_scalar.size() != 2) {
-        cout << "The size of Scalar vector is wrong." << endl;
+        cout << "The size of Scalar vector is wrong." << "\n";
         return 1;
     }
     for (vector<CellData_Scalar>::iterator it = cd_scalar.begin(); it != cd_scalar.end(); it++) {
@@ -550,7 +550,24 @@ int VtkFile::Calculate_Mass_Find_Max()
             m_par = m_temp*cell_volume;
             Max_Rhop = maximum;
         } else {
-            cout << "Unkonwn data name: " << it->dataname << endl;
+            cout << "Unkonwn data name: " << it->dataname << "\n";
+        }
+    }
+    
+    for (vector<CellData_Vector>::iterator it = cd_vector.begin(); it != cd_vector.end(); it++) {
+        if (it->dataname.compare("momentum") == 0) {
+            dSigma = 0;
+            for (int iy = 0; iy != dimensions[1]; iy++) {
+                for (int ix = 0; ix != dimensions[0]; ix++) {
+                    if (cd_vector[0].data[dimensions[2]-1][iy][ix][2]  > 0) {
+                        dSigma += cd_vector[0].data[dimensions[2]-1][iy][ix][2];
+                    }
+                    if (cd_vector[0].data[0][iy][ix][2] < 0) {
+                        dSigma -= cd_vector[0].data[0][iy][ix][2];
+                    }
+                }
+            }
+            dSigma *= (cell_volume / (spacing[0]*spacing[1]*dimensions[0]*dimensions[1]));
         }
     }
     return 0;
