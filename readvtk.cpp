@@ -556,18 +556,27 @@ int VtkFile::Calculate_Mass_Find_Max()
     
     for (vector<CellData_Vector>::iterator it = cd_vector.begin(); it != cd_vector.end(); it++) {
         if (it->dataname.compare("momentum") == 0) {
-            dSigma = 0;
+            dSigma = 0; //int inflow_count = 0;
             for (int iy = 0; iy != dimensions[1]; iy++) {
                 for (int ix = 0; ix != dimensions[0]; ix++) {
                     if (cd_vector[0].data[dimensions[2]-1][iy][ix][2]  > 0) {
                         dSigma += cd_vector[0].data[dimensions[2]-1][iy][ix][2];
+                    } else {
+                        dSigma += 0.5 * cd_vector[0].data[dimensions[2]-1][iy][ix][2];
+                        //cout << "inflow: ix=" << ix << ", iy=" << iy << "\n";
+                        //inflow_count++;
                     }
                     if (cd_vector[0].data[0][iy][ix][2] < 0) {
                         dSigma -= cd_vector[0].data[0][iy][ix][2];
+                    } else {
+                        dSigma -= 0.5 * cd_vector[0].data[0][iy][ix][2];
+                        //cout << "inflow: ix=" << ix << ", iy=" << iy << "\n";
+                        //inflow_count++;
                     }
                 }
             }
-            dSigma *= (cell_volume / (spacing[0]*spacing[1]*dimensions[0]*dimensions[1]));
+            //cout << "in/out=" << float(inflow_count)/(2*dimensions[0]*dimensions[1]) << "\n";
+            dSigma /= (dimensions[0]*dimensions[1]);
         }
     }
     return 0;
