@@ -390,6 +390,9 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     //long filepos1, filepos2;
     while (!file.eof()) {
         getline(file, tempstring, ' ');
+		if (tempstring[0] == '\n') {
+			tempstring = tempstring.substr(1);
+		}
         if (tempstring.compare("SCALARS") == 0) {
             n_cd_scalar++;// cout << "n_cd_scalar=" << n_cd_scalar << "\n";
             // if vector has elements, no need to push_back a new one
