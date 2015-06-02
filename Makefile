@@ -1,6 +1,6 @@
 CXX	  = mpicxx
 
-OPTIMIZE  = -O2 -m64 -Wall -g
+OPTIMIZE  = -O2 -m64 -Wall -g -ggdb
 
 SOURCES   = readvtklis.cpp readvtk.cpp readlis.cpp fop.cpp global.cpp
 OBJECTS   = $(SOURCES:.cpp=.o)
