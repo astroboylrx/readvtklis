@@ -132,8 +132,8 @@ int Paras2probe::AllocateSubMemory(int n_file, int *dimensions)
         for (int j = 0; j != 2*dimensions[2]; j++) {
             VertRho[i][j] = 0;
         }
-        CorrL[i] = new double[dimensions[2]];
-        for (int j = 0; j != dimensions[2]; j++) {
+        CorrL[i] = new double[3*dimensions[2]];
+        for (int j = 0; j != 3*dimensions[2]; j++) {
             CorrL[i][j] = 0;
         }
     }

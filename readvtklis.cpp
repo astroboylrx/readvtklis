@@ -240,7 +240,7 @@ int main(int argc, const char * argv[]) {
         }
         if (fio->CorrL_flag) {
             for (int i = 0; i != fio->n_file; i++) {
-                MPI::COMM_WORLD.Allreduce(myMPI->paras.CorrL[i], fio->paras.CorrL[i], vf->dimensions[2], MPI::DOUBLE, MPI::SUM);
+                MPI::COMM_WORLD.Allreduce(myMPI->paras.CorrL[i], fio->paras.CorrL[i], 3*vf->dimensions[2], MPI::DOUBLE, MPI::SUM);
             }
         }
         cout << "Processor " << myMPI->myrank << ": I'm done." << "\n";

@@ -492,14 +492,14 @@ int FileIO::Output_Data()
             cout << "Failed to open " << iof.output_corrl_path_name << "\n";
             return 1;
         }
-        file_CorrL << "#The first row of data is orbit time. The first column is z (vertical direction) coordinate. Others is data.";
+        file_CorrL << "#The first row of data is orbit time. The first column is z (vertical direction) coordinate. Others is data, but divided into three blocks, first is for Mx, then for Vx, then for density.";
         file_CorrL << "\n";
         file_CorrL << setw(15) << setfill(' ') << 0.0;
         for (int i = 0; i != n_file; i++) {
             file_CorrL << setw(15) << scientific << paras.Otime[i];
         }
         file_CorrL << "\n";
-        for (int i = 0; i != paras.dimensions[2]; i++) {
+        for (int i = 0; i != 3*paras.dimensions[2]; i++) {
             file_CorrL << setw(15) << scientific << paras.ccz[i%paras.dimensions[2]];
             for (int j = 0; j != n_file; j++) {
                 file_CorrL << setw(15) << scientific << paras.CorrL[j][i];

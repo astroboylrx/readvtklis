@@ -651,28 +651,56 @@ int VtkFile::VertRho(double *VertRho)
  *  \brief calculate the correlation length */
 int VtkFile::CorrLen(double *CorrL)
 {
-    int l = 0, lc = 0;
-    double *corr = new double[dimensions[0]];
+    int l = 0, lcMx, lcVx, lcRho;
+    double MxMx, RhoRho;
+    double *corrMx = new double[dimensions[0]];
+    double *corrVx = new double[dimensions[0]];
+    double *corrRho = new double[dimensions[0]];
     for (int iz = 0; iz != dimensions[2]; iz++) {
+        // Initilization
         CorrL[iz] = 0;
-        lc = dimensions[0]-1;
+        CorrL[iz+dimensions[2]] = 0;
+        CorrL[iz+2*dimensions[2]] = 0;
+        lcMx = dimensions[0]-1;
+        lcVx = lcMx;
+        lcRho = lcMx;
+        
         for (l = 0; l != dimensions[0]; l ++) {
-            corr[l] = 0;
+            corrMx[l] = 0;
+            corrVx[l] = 0;
+            corrRho[l] = 0;
             for (int iy = 0; iy != dimensions[1]; iy++) {
                 for (int ix = 0; ix != dimensions[0]-l; ix++) {
-                    corr[l] += cd_vector[0].data[iz][iy][ix][0] * cd_vector[0].data[iz][iy][ix+l][0];
+                    MxMx = (cd_vector[0].data[iz][iy][ix][0] * cd_vector[0].data[iz][iy][ix+l][0]);
+                    corrMx[l] += MxMx;
+                    RhoRho = (cd_scalar[0].data[iz][iy][ix] * cd_scalar[0].data[iz][iy][ix+l]);
+                    corrRho[l] += RhoRho;
+                    corrVx[l] += MxMx/RhoRho;
                 }
             }
         }
         for (l = dimensions[0]-1; l >= 0; l--) {
-            corr[l] /= corr[0];
-            if (fabs(corr[l]-0.5) < fabs(corr[lc]-0.5)) {
-                lc = l;
+            corrMx[l] /= corrMx[0];
+            corrVx[l] /= corrVx[0];
+            corrRho[l] /= corrRho[0];
+            if (fabs(corrMx[l]-0.5) < fabs(corrMx[lcMx]-0.5)) {
+                lcMx = l;
+            }
+            if (fabs(corrVx[l]-0.5) < fabs(corrVx[lcVx]-0.5)) {
+                lcVx = l;
+            }
+            if (fabs(corrRho[l]-0.5) < fabs(corrRho[lcRho]-0.5)) {
+                lcRho = l;
             }
         }
-        CorrL[iz] = lc * spacing[0];
+        CorrL[iz] = lcMx * spacing[0];
+        CorrL[iz+dimensions[2]] = lcVx * spacing[0];
+        CorrL[iz+2*dimensions[2]] = lcRho * spacing[0];
     }
-    delete [] corr;
+    
+    delete [] corrMx;
+    delete [] corrVx;
+    delete [] corrRho;
     return 0;
 }
 
