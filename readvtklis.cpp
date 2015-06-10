@@ -48,7 +48,7 @@ int main(int argc, const char * argv[]) {
     cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << "\n";
 #endif
     // for reading V_gas_0 if VpecG_flag is set
-    if (fio->VpecG_flag || fio->MeanSigma_flag || fio->VertRho_flag) {
+    if (fio->VpecG_flag || fio->MeanSigma_flag || fio->VertRho_flag || fio->CorrL_flag) {
         if (vf->Read_Header_Record_Pos(fio->vtk_filenames[0])) {
             cout << "Having problem reading header..." << "\n";
             exit(1);
@@ -240,11 +240,12 @@ int main(int argc, const char * argv[]) {
         }
         if (fio->CorrL_flag) {
             for (int i = 0; i != fio->n_file; i++) {
-                MPI::COMM_WORLD.Allreduce(myMPI->paras.CorrL[i], fio->paras.CorrL, vf->dimensions[2], MPI::DOUBLE, MPI::SUM);
+                MPI::COMM_WORLD.Allreduce(myMPI->paras.CorrL[i], fio->paras.CorrL[i], vf->dimensions[2], MPI::DOUBLE, MPI::SUM);
             }
         }
         cout << "Processor " << myMPI->myrank << ": I'm done." << "\n";
         myMPI->Barrier();
+        
         if (myMPI->myrank == myMPI->master) {
 #endif
             fio->Output_Data();
@@ -258,10 +259,7 @@ int main(int argc, const char * argv[]) {
         }
 #endif
         
-        // have bugs when I delete fio and pl, don't know why
-        delete fio;
-        delete pl;
-        delete vf;
+
         
         end_t = clock();
         elapsed_secs = double(end_t - begin_t) / CLOCKS_PER_SEC;
@@ -280,8 +278,11 @@ int main(int argc, const char * argv[]) {
         }
         myMPI->Finalize();
         
-        delete myMPI;
-        
+        //delete myMPI;
+        // have bugs when I delete fio and pl, don't know why
+        //delete fio;
+        //delete pl;
+        //delete vf;
 #endif
         return 0;
     }

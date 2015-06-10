@@ -654,9 +654,7 @@ int VtkFile::CorrLen(double *CorrL)
     int l = 0, lc = 0;
     double *corr = new double[dimensions[0]];
     for (int iz = 0; iz != dimensions[2]; iz++) {
-        //cout << myMPI->myrank << " is here.\n";
         CorrL[iz] = 0;
-        //cout << myMPI->myrank << " iz = " << iz << "\n";
         lc = dimensions[0]-1;
         for (l = 0; l != dimensions[0]; l ++) {
             corr[l] = 0;
@@ -674,7 +672,6 @@ int VtkFile::CorrLen(double *CorrL)
         }
         CorrL[iz] = lc * spacing[0];
     }
-    //cout << myMPI->myrank << " is here.\n";
     delete [] corr;
     return 0;
 }
