@@ -150,6 +150,10 @@ public:
      *  \brief calculate vertical rho_g and rho_p */
     int VertRho(double *VertRho);
     
+    /*! \fn int CorrLen(double *CoorL)
+     *  \brief calculate the correlation length */
+    int CorrLen(double *CorrL);
+    
 };
 
 #endif /* defined(__readvtklis__readvtk__) */

@@ -25,6 +25,9 @@ public:
     string output_sigma_path_name;                  /*!< the name for output of MeanSigma */
     string output_vpecg_path_name;                  /*!< the name for output of VpecG */
     string output_vertrho_path_name;                /*!< the name for output of VertRho */
+    string output_corrl_path_name;                  /*!< the name for output of Correlation Length */
+    string data_level;                              /*!< the level of data */
+    string data_domain;                             /*!< the domain of data */
 
 };
 
@@ -52,6 +55,7 @@ public:
         MeanSigma_flag,                             /*!< flag: gas/particle column density averaged azimuthally and vertically */
         VpecG_flag,                                 /*!< flag: gas peculiar velocity components averaged equatorially, weighted by rho_g */
         VertRho_flag,                               /*!< flag: vertical structure of rho_g and rho_p */
+        CorrL_flag,                                 /*!< flag: correlation length of Vgas */
         //New_flag,                                 /*!< flag: example of new flag */
         UselessEnd_flag;                            /*!< flag: just in order to add flag conveniently */
     // after adding a flag:

@@ -110,6 +110,7 @@ int Paras2probe::AllocateMemory(int n_file)
     MeanSigma = new double*[n_file];
     VpecG = new double*[n_file];
     VertRho = new double*[n_file];
+    CorrL = new double*[n_file];
     return 0;
 }
 
@@ -131,6 +132,10 @@ int Paras2probe::AllocateSubMemory(int n_file, int *dimensions)
         for (int j = 0; j != 2*dimensions[2]; j++) {
             VertRho[i][j] = 0;
         }
+        CorrL[i] = new double[dimensions[2]];
+        for (int j = 0; j != dimensions[2]; j++) {
+            CorrL[i][j] = 0;
+        }
     }
     return 0;
 }
@@ -149,6 +154,7 @@ Paras2probe::~Paras2probe()
     delete [] MeanSigma;
     delete [] VpecG;
     delete [] VertRho;
+    delete [] CorrL;
 }
 
 

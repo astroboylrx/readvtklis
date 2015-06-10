@@ -27,8 +27,8 @@ int FileIO::Print_Stars(string info)
  *  \brief print usage */
 int FileIO::Print_Usage(const char *progname)
 {
-    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma]\n" << "\n";
-    cout << "Example: ./readvtklis -c 16 -i comb -b Cout -s all -f 0:100 -o result.txt --ParNum  --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma" << "\n";
+    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -l <level> -d <domain> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL]\n" << "\n";
+    cout << "Example: ./readvtklis -c 16 -i comb -b Cout -l 1 -d 0 -s all -f 0:100 -o result.txt --ParNum  --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL" << "\n";
     return 0;
 }
 
@@ -55,6 +55,7 @@ int FileIO::Initialize(int argc, const char * argv[])
     MeanSigma_flag = 0;
     VpecG_flag = 0;
     VertRho_flag = 0;
+    CorrL_flag = 0;
     
     //Specifying the expected options
     static struct option long_options[] = {
@@ -66,6 +67,7 @@ int FileIO::Initialize(int argc, const char * argv[])
         {"MeanSigma", no_argument, &MeanSigma_flag, 1},
         {"VpecG", no_argument, &VpecG_flag, 1},
         {"VertRho", no_argument, &VertRho_flag, 1},
+        {"CorrL", no_argument, &CorrL_flag, 1},
         // These options don't set a flag
         {"ncpu", required_argument, 0, 'c'},
         {"input", required_argument, 0, 'i'},
@@ -73,11 +75,13 @@ int FileIO::Initialize(int argc, const char * argv[])
         {"postname", required_argument, 0, 's'},
         {"filenumber", required_argument, 0, 'f'},
         {"output", required_argument, 0, 'o'},
+        {"level", required_argument, 0, 'l'},
+        {"domain", required_argument, 0, 'd'},
         // End
         {0,0,0,0}
     };
     
-    if (argc < 12) {
+    if (argc < 14) {
 #ifdef ENABLE_MPI
         if (myMPI->myrank == myMPI->master) {
 #endif
@@ -103,7 +107,7 @@ int FileIO::Initialize(int argc, const char * argv[])
         while (1) {
             // getopt_long stores the option
             int option_index = 0;
-            temp = getopt_long(argc, (char *const *)argv, "i:b:s:f:o:c:", long_options, &option_index);
+            temp = getopt_long(argc, (char *const *)argv, "i:b:s:f:o:c:l:d:", long_options, &option_index);
             if (temp == -1) {
                 break;
             }
@@ -168,11 +172,19 @@ int FileIO::Initialize(int argc, const char * argv[])
                     //cout << "output_path_name is " << output_path_name << "\n";
                     break;
                 }
+                case 'l': {
+                    iof.data_level.assign(optarg);
+                    break;
+                }
+                case 'd': {
+                    iof.data_domain.assign(optarg);
+                    break;
+                }
                 case '?': {
 #ifdef ENABLE_MPI
                     if (myMPI->myrank == myMPI->master) {
 #endif
-                        if (optopt == 'i' || optopt == 'b' || optopt == 's' || optopt == 'f' || optopt == 'o' || optopt == 'c')
+                        if (optopt == 'i' || optopt == 'b' || optopt == 's' || optopt == 'f' || optopt == 'o' || optopt == 'c' || optopt == 'l' || optopt == 'd')
                             fprintf (stderr, "Option -%c requires an argument.\n", optopt);
                         else if (isprint (optopt))
                             fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -222,15 +234,23 @@ int FileIO::Initialize(int argc, const char * argv[])
  *  \brief generate filenames for processing */
 int FileIO::Generate_Filename()
 {
+    string temp_name;
     if (*iof.data_path.rbegin() != '/') {
         iof.data_path.push_back('/');
+    }
+    temp_name.assign(iof.data_path+iof.data_basename);
+    if (iof.data_level.compare("0") != 0) {
+        temp_name = temp_name+"-lev"+iof.data_level;
+    }
+    if (iof.data_domain.compare("0") != 0) {
+        temp_name = temp_name+"-dom"+iof.data_domain;
     }
     for (int i = start_no; i <= end_no; i++) {
         stringstream ss;
         ss << setw(4) << setfill('0') << i;
         string file_no = ss.str();
-        lis_filenames.push_back(iof.data_path+iof.data_basename+'.'+file_no+'.'+iof.post_name+".lis");
-        vtk_filenames.push_back(iof.data_path+iof.data_basename+'.'+file_no+".vtk");
+        lis_filenames.push_back(temp_name+'.'+file_no+'.'+iof.post_name+".lis");
+        vtk_filenames.push_back(temp_name+'.'+file_no+".vtk");
     }
     /*
      Print_Stars("Check Filenames");
@@ -243,6 +263,12 @@ int FileIO::Generate_Filename()
         cout << "Error: No output path/name. " << "\n";
         return 1;
     }
+    if (iof.data_level.compare("0") != 0) {
+        iof.output_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"-lev"+iof.data_level+".txt";
+    }
+    if (iof.data_domain.compare("0") != 0) {
+                iof.output_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"-dom"+iof.data_domain+".txt";
+    }
     if (MeanSigma_flag) {
         iof.output_sigma_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_MeanSigma.txt";
     }
@@ -251,6 +277,9 @@ int FileIO::Generate_Filename()
     }
     if (VertRho_flag) {
         iof.output_vertrho_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_VertRho.txt";
+    }
+    if (CorrL_flag) {
+        iof.output_corrl_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_CorrL.txt";
     }
     return 0;
 }
@@ -263,6 +292,8 @@ int FileIO::Check_Input_Path_Filename()
     Print_Stars("Check Input");
     cout << "data_path is " << iof.data_path << "\n";
     cout << "data_basename is " << iof.data_basename << "\n";
+    cout << "data_level is " << iof.data_level << "\n";
+    cout << "data_domain is " << iof.data_domain << "\n";
     cout << "post_name is " << iof.post_name << "\n";
     cout << "start_no=" << start_no << ", end_no=" << end_no << "\n";
     cout << "output_path_name is " << iof.output_path_name << "\n";
@@ -273,7 +304,7 @@ int FileIO::Check_Input_Path_Filename()
     cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << "\n";
     cout << "The first one is " << *vtk_filenames.begin() << "\n";
     Print_Stars("Check Output");
-    if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag) {
+    if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag || CorrL_flag) {
         cout << "Output includes: " << "\n";
         if (ParNum_flag) {
             cout << "particle numbers" << "\n";
@@ -295,6 +326,9 @@ int FileIO::Check_Input_Path_Filename()
         }
         if (VertRho_flag) {
             cout << "Vertical Rho_g and Rho_p" << "\n";
+        }
+        if (CorrL_flag) {
+            cout << "Correlation Length" << "\n";
         }
     } else {
         cout << "Need output choices." << "\n";
@@ -401,6 +435,7 @@ int FileIO::Output_Data()
         file_MeanSigma.close();
     }
     
+    // VpecG part
     if (VpecG_flag) {
         ofstream file_VpecG;
         file_VpecG.open(iof.output_vpecg_path_name.c_str(), ofstream::out);
@@ -425,6 +460,7 @@ int FileIO::Output_Data()
         file_VpecG.close();
     }
     
+    // Vertical rho part
     if (VertRho_flag) {
         ofstream file_VertRho;
         file_VertRho.open(iof.output_vertrho_path_name.c_str(), ofstream::out);
@@ -447,6 +483,31 @@ int FileIO::Output_Data()
             file_VertRho << "\n";
         }
         file_VertRho.close();
+    }
+    
+    if (CorrL_flag) {
+        ofstream file_CorrL;
+        file_CorrL.open(iof.output_corrl_path_name.c_str(), ofstream::out);
+        if (!file_CorrL.is_open()) {
+            cout << "Failed to open " << iof.output_corrl_path_name << "\n";
+            return 1;
+        }
+        file_CorrL << "#The first row of data is orbit time. The first column is z (vertical direction) coordinate. Others is data.";
+        file_CorrL << "\n";
+        file_CorrL << setw(15) << setfill(' ') << 0.0;
+        for (int i = 0; i != n_file; i++) {
+            file_CorrL << setw(15) << scientific << paras.Otime[i];
+        }
+        file_CorrL << "\n";
+        for (int i = 0; i != paras.dimensions[2]; i++) {
+            file_CorrL << setw(15) << scientific << paras.ccz[i%paras.dimensions[2]];
+            for (int j = 0; j != n_file; j++) {
+                file_CorrL << setw(15) << scientific << paras.CorrL[j][i];
+            }
+            file_CorrL << "\n";
+        }
+
+        file_CorrL.close();
     }
 
     return 0;

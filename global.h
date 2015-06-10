@@ -32,7 +32,7 @@ using namespace::std;
 /*****Pre-defined Compiler Macros*****/
 /*************************************/
 
-#define ENABLE_MPI
+//#define ENABLE_MPI
 
 //#define RESERVE_PUSH_BACK
 //#define FROM_ARRAY_TO_VECTOR
@@ -152,6 +152,8 @@ public:
     
     // output to result_VertRho.txt, first rho_g and then rho_p
     double **VertRho;                               /*!< Vertical Structure of rho_g and rho_p */
+    
+    double **CorrL;                                 /*!< Correlation Length of V_x */
     
     /******relative to calculation********/
     float ****V_gas_0;                              /*!< initial v_gas */

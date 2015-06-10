@@ -390,9 +390,6 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     //long filepos1, filepos2;
     while (!file.eof()) {
         getline(file, tempstring, ' ');
-		if (tempstring[0] == '\n') {
-			tempstring = tempstring.substr(1);
-		}
         if (tempstring.compare("SCALARS") == 0) {
             n_cd_scalar++;// cout << "n_cd_scalar=" << n_cd_scalar << "\n";
             // if vector has elements, no need to push_back a new one
@@ -649,6 +646,38 @@ int VtkFile::VertRho(double *VertRho)
     return 0;
 }
 
+/********** Calculate correlation length **********/
+/*! \fn int CorrLen(double *CoorL)
+ *  \brief calculate the correlation length */
+int VtkFile::CorrLen(double *CorrL)
+{
+    int l = 0, lc = 0;
+    double *corr = new double[dimensions[0]];
+    for (int iz = 0; iz != dimensions[2]; iz++) {
+        //cout << myMPI->myrank << " is here.\n";
+        CorrL[iz] = 0;
+        //cout << myMPI->myrank << " iz = " << iz << "\n";
+        lc = dimensions[0]-1;
+        for (l = 0; l != dimensions[0]; l ++) {
+            corr[l] = 0;
+            for (int iy = 0; iy != dimensions[1]; iy++) {
+                for (int ix = 0; ix != dimensions[0]-l; ix++) {
+                    corr[l] += cd_vector[0].data[iz][iy][ix][0] * cd_vector[0].data[iz][iy][ix+l][0];
+                }
+            }
+        }
+        for (l = dimensions[0]-1; l >= 0; l--) {
+            corr[l] /= corr[0];
+            if (fabs(corr[l]-0.5) < fabs(corr[lc]-0.5)) {
+                lc = l;
+            }
+        }
+        CorrL[iz] = lc * spacing[0];
+    }
+    //cout << myMPI->myrank << " is here.\n";
+    delete [] corr;
+    return 0;
+}
 
 
 
