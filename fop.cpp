@@ -250,11 +250,13 @@ int FileIO::Initialize(int argc, const char * argv[])
  *  \brief generate filenames for processing */
 int FileIO::Generate_Filename()
 {
-    string temp_name;
+    string temp_name, lis_temp_name;
     if (*iof.data_path.rbegin() != '/') {
         iof.data_path.push_back('/');
     }
     temp_name.assign(iof.data_path+iof.data_basename);
+    lis_temp_name.assign(iof.data_path+iof.data_basename);
+    
     if (iof.data_level.compare("0") != 0) {
         temp_name = temp_name+"-lev"+iof.data_level;
     }
@@ -265,7 +267,7 @@ int FileIO::Generate_Filename()
         stringstream ss;
         ss << setw(4) << setfill('0') << i;
         string file_no = ss.str();
-        lis_filenames.push_back(temp_name+'.'+file_no+'.'+iof.post_name+".lis");
+        lis_filenames.push_back(lis_temp_name+'.'+file_no+'.'+iof.post_name+".lis");
         vtk_filenames.push_back(temp_name+'.'+file_no+".vtk");
     }
     /*
