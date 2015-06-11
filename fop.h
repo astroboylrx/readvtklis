@@ -26,6 +26,9 @@ public:
     string output_vpecg_path_name;                  /*!< the name for output of VpecG */
     string output_vertrho_path_name;                /*!< the name for output of VertRho */
     string output_corrl_path_name;                  /*!< the name for output of Correlation Length */
+#ifdef CorrValue
+    string output_corrv_path_name;                  /*!< the name for output of Correlation Value */
+#endif
     string data_level;                              /*!< the level of data */
     string data_domain;                             /*!< the domain of data */
 
@@ -43,7 +46,7 @@ public:
     vector<string> lis_filenames;                   /*!< the vecotr for lis filenames */
     vector<string> vtk_filenames;                   /*!< the vector for vtk filenames */
     
-    int start_no, end_no;                           /*!< the start_number/end_number for file */
+    int start_no, end_no, interval=1;               /*!< the start_number/end_number/interval for file */
     int n_file;                                     /*!< the number of file */
     int n_cpu;                                      /*!< the number of processors */
     

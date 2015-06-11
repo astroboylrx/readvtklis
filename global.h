@@ -38,6 +38,8 @@ using namespace::std;
 //#define FROM_ARRAY_TO_VECTOR
 #define RESIZE_LIST
 
+#define CorrValue // print correlation value of Mx
+
 /*************************************/
 /********Forward Declaration**********/
 /*************************************/
@@ -153,7 +155,10 @@ public:
     // output to result_VertRho.txt, first rho_g and then rho_p
     double **VertRho;                               /*!< Vertical Structure of rho_g and rho_p */
     
-    double **CorrL;                                 /*!< Correlation Length of V_x */
+    double **CorrL;                                 /*!< Correlation Length  */
+#ifdef CorrValue
+    double **CorrV;                                 /*!< Correlation Value */
+#endif
     
     /******relative to calculation********/
     float ****V_gas_0;                              /*!< initial v_gas */

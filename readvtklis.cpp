@@ -96,7 +96,7 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
             << "Processor " << myMPI->myrank << ": "
 #endif
-            << "Reading " << fio->iof.data_basename+"." << setw(4) << setfill('0') << i+fio->start_no << "\n"; //" " << fio->ParNum_flag << fio->RhoParMax_flag << fio->HeiPar_flag << "\n";
+            << "Reading " << fio->iof.data_basename+"." << setw(4) << setfill('0') << i*fio->interval+fio->start_no << "\n"; //" " << fio->ParNum_flag << fio->RhoParMax_flag << fio->HeiPar_flag << "\n";
             
             if (vf->Read_Header_Record_Pos(fio->vtk_filenames[i])) {
                 cout << "Having problem reading header..." << "\n";
@@ -150,7 +150,11 @@ int main(int argc, const char * argv[]) {
                 vf->VertRho(myMPI->paras.VertRho[i]);
             }
             if (fio->CorrL_flag) {
-                vf->CorrLen(myMPI->paras.CorrL[i]);
+                vf->CorrLen(myMPI->paras.CorrL[i]
+#ifdef CorrValue
+                            , myMPI->paras.CorrV[i]
+#endif
+                            );
             }
             
 #else
@@ -177,7 +181,11 @@ int main(int argc, const char * argv[]) {
                 vf->VertRho(fio->paras.VertRho[i]);
             }
             if (fio->CorrL_flag) {
-                vf->CorrLen(fio->paras.CorrL[i]);
+                vf->CorrLen(fio->paras.CorrL[i]
+#ifdef CorrValue
+                            , fio->paras.CorrV[i]
+#endif
+                            );
             }
             
             // for temp output test
@@ -241,6 +249,10 @@ int main(int argc, const char * argv[]) {
         if (fio->CorrL_flag) {
             for (int i = 0; i != fio->n_file; i++) {
                 MPI::COMM_WORLD.Allreduce(myMPI->paras.CorrL[i], fio->paras.CorrL[i], 3*vf->dimensions[2], MPI::DOUBLE, MPI::SUM);
+            
+#ifdef CorrValue
+                MPI::COMM_WORLD.Allreduce(myMPI->paras.CorrV[i], fio->paras.CorrV[i], 3*vf->dimensions[2]*(vf->dimensions[0]/2+1), MPI::DOUBLE, MPI::SUM);
+#endif
             }
         }
         cout << "Processor " << myMPI->myrank << ": I'm done." << "\n";

@@ -111,6 +111,9 @@ int Paras2probe::AllocateMemory(int n_file)
     VpecG = new double*[n_file];
     VertRho = new double*[n_file];
     CorrL = new double*[n_file];
+#ifdef CorrValue
+    CorrV = new double*[n_file];
+#endif
     return 0;
 }
 
@@ -136,6 +139,13 @@ int Paras2probe::AllocateSubMemory(int n_file, int *dimensions)
         for (int j = 0; j != 3*dimensions[2]; j++) {
             CorrL[i][j] = 0;
         }
+#ifdef CorrValue
+        int Nz = dimensions[2], Nlines = Nz * (dimensions[0]/2+1);
+        CorrV[i] = new double[3*Nlines];
+        for (int j = 0; j != 3*Nlines; j++) {
+            CorrV[i][j] = 0;
+        }
+#endif
     }
     return 0;
 }
@@ -155,6 +165,9 @@ Paras2probe::~Paras2probe()
     delete [] VpecG;
     delete [] VertRho;
     delete [] CorrL;
+#ifdef CorrValue
+    delete [] CorrV;
+#endif
 }
 
 

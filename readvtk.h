@@ -152,7 +152,11 @@ public:
     
     /*! \fn int CorrLen(double *CoorL)
      *  \brief calculate the correlation length */
-    int CorrLen(double *CorrL);
+    int CorrLen(double *CorrL
+#ifdef CorrValue
+                , double *CorrV
+#endif
+                );
     
 };
 

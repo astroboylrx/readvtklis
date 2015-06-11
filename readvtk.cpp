@@ -647,55 +647,105 @@ int VtkFile::VertRho(double *VertRho)
 }
 
 /********** Calculate correlation length **********/
-/*! \fn int CorrLen(double *CoorL)
+/*! \fn int CorrLen(double *CoorL, double *CorrV)
  *  \brief calculate the correlation length */
-int VtkFile::CorrLen(double *CorrL)
+int VtkFile::CorrLen(double *CorrL
+#ifdef CorrValue
+                    , double *CorrV
+#endif
+                     )
 {
-    int l = 0, lcMx, lcVx, lcRho;
-    double MxMx, RhoRho;
-    double *corrMx = new double[dimensions[0]];
-    double *corrVx = new double[dimensions[0]];
-    double *corrRho = new double[dimensions[0]];
-    for (int iz = 0; iz != dimensions[2]; iz++) {
+    int Nx = dimensions[0], Ny = dimensions[1], Nz = dimensions[2];
+    int l = 0, Nl = Nx/2+1, Nlines = Nz * Nl, lcMx, lcVx, lcRho;
+    double MxMx, RhoRho, MxBar, RhoBar, VxBar;
+    double *corrMx = new double[Nl];
+    double *corrVx = new double[Nl];
+    double *corrRho = new double[Nl];
+    double NxNy = Nx*Ny;
+    for (int iz = 0; iz != Nz; iz++) {
         // Initilization
-        CorrL[iz] = 0;
-        CorrL[iz+dimensions[2]] = 0;
-        CorrL[iz+2*dimensions[2]] = 0;
-        lcMx = dimensions[0]-1;
-        lcVx = lcMx;
-        lcRho = lcMx;
+        CorrL[iz] = 0;      lcMx = Nl-1;    MxBar = 0;
+        CorrL[iz+Nz] = 0;   lcVx = Nl-1;    VxBar = 0;
+        CorrL[iz+2*Nz] = 0; lcRho = Nl-1;   RhoBar = 0;
+        // Calculate Mean Value
+        for (int iy = 0; iy != Ny; iy++) {
+            for (int ix = 0; ix != Nx; ix++) {
+                MxBar += cd_vector[0].data[iz][iy][ix][0];
+                VxBar += cd_vector[0].data[iz][iy][ix][0]/cd_scalar[0].data[iz][iy][ix];
+                RhoBar += cd_scalar[0].data[iz][iy][ix];
+            }
+        }
+        // RL: the explicit method
+        //MxBar /= NxNy;
+        //VxBar /= NxNy;
+        //RhoBar /= NxNy;
         
-        for (l = 0; l != dimensions[0]; l ++) {
-            corrMx[l] = 0;
-            corrVx[l] = 0;
-            corrRho[l] = 0;
-            for (int iy = 0; iy != dimensions[1]; iy++) {
-                for (int ix = 0; ix != dimensions[0]-l; ix++) {
-                    MxMx = (cd_vector[0].data[iz][iy][ix][0] * cd_vector[0].data[iz][iy][ix+l][0]);
+        // Calculate Correlation Value
+        for (l = 0; l != Nl; l ++) {
+            corrMx[l] = 0; MxBar = 0;
+            corrVx[l] = 0; VxBar = 0;
+            corrRho[l] = 0; RhoBar = 0;
+            for (int iy = 0; iy != Ny; iy++) {
+                for (int ix = 0; ix != Nx; ix++) {
+                    // RL: the explicit method
+                    //MxMx = ((cd_vector[0].data[iz][iy][ix][0]-MxBar) * (cd_vector[0].data[iz][iy][(ix+l)%Nx][0]-MxBar));
+                    //RhoRho = ((cd_scalar[0].data[iz][iy][ix]-RhoBar) * (cd_scalar[0].data[iz][iy][(ix+l)%Nx]-RhoBar));
+                    //corrVx[l] += ((cd_vector[0].data[iz][iy][ix][0]/cd_scalar[0].data[iz][iy][ix] - VxBar) * (cd_vector[0].data[iz][iy][(ix+l)%Nx][0]/cd_scalar[0].data[iz][iy][(ix+l)%Nx] - VxBar));
+                    
+                    // RL: the more effective way to do it
+                    MxMx = (cd_vector[0].data[iz][iy][ix][0] * cd_vector[0].data[iz][iy][(ix+l)%Nx][0]);
                     corrMx[l] += MxMx;
-                    RhoRho = (cd_scalar[0].data[iz][iy][ix] * cd_scalar[0].data[iz][iy][ix+l]);
+                    RhoRho = (cd_scalar[0].data[iz][iy][ix] * cd_scalar[0].data[iz][iy][(ix+l)%Nx]);
                     corrRho[l] += RhoRho;
                     corrVx[l] += MxMx/RhoRho;
                 }
             }
         }
-        for (l = dimensions[0]-1; l >= 0; l--) {
+        // Substract Mean Square (RL: more effective way)
+        corrMx[l] -= (MxBar * MxBar / NxNy);
+        corrVx[l] -= (VxBar * VxBar / NxNy);
+        corrRho[l] -= (RhoBar * RhoBar / NxNy);
+        
+        for (l = Nl-1; l >= 0; l--) {
             corrMx[l] /= corrMx[0];
             corrVx[l] /= corrVx[0];
             corrRho[l] /= corrRho[0];
-            if (fabs(corrMx[l]-0.5) < fabs(corrMx[lcMx]-0.5)) {
+#ifdef CorrValue
+            CorrV[Nl*iz+l] = corrMx[l];
+            CorrV[Nlines+Nl*iz+l] = corrVx[l];
+            CorrV[2*Nlines+Nl*iz+l] = corrRho[l];            
+#endif
+        }
+        
+        for (l = 1; l < Nl; l++) {
+            // original criteria
+            if (corrMx[l] < 0.5 && corrMx[l-1] > 0.5) {
+                lcMx = (corrMx[l-1]-0.5)<(0.5-corrMx[l]) ? l-1:l;
+                break;
+            }
+            /* This criteria is trying to find the inflection point
+            if ((corrMx[l-1]-corrMx[l]) > (corrMx[l]-corrMx[l+1])) {
                 lcMx = l;
+                break;
             }
-            if (fabs(corrVx[l]-0.5) < fabs(corrVx[lcVx]-0.5)) {
-                lcVx = l;
-            }
-            if (fabs(corrRho[l]-0.5) < fabs(corrRho[lcRho]-0.5)) {
-                lcRho = l;
+             */
+        }
+        for (l = 1; l < Nl; l++) {
+            if (corrRho[l] < 0.5 && corrRho[l-1] > 0.5) {
+                lcRho = (corrRho[l-1]-0.5)<(0.5-corrRho[l]) ? l-1:l;
+                break;
             }
         }
+        for (l = 1; l < Nl; l++) {
+            if (corrVx[l] < 0.5 && corrVx[l-1] > 0.5) {
+                lcVx = (corrVx[l-1]-0.5)<(0.5-corrVx[l]) ? l-1:l;
+                break;
+            }
+        }
+        
         CorrL[iz] = lcMx * spacing[0];
-        CorrL[iz+dimensions[2]] = lcVx * spacing[0];
-        CorrL[iz+2*dimensions[2]] = lcRho * spacing[0];
+        CorrL[iz+Nz] = lcVx * spacing[0];
+        CorrL[iz+2*Nz] = lcRho * spacing[0];
     }
     
     delete [] corrMx;

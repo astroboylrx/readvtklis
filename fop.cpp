@@ -150,11 +150,22 @@ int FileIO::Initialize(int argc, const char * argv[])
                 case 'f': {
                     //sscanf(optarg,"%d:%d", &start_no, &end_no);
                     // obviously, the line above can replace the four line below
+                    string tempStr;
+                    tempStr.assign(optarg);
+                    size_t pos1 = tempStr.find_first_of(':');
+                    size_t pos2 = tempStr.find_last_of(':');
                     istringstream ifs;
-                    ifs.str(optarg);
-                    char tempchar;
-                    ifs >> start_no >> tempchar >> end_no;
-                    
+                    char tempchar1;
+                    if (pos1 == pos2) {
+                        ifs.str(optarg);
+                        ifs >> start_no >> tempchar1 >> end_no;
+                    } else {
+                        ifs.str(tempStr.substr(0, pos2));
+                        ifs >> start_no >> tempchar1 >> end_no;
+                        istringstream ifs2;
+                        ifs2.str(tempStr.substr(pos2+1));
+                        ifs2 >> interval;
+                    }
                     if (start_no < 0) {
                         cout << "The start number should be larger than 0. (Auto fix to 0)" << "\n";
                         start_no = 0;
@@ -163,8 +174,12 @@ int FileIO::Initialize(int argc, const char * argv[])
                         cout << "The end number should be larger than the start number. (Auto fix to start number + 1)." << "\n";
                         end_no += start_no;
                     }
-                    //cout << "start_no=" << start_no << ", end_no=" << end_no << "\n";
-                    n_file = end_no - start_no + 1;
+                    if (interval == 0) {
+                        cout << "The interval should be non-zero. (Auto fix to 1)\n";
+                        interval = 1;
+                    }
+                    //cout << "start_no=" << start_no << ", end_no=" << end_no << ", interval=" << interval << "\n";
+                    n_file = (end_no - start_no)/interval + 1;
                     break;
                 }
                 case 'o': {
@@ -245,7 +260,7 @@ int FileIO::Generate_Filename()
     if (iof.data_domain.compare("0") != 0) {
         temp_name = temp_name+"-dom"+iof.data_domain;
     }
-    for (int i = start_no; i <= end_no; i++) {
+    for (int i = start_no; i <= end_no; i+=interval) {
         stringstream ss;
         ss << setw(4) << setfill('0') << i;
         string file_no = ss.str();
@@ -280,6 +295,9 @@ int FileIO::Generate_Filename()
     }
     if (CorrL_flag) {
         iof.output_corrl_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_CorrL.txt";
+#ifdef CorrValue
+        iof.output_corrv_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_CorrV.txt";
+#endif
     }
     return 0;
 }
@@ -295,7 +313,7 @@ int FileIO::Check_Input_Path_Filename()
     cout << "data_level is " << iof.data_level << "\n";
     cout << "data_domain is " << iof.data_domain << "\n";
     cout << "post_name is " << iof.post_name << "\n";
-    cout << "start_no=" << start_no << ", end_no=" << end_no << "\n";
+    cout << "start_no=" << start_no << ", end_no=" << end_no << ", interval=" << interval << "\n";
     cout << "output_path_name is " << iof.output_path_name << "\n";
     cout << "n_cpu is " << n_cpu << "\n";
     Print_Stars("Check Filenames");
@@ -329,6 +347,9 @@ int FileIO::Check_Input_Path_Filename()
         }
         if (CorrL_flag) {
             cout << "Correlation Length" << "\n";
+#ifdef CorrValue
+            cout << "Correlation Value" << "\n";
+#endif
         }
     } else {
         cout << "Need output choices." << "\n";
@@ -508,6 +529,35 @@ int FileIO::Output_Data()
         }
 
         file_CorrL.close();
+        
+#ifdef CorrValue
+        ofstream file_CorrV;
+        file_CorrV.open(iof.output_corrv_path_name.c_str(), ofstream::out);
+        if (!file_CorrV.is_open()) {
+            cout << "Failed to open " << iof.output_corrv_path_name << "\n";
+            return 1;
+        }
+        file_CorrV << "#The first row of data is orbit time. The first column is z (vertical direction) coordinate. The second column is length of correlation calculations. The other is data, but divided into all different LC and different Z.";
+        file_CorrV << "\n";
+        file_CorrV << setw(15) << setfill(' ') << 0.0;
+        file_CorrV << setw(15) << setfill(' ') << 0.0;
+        for (int i = 0; i != n_file; i++) {
+            file_CorrV << setw(15) << scientific << paras.Otime[i];
+        }
+        file_CorrV << "\n";
+        int Nz = paras.dimensions[2], Nl = paras.dimensions[0]/2+1, Nlines = Nz * Nl;
+        for (int i = 0; i != 3*Nlines; i++) {
+            file_CorrV << setw(15) << scientific << paras.ccz[i/Nl];
+            file_CorrV << setw(15) << scientific << (i%Nl)*paras.spacing[2];
+            for (int j = 0; j != n_file; j++) {
+                file_CorrV << setw(15) << scientific << paras.CorrV[j][i];
+            }
+            file_CorrV << "\n";
+        }
+       
+        file_CorrV.close();
+#endif
+        
     }
 
     return 0;
