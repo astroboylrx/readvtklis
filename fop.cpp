@@ -45,6 +45,7 @@ FileIO::FileIO()
  *  \brief initialization */
 int FileIO::Initialize(int argc, const char * argv[])
 {
+    interval = 1;
     mratio = 0.02;
     int temp;
     // initialize flags

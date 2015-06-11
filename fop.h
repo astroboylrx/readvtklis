@@ -46,7 +46,7 @@ public:
     vector<string> lis_filenames;                   /*!< the vecotr for lis filenames */
     vector<string> vtk_filenames;                   /*!< the vector for vtk filenames */
     
-    int start_no, end_no, interval=1;               /*!< the start_number/end_number/interval for file */
+    int start_no, end_no, interval;               /*!< the start_number/end_number/interval for file */
     int n_file;                                     /*!< the number of file */
     int n_cpu;                                      /*!< the number of processors */
     
