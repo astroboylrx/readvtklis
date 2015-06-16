@@ -38,7 +38,7 @@ using namespace::std;
 //#define FROM_ARRAY_TO_VECTOR
 #define RESIZE_LIST
 
-#define CorrValue // print correlation value of Mx
+//#define CorrValue // print correlation value of Mx
 
 /*************************************/
 /********Forward Declaration**********/

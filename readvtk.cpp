@@ -723,12 +723,13 @@ int VtkFile::CorrLen(double *CorrL
                 lcMx = (corrMx[l-1]-0.5)<(0.5-corrMx[l]) ? l-1:l;
                 break;
             }
+            //*/
             /* This criteria is trying to find the inflection point
             if ((corrMx[l-1]-corrMx[l]) > (corrMx[l]-corrMx[l+1])) {
                 lcMx = l;
                 break;
             }
-             */
+            //*/
         }
         for (l = 1; l < Nl; l++) {
             if (corrRho[l] < 0.5 && corrRho[l-1] > 0.5) {
