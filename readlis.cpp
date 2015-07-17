@@ -117,6 +117,11 @@ int ParticleList::ReadLis(string filename)
 int ParticleList::ScaleHeight(double &Hp, double &Hp_in1sigma)
 {
     double one_sigma = 0.682689492137;
+    if (List.size() == 0) {
+        Hp = 0;
+        Hp_in1sigma = 0;
+        return 0;
+    }
     vector<float> par_z;
     par_z.resize(List.size());
     Hp = 0;
