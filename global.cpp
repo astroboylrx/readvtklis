@@ -31,6 +31,9 @@ int Paras2probe::AllocateMemory(int n_file)
         Otime[i] = 0;
         N_par[i] = 0;
         Max_Rhop[i] = 0;
+        RpAV[i] = 0;
+        RpSQ[i] = 0;
+        RpQU[i] = 0;
         Hp[i] = 0;
         Hp_in1sigma[i] = 0;
         dSigma[i] = 0;
