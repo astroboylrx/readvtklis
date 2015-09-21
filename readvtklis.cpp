@@ -48,7 +48,7 @@ int main(int argc, const char * argv[]) {
     cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << "\n";
 #endif
     // for reading V_gas_0 if VpecG_flag is set
-    if (fio->VpecG_flag || fio->MeanSigma_flag || fio->VertRho_flag || fio->CorrL_flag) {
+    if (fio->MeanSigma_flag) {
         if (vf->Read_Header_Record_Pos(fio->vtk_filenames[0])) {
             cout << "Having problem reading header..." << "\n";
             exit(1);

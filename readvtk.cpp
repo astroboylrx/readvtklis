@@ -387,8 +387,8 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     if (cell_center == NULL) {
         Construct_Coor(dimensions);
     }
-    kps = dimensions[2]/2 - int(0.025/spacing[2]);
-    kpe = dimensions[2]/2 + int(0.025/spacing[2]);
+    kps = dimensions[2]/2 - int(0.075/spacing[2]);
+    kpe = dimensions[2]/2 + int(0.075/spacing[2]);
     
     //long filepos1, filepos2;
     while (!file.eof()) {
