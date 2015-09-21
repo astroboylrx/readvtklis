@@ -98,6 +98,7 @@ public:
     // ORIGIN x y z
     // SPACING s_x s_y s_z
     int dimensions[3];                          /*!< the number of cells in each dimension */
+    int kps, kpe;                               /*!< the begin/end indices of the cells that correspond to the lower/upper initial Hp */
     double origin[3];                           /*!< the coordinate of origin point */
     double spacing[3];                          /*!< the spacing of coordinate */
     double cell_volume;                         /*!< the cell volume */
@@ -112,6 +113,9 @@ public:
     double m_par;                               /*!< total particle mass */
     double Max_Rhog;                            /*!< maximum density of gas */
     double Max_Rhop;                            /*!< maximum density of particle */
+    double RpAV;                                /*!< <rho_p> */
+    double RpSQ;                                /*!< <rho_p^2>^0.5 */
+    double RpQU;                                /*!< <rho_p^4>^0.25 */
     double dSigma;                              /*!< change of gas surface density due to outflow */
     
     VtkFile();                                  /*!< constructor */

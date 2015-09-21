@@ -38,6 +38,9 @@ int ParticleList::ReadLis(string filename)
         if (fio->ParNum_flag == 1 && fio->HeiPar_flag == 0) {
             return 0;
         }
+        if (n == 0) {
+            return 0;
+        }
 #ifdef RESERVE_PUSH_BACK
         /*** reserve and push_back ***/
         List.reserve(n);
@@ -101,9 +104,6 @@ int ParticleList::ReadLis(string filename)
         /*** resize list ***/
 #endif
         
-        
-        
-        
     } else {
         cout << "Failed to open " << filename << "\n";
     }
@@ -117,7 +117,7 @@ int ParticleList::ReadLis(string filename)
 int ParticleList::ScaleHeight(double &Hp, double &Hp_in1sigma)
 {
     double one_sigma = 0.682689492137;
-    if (List.size() == 0) {
+    if (n == 0) {
         Hp = 0;
         Hp_in1sigma = 0;
         return 0;

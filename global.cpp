@@ -8,80 +8,6 @@
 
 #include "global.h"
 
-//template<typename T>
-/*! \fn T ***allocate3d_scalar_array(int *dimensions)
- *  \brief allocate memory to 3d scalar array
-T ***allocate3d_scalar_array(int *dimensions)
-{
-    // store in x, then y, then stack them as z direction
-    T ***data = new T**[dimensions[2]];
-    for (int i = 0; i != dimensions[2]; i++) {
-        data[i] = new T*[dimensions[1]];
-        for (int j = 0; j != dimensions[1]; j++) {
-            data[i][j] = new T[dimensions[0]];
-            for (int k = 0; k != dimensions[0]; k++) {
-                data[i][j][k] = 0;
-            }
-        }
-    }
-    return data;
-}*/
-
-//template<typename T>
-/*! \fn int deallocate3d_scalar_array(T ***data, int *dimensions)
- *  \brief deallocate memory of 3d scalar array
-int deallocate3d_scalar_array(T ***data, int *dimensions)
-{
-    for (int i = 0; i != dimensions[2]; i++) {
-        for (int j = 0; j != dimensions[1]; j++) {
-            delete [] data[i][j];
-        }
-        delete [] data[i];
-    }
-    delete [] data;
-    return 0;
-}*/
-    
-//template<typename T>
-/*! \fn T ****allocate3d_vector_array(int *dimensions)
- *  \brief allocate memory to 3d vector array
-T ****allocate3d_vector_array(int *dimensions)
-{
-    // store in x, then y, then stack them as z direction
-    T ****data = new T***[dimensions[2]];
-    for (int i = 0; i != dimensions[2]; i++) {
-        data[i] = new T**[dimensions[1]];
-        for (int j = 0; j != dimensions[1]; j++) {
-            data[i][j] = new T*[dimensions[0]];
-            for (int k = 0; k != dimensions[0]; k++) {
-                data[i][j][k] = new T[3];
-                data[i][j][k][0] = 0;
-                data[i][j][k][1] = 0;
-                data[i][j][k][2] = 0;
-            }
-        }
-    }
-    return data;
-}*/
-
-//template<typename T>
-/*! \fn int deallocate3d_vcetor_array(T ****data, int *dimensions)
- *  \brief deallocate memory of 3d vector array
-int deallocate3d_vector_array(T ****data, int *dimensions)
-{
-    for (int i = 0; i != dimensions[2]; i++) {
-        for (int j = 0; j != dimensions[1]; j++) {
-            for (int k = 0; k != dimensions[0]; k++) {
-                delete [] data[i][j][k];
-            }
-            delete [] data[i][j];
-        }
-        delete [] data[i];
-    }
-    delete [] data;
-    return 0;
-}*/
-
 /*************************************/
 /************Paras2probe**************/
 /*************************************/
@@ -94,6 +20,9 @@ int Paras2probe::AllocateMemory(int n_file)
     Otime = new double[n_file];
     N_par = new long[n_file];
     Max_Rhop = new double[n_file];
+    RpAV = new double[n_file];
+    RpSQ = new double[n_file];
+    RpQU = new double[n_file];
     Hp = new double[n_file];
     Hp_in1sigma = new double[n_file];
     dSigma = new double[n_file];
@@ -158,6 +87,9 @@ Paras2probe::~Paras2probe()
     delete [] Otime;
     delete [] N_par;
     delete [] Max_Rhop;
+    delete [] RpAV;
+    delete [] RpSQ;
+    delete [] RpQU;
     delete [] Hp;
     delete [] Hp_in1sigma;
     delete [] dSigma;

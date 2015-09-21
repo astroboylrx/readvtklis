@@ -405,6 +405,9 @@ int FileIO::Output_Data()
         }
         if (RhoParMax_flag) {
             file << setw(15) << setfill(' ') << "Max_Rhop";
+            file << setw(15) << setfill(' ') << "RpAV";
+            file << setw(15) << setfill(' ') << "RpSQ";
+            file << setw(15) << setfill(' ') << "RpQU";
         }
         if (HeiPar_flag) {
             file << setw(15) << setfill(' ') << "H_p";
@@ -421,6 +424,9 @@ int FileIO::Output_Data()
             }
             if (RhoParMax_flag) {
                 file << setw(15) << scientific << paras.Max_Rhop[i];
+                file << setw(15) << scientific << paras.RpAV[i];
+                file << setw(15) << scientific << paras.RpSQ[i];
+                file << setw(15) << scientific << paras.RpQU[i];
             }
             if (HeiPar_flag) {
                 file << setw(15) << scientific << paras.Hp[i];

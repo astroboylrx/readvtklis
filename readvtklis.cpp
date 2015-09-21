@@ -54,6 +54,7 @@ int main(int argc, const char * argv[]) {
             exit(1);
         }
         vf->Read_Data(fio->vtk_filenames[0]);
+        /*
         if (fio->VertRho_flag) {
             fio->paras.V_gas_0 = allocate3d_vector_array<float>(vf->dimensions);
             for (int i = 0; i != vf->dimensions[2]; i++) {
@@ -65,7 +66,7 @@ int main(int argc, const char * argv[]) {
                     }
                 }
             }
-        }
+        }//*/
         if (fio->MeanSigma_flag) {
             vf->Sigma_gas_0_inbox = 0;
             for (int ix = 0; ix != vf->dimensions[0]; ix++) {
@@ -133,6 +134,9 @@ int main(int argc, const char * argv[]) {
             }
             if (fio->RhoParMax_flag) {
                 myMPI->paras.Max_Rhop[i] = vf->Max_Rhop;
+                myMPI->paras.RpAV[i] = vf->RpAV;
+                myMPI->paras.RpSQ[i] = vf->RpSQ;
+                myMPI->paras.RpQU[i] = vf->RpQU;
             }
             if (fio->HeiPar_flag) {
                 pl->ScaleHeight(myMPI->paras.Hp[i], myMPI->paras.Hp_in1sigma[i]);
@@ -164,6 +168,9 @@ int main(int argc, const char * argv[]) {
             }
             if (fio->RhoParMax_flag) {
                 fio->paras.Max_Rhop[i] = vf->Max_Rhop;
+                fio->paras.RpAV[i] = vf->RpAV;
+                fio->paras.RpSQ[i] = vf->RpSQ;
+                fio->paras.RpQU[i] = vf->RpQU;
             }
             if (fio->HeiPar_flag) {
                 pl->ScaleHeight(fio->paras.Hp[i], fio->paras.Hp_in1sigma[i]);
@@ -223,6 +230,9 @@ int main(int argc, const char * argv[]) {
         }
         if (fio->RhoParMax_flag) {
             MPI::COMM_WORLD.Allreduce(myMPI->paras.Max_Rhop, fio->paras.Max_Rhop, fio->n_file, MPI::DOUBLE, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.RpAV, fio->paras.RpAV, fio->n_file, MPI::DOUBLE, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.RpSQ, fio->paras.RpSQ, fio->n_file, MPI::DOUBLE, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.RpQU, fio->paras.RpQU, fio->n_file, MPI::DOUBLE, MPI::SUM);
         }
         if (fio->HeiPar_flag) {
             MPI::COMM_WORLD.Allreduce(myMPI->paras.Hp, fio->paras.Hp, fio->n_file, MPI::DOUBLE, MPI::SUM);

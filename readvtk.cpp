@@ -386,6 +386,8 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     int n_cd_scalar = 0, n_cd_vector = 0;
     if (cell_center == NULL) {
         Construct_Coor(dimensions);
+        kps = dimensions[2]/2 - int(0.025/spacing[2]);
+        kpe = dimensions[2]/2 + int(0.025/spacing[2]);
     }
     //long filepos1, filepos2;
     while (!file.eof()) {
@@ -531,52 +533,84 @@ int VtkFile::Calculate_Mass_Find_Max()
         return 1;
     }
     for (vector<CellData_Scalar>::iterator it = cd_scalar.begin(); it != cd_scalar.end(); it++) {
-        double m_temp = 0, maximum = 0, tempdata;
-        for (int k = 0; k != dimensions[2]; k++) {
-            for (int j = 0; j != dimensions[1]; j++) {
-                for (int i = 0; i != dimensions[0]; i++) {
-                    tempdata = it->data[k][j][i];
-                    m_temp += tempdata;
-                    if (tempdata > maximum) {
-                        maximum = tempdata;
+        if (it->dataname.compare("density") == 0) {
+            //m_gas = m_temp*cell_volume;
+            //Max_Rhog = maximum;
+        } else if (it->dataname.compare("particle_density") == 0) {
+            double m_temp = 0, maximum = 0, tempdata;
+            for (int k = 0; k != dimensions[2]; k++) {
+                for (int j = 0; j != dimensions[1]; j++) {
+                    for (int i = 0; i != dimensions[0]; i++) {
+                        tempdata = it->data[k][j][i];
+                        m_temp += tempdata;
+                        if (tempdata > maximum) {
+                            maximum = tempdata;
+                        }
                     }
                 }
             }
-        }
-        if (it->dataname.compare("density") == 0) {
-            m_gas = m_temp*cell_volume;
-            Max_Rhog = maximum;
-        } else if (it->dataname.compare("particle_density") == 0) {
             m_par = m_temp*cell_volume;
             Max_Rhop = maximum;
+            
+            RpAV = 0; RpSQ = 0; RpQU = 0;
+            double tempSQ = 0, tempV = 0;
+            for (int k = kps; k != kpe; k++) {
+                for (int j = 0; j != dimensions[1]; j++) {
+                    for (int i = 0; i != dimensions[0]; i++) {
+                        tempdata = it->data[k][j][i];
+                        RpAV += tempdata;
+                        tempSQ = tempdata * tempdata;
+                        RpSQ += tempSQ;
+                        RpQU += tempSQ * tempSQ;
+                    }
+                }
+            }
+            tempV = (kpe-kps)*dimensions[1]*dimensions[0];
+            RpAV /= tempV;
+            RpSQ = sqrt(RpSQ/tempV);
+            RpQU = sqrt(sqrt(RpQU/tempV));
         } else {
             cout << "Unkonwn data name: " << it->dataname << "\n";
         }
     }
-    
+    //int inflow_count = 0; double inflow = 0.0, outflow = 0.0;
     for (vector<CellData_Vector>::iterator it = cd_vector.begin(); it != cd_vector.end(); it++) {
         if (it->dataname.compare("momentum") == 0) {
             dSigma = 0; //int inflow_count = 0;
             for (int iy = 0; iy != dimensions[1]; iy++) {
                 for (int ix = 0; ix != dimensions[0]; ix++) {
+#ifdef OutflowRate
                     if (cd_vector[0].data[dimensions[2]-1][iy][ix][2]  > 0) {
                         dSigma += cd_vector[0].data[dimensions[2]-1][iy][ix][2];
+                        //outflow += abs(cd_vector[0].data[dimensions[2]-1][iy][ix][2]);
                     } else {
                         dSigma += 0.5 * cd_vector[0].data[dimensions[2]-1][iy][ix][2];
                         //cout << "inflow: ix=" << ix << ", iy=" << iy << "\n";
+                        //inflow += abs(cd_vector[0].data[dimensions[2]-1][iy][ix][2]);
                         //inflow_count++;
                     }
                     if (cd_vector[0].data[0][iy][ix][2] < 0) {
                         dSigma -= cd_vector[0].data[0][iy][ix][2];
+                        //outflow += abs(cd_vector[0].data[0][iy][ix][2]);
                     } else {
                         dSigma -= 0.5 * cd_vector[0].data[0][iy][ix][2];
                         //cout << "inflow: ix=" << ix << ", iy=" << iy << "\n";
+                        //inflow += abs(cd_vector[0].data[0][iy][ix][2]);
                         //inflow_count++;
                     }
+#endif // OutflowRate
+#ifdef PeriodicFlux
+                    dSigma += cd_vector[0].data[dimensions[2]-1][iy][ix][2];
+#endif
                 }
             }
-            //cout << "in/out=" << float(inflow_count)/(2*dimensions[0]*dimensions[1]) << "\n";
+#ifdef OutflowRate
+            //cout << "in/out=" << float(inflow_count)/(2*dimensions[0]*dimensions[1]) << " " << inflow/outflow << "\n";
+#endif
             dSigma /= (dimensions[0]*dimensions[1]);
+#ifdef PeriodicFlux
+            dSigma = abs(dSigma);
+#endif
         }
     }
     return 0;
