@@ -389,6 +389,9 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     }
     kps = dimensions[2]/2 - int(0.075/spacing[2]);
     kpe = dimensions[2]/2 + int(0.075/spacing[2]);
+    for (int i = 0; i != 3; i++) {
+        L[i] = dimensions[i] * spacing[i];
+    }
     
     //long filepos1, filepos2;
     while (!file.eof()) {
@@ -533,6 +536,8 @@ int VtkFile::Calculate_Mass_Find_Max()
         cout << "The size of Scalar vector is wrong." << "\n";
         return 1;
     }
+    
+    /* RL: move these calculations to octree.cpp
     for (vector<CellData_Scalar>::iterator it = cd_scalar.begin(); it != cd_scalar.end(); it++) {
         if (it->dataname.compare("density") == 0) {
             //m_gas = m_temp*cell_volume;
@@ -573,7 +578,8 @@ int VtkFile::Calculate_Mass_Find_Max()
         } else {
             cout << "Unkonwn data name: " << it->dataname << "\n";
         }
-    }
+    } //*/
+    
     //int inflow_count = 0; double inflow = 0.0, outflow = 0.0;
     for (vector<CellData_Vector>::iterator it = cd_vector.begin(); it != cd_vector.end(); it++) {
         if (it->dataname.compare("momentum") == 0) {

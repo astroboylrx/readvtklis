@@ -101,6 +101,7 @@ public:
     int kps, kpe;                               /*!< the begin/end indices of the cells that correspond to the lower/upper initial Hp */
     double origin[3];                           /*!< the coordinate of origin point */
     double spacing[3];                          /*!< the spacing of coordinate */
+    double L[3];                                /*!< the length of box */
     double cell_volume;                         /*!< the cell volume */
     double ****cell_center;                     /*!< the coordinate cell center */
     long n_CellData;                            /*!< number of CELL_DATA, should be equal to the product of dimensions */

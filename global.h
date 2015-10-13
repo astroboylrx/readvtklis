@@ -38,8 +38,8 @@ using namespace::std;
 //#define FROM_ARRAY_TO_VECTOR
 #define RESIZE_LIST
 
-//#define OutflowRate
-#define PeriodicFlux
+#define OutflowRate
+//#define PeriodicFlux
 
 //#define CorrValue // print correlation value of Mx
 
@@ -148,6 +148,7 @@ public:
     double *RpAV;                                   /*!< <rho_p> */
     double *RpSQ;                                   /*!< <rho_p^2>^0.5 */
     double *RpQU;                                   /*!< <rho_p^4>^0.25 */
+    double *RpEtar;                                 /*!< weighted rho_p */
     double *Hp;                                     /*!< par scale height */
     double *Hp_in1sigma;                            /*!< par scale height derived from Gaussian 1sigma range */
     double *dSigma;                                 /*!< the change of gas surface density due to outflow */
@@ -229,6 +230,5 @@ public:
 
 extern MPI_info *myMPI; // declaration is in main function
 #endif
-
 
 #endif /* defined(__readvtklis__global__) */

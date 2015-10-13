@@ -23,6 +23,7 @@ int Paras2probe::AllocateMemory(int n_file)
     RpAV = new double[n_file];
     RpSQ = new double[n_file];
     RpQU = new double[n_file];
+    RpEtar = new double[n_file];
     Hp = new double[n_file];
     Hp_in1sigma = new double[n_file];
     dSigma = new double[n_file];
@@ -34,6 +35,7 @@ int Paras2probe::AllocateMemory(int n_file)
         RpAV[i] = 0;
         RpSQ[i] = 0;
         RpQU[i] = 0;
+        RpEtar[i] = 0;
         Hp[i] = 0;
         Hp_in1sigma[i] = 0;
         dSigma[i] = 0;
@@ -93,6 +95,7 @@ Paras2probe::~Paras2probe()
     delete [] RpAV;
     delete [] RpSQ;
     delete [] RpQU;
+    delete [] RpEtar;
     delete [] Hp;
     delete [] Hp_in1sigma;
     delete [] dSigma;
