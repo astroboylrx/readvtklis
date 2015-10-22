@@ -19,16 +19,19 @@ OctreeNode::OctreeNode()
     rhop = 0;
     np = 0;
     Father = NULL;
-    Daughter = (OctreeNode **)calloc(8, sizeof(OctreeNode*));
-    for (int i = 0; i != 8; i++) {
-        Daughter[i] = NULL;
+    Daughter.resize(8);
+    for (vector<OctreeNode *>::iterator it = Daughter.begin(); it != Daughter.end(); it++) {
+        (*it) = NULL;
     }
 }
 
 /********** Destructor **********/
 OctreeNode::~OctreeNode()
 {
-    delete [] Daughter;
+    if (Daughter.size() > 0) {
+        vector<OctreeNode *> temp;
+        Daughter.swap(temp);
+    }
 }
 
 
@@ -61,16 +64,15 @@ Octree::~Octree()
 }
 
 /********** CleanMem **********/
-int Octree::CleanMem(OctreeNode *p)
+void Octree::CleanMem(OctreeNode *p)
 {
-    for (int i = 0; i != 8; i++) {
-        if (p->Daughter[i] != NULL) {
-            CleanMem(p->Daughter[i]);
-            delete p->Daughter[i];
-            p->Daughter[i] = NULL;
+    for (vector<OctreeNode *>::iterator it = p->Daughter.begin(); it != p->Daughter.end(); it++) {
+        if ((*it) != NULL) {
+            CleanMem((*it));
+            delete (*it);
+            (*it) = NULL;
         }
     }
-    return 0;
 }
 
 /********** BuildTree **********/
@@ -79,6 +81,8 @@ int Octree::CleanMem(OctreeNode *p)
 int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
 {
     CleanMem(root);
+    //root->FreeNode();
+    delete root; root = NULL;
     Initialize();
     vf = VF;
     pl = PL;
@@ -90,6 +94,8 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
         }
     }
     level = int(log10(root->Nx)/log10(2.0)); // count root level
+    maxrhop = (double *)calloc(level+1, sizeof(double));
+    
     for (int i = 0; i != 3; i++) {
         root->center[i] = 0.0; // this code only considers special cases
     }
@@ -98,17 +104,20 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
     
     // Add cells to activate nodes
     OctreeNode *p;
-    double tempSQ, tempV;
+    double temprhop, tempSQ, tempV;
     for (int iz = 0; iz != vf->dimensions[2]; iz++) {
         for (int iy = 0; iy != vf->dimensions[1]; iy++) {
             for (int ix = 0; ix != vf->dimensions[0]; ix++) {
-                p = AddCell(vf->cell_center[iz][iy][ix], vf->cd_scalar[1].data[iz][iy][ix]);
-                if (Max_Rhop < p->rhop) {
-                    Max_Rhop = p->rhop;
+                temprhop = vf->cd_scalar[1].data[iz][iy][ix];
+                if (temprhop != 0) {
+                    p = AddCell(vf->cell_center[iz][iy][ix], vf->cd_scalar[1].data[iz][iy][ix]);
+                    if (Max_Rhop < p->rhop) {
+                        Max_Rhop = p->rhop;
+                    }
+                    tempSQ = p->rhop * p->rhop;
+                    RpSQ += tempSQ;
+                    RpQU += tempSQ * tempSQ;
                 }
-                tempSQ = p->rhop * p->rhop;
-                RpSQ += tempSQ;
-                RpQU += tempSQ * tempSQ;
             }
         }
     }
@@ -117,14 +126,33 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
     RpSQ = sqrt(RpSQ/tempV);
     RpQU = sqrt(sqrt(RpQU/tempV));
     
-    // compute particle numbers for each node
+    /* compute particle numbers for each node
     for (vector<Particle>::iterator it = pl->List.begin(); it != pl->List.end(); ++it) {
         AddParticle(it->x);
     } //*/
     
-    GetRpEtar();
+    //GetRpEtar();
+    p = root;
+    maxrhopPerlevel(p);
+    for (int i = 0; i != level; i++) {
+        maxrhop[i] /= pow(root->Nx/pow(2, i), 3);
+        cout << "Level = " << i << ": rhop = " << maxrhop[i] << endl;
+    }
     
+    delete [] maxrhop;
     return 0;
+}
+
+void Octree::maxrhopPerlevel(OctreeNode *p)
+{
+    if (p->rhop > maxrhop[p->level]) {
+        maxrhop[p->level] = p->rhop;
+    }
+    for (int i = 0; i != 8; i++){
+        if (p->Daughter[i] != NULL) {
+            maxrhopPerlevel(p->Daughter[i]);
+        }
+    }
 }
 
 /********** AddCell **********/
@@ -132,11 +160,10 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
  *  \brief using cell center to find the tree node, create nodes if needed */
 OctreeNode *Octree::AddCell(double cc[3], double rhop)
 {
-    OctreeNode *p = root;
+    OctreeNode *p = root, *q;
     for (int l = 0; l != level; l++) {
         int di = GetOctant<double>(p->center, cc); // daughter index
         if (p->Daughter[di] == NULL) {
-            OctreeNode *q = new OctreeNode;
             q = new OctreeNode;
             q->level = p->level + 1;
             q->Nx = p->Nx / 2;
@@ -264,7 +291,7 @@ int Octree::GetRpEtar()
         RpEtar += rp;
         count++;
         if (count % 1000 == 0) {
-            cout << "count=" << count << "\n";
+            cout << "count=" << count << endl;
         }
     } //*/
     

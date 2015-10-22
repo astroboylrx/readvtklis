@@ -23,7 +23,7 @@ private:
 public:
     int level;                                      /*!< the level of this node */
     OctreeNode *Father;                             /*!< father node pointer of this node */
-    OctreeNode **Daughter;                          /*!< eight daughters in the increasing order of x, y and z */
+    vector<OctreeNode *> Daughter;                  /*!< eight daughters in the increasing order of x, y and z */
     double rhop;                                    /*!< the sum of particle density for all the cells in this node */
     int Nx;                                         /*!< the number of cells,  forced to be the same in each directions */
     double Lx;                                      /*!< length of this node */
@@ -37,7 +37,6 @@ public:
     /*! \fn ~OctreeNode()
      *  \brief Destructor */
     ~OctreeNode();
-    
     
 };
 
@@ -64,6 +63,8 @@ public:
     double MaxD[3];                                 /*!< max allowed distance that we do not consider periodic boundary */
     double RpEtar;                                  /*!< weighted particle density computed by summing all the related cells around each particle, using eta*r as the radius; define "related" by measuing the distance between cell center and particle */
     
+    double *maxrhop;
+    
     /*! \fn Octree();
      *  \brief Constructor of tree sturcture */
     Octree();
@@ -76,9 +77,9 @@ public:
      *  \brief Destructor */
     ~Octree();
     
-    /*! \fn CleanMem();
+    /*! \fn void CleanMem(OctreeNode *p);
      *  \brief clean all the memory */
-    int CleanMem(OctreeNode *p);
+    void CleanMem(OctreeNode *p);
     
     /*! \fn int BuildTree(VtkFile *VF, ParticleList *PL)
      *  \brief Build the whole tree */
@@ -112,7 +113,7 @@ public:
     double Distance(OctreeNode *p, T x[3]);
     
     void EstimateRpEtar(OctreeNode *p);
-    
+    void maxrhopPerlevel(OctreeNode *p);
     
 };
 

@@ -105,7 +105,7 @@ int ParticleList::ReadLis(string filename)
 #endif
         
     } else {
-        cout << "Failed to open " << filename << "\n";
+        cout << "Failed to open " << filename << endl;
     }
     file.close();
     return 0;
@@ -161,11 +161,11 @@ int ParticleList::InitializeList()
  *  \brief print basic info */
 int ParticleList::PrintInfo()
 {
-    cout << "N_par = " << n << "\n";
-    cout << "N_par_type = " << ntype << "\n";
-    cout << "Mass of particles:" << "\n";
+    cout << "N_par = " << n << endl;
+    cout << "N_par_type = " << ntype << endl;
+    cout << "Mass of particles:" << endl;
     for (int i = 0; i != ntype; i++) {
-        cout << typeinfo[i] << "\n";
+        cout << typeinfo[i] << endl;
     }
     
     return 0;

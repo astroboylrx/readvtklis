@@ -14,11 +14,10 @@
 /*! \fn int Print_Stars(string info)
  *  \brief print stars with info */
 int FileIO::Print_Stars(string info)
-{   cout << "\n";
+{   cout << endl;
     cout << setw(10) << setfill('*') << "*";
     cout << " " << info << " ";
-    cout << setw(10) << setfill('*') << "*" << "\n";
-    //cout << "\n";
+    cout << setw(10) << setfill('*') << "*" << endl;
     return 0;
 }
 
@@ -27,8 +26,8 @@ int FileIO::Print_Stars(string info)
  *  \brief print usage */
 int FileIO::Print_Usage(const char *progname)
 {
-    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -l <level> -d <domain> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL]\n" << "\n";
-    cout << "Example: ./readvtklis -c 16 -i comb -b Cout -l 1 -d 0 -s all -f 0:100 -o result.txt --ParNum  --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL" << "\n";
+    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -l <level> -d <domain> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL]\n" << endl;
+    cout << "Example: ./readvtklis -c 16 -i comb -b Cout -l 1 -d 0 -s all -f 0:100 -o result.txt --ParNum  --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL" << endl;
     return 0;
 }
 
@@ -168,15 +167,15 @@ int FileIO::Initialize(int argc, const char * argv[])
                         ifs2 >> interval;
                     }
                     if (start_no < 0) {
-                        cout << "The start number should be larger than 0. (Auto fix to 0)" << "\n";
+                        cout << "The start number should be larger than 0. (Auto fix to 0)" << endl;
                         start_no = 0;
                     }
                     if (end_no < start_no) {
-                        cout << "The end number should be larger than the start number. (Auto fix to start number + 1)." << "\n";
+                        cout << "The end number should be larger than the start number. (Auto fix to start number + 1)." << endl;
                         end_no += start_no;
                     }
                     if (interval == 0) {
-                        cout << "The interval should be non-zero. (Auto fix to 1)\n";
+                        cout << "The interval should be non-zero. (Auto fix to 1)" << endl;
                         interval = 1;
                     }
                     //cout << "start_no=" << start_no << ", end_no=" << end_no << ", interval=" << interval << "\n";
@@ -215,8 +214,8 @@ int FileIO::Initialize(int argc, const char * argv[])
 #ifdef ENABLE_MPI
                     if (myMPI->myrank == myMPI->master) {
 #endif
-                        cout << temp << "\n";
-                        cout << "Argument wrong." << "\n";
+                        cout << temp << endl;
+                        cout << "Argument wrong." << endl;
 #ifdef ENABLE_MPI
                     }
 #endif
@@ -233,7 +232,7 @@ int FileIO::Initialize(int argc, const char * argv[])
                 while (optind < argc) {
                     cout << argv[optind++];
                 }
-                cout << "\n";
+                cout << endl;
             }
 #ifdef ENABLE_MPI
         }
@@ -278,7 +277,7 @@ int FileIO::Generate_Filename()
      cout << "The first one is " << *vtk_filenames.begin() << "\n";
      */
     if (iof.output_path_name.length() == 0) {
-        cout << "Error: No output path/name. " << "\n";
+        cout << "Error: No output path/name. " << endl;
         return 1;
     }
     if (iof.data_level.compare("0") != 0) {

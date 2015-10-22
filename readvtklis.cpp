@@ -47,12 +47,12 @@ int main(int argc, const char * argv[]) {
     myMPI->paras.AllocateMemory(fio->n_file);
     myMPI->Barrier();
     // for debug
-    cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << "\n";
+    cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << endl;
 #endif
     // for reading initial gas properties if needed
     if (fio->MeanSigma_flag) {
         if (vf->Read_Header_Record_Pos(fio->vtk_filenames[0])) {
-            cout << "Having problem reading header..." << "\n";
+            cout << "Having problem reading header..." << endl;
             exit(1);
         }
         vf->Read_Data(fio->vtk_filenames[0]);
@@ -86,10 +86,10 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
             << "Processor " << myMPI->myrank << ": "
 #endif
-            << "Reading " << fio->iof.data_basename+"." << setw(4) << setfill('0') << i*fio->interval+fio->start_no << "\n"; //" " << fio->ParNum_flag << fio->RhoParMax_flag << fio->HeiPar_flag << "\n";
+            << "Reading " << fio->iof.data_basename+"." << setw(4) << setfill('0') << i*fio->interval+fio->start_no << endl; //" " << fio->ParNum_flag << fio->RhoParMax_flag << fio->HeiPar_flag << endl;
             
             if (vf->Read_Header_Record_Pos(fio->vtk_filenames[i])) {
-                cout << "Having problem reading header..." << "\n";
+                cout << "Having problem reading header..." << endl;
                 exit(1);
             }
 #ifdef ENABLE_MPI
@@ -105,7 +105,7 @@ int main(int argc, const char * argv[]) {
             if (fio->RhoParMax_flag || fio->MeanSigma_flag || fio->VpecG_flag || fio->VertRho_flag || fio->dSigma_flag || fio->CorrL_flag) {
                 vf->Read_Data(fio->vtk_filenames[i]);
                 vf->Calculate_Mass_Find_Max();
-                //cout << "m_gas = " << vf->m_gas << "; m_par = " << vf->m_par << "\n";
+                //cout << "m_gas = " << vf->m_gas << "; m_par = " << vf->m_par << endl;
                 
                 // I have checked the total gas mass and par mass, which is corresponding to mratio = 0.02
             }
@@ -196,7 +196,7 @@ int main(int argc, const char * argv[]) {
              string file_ccpos_name = fio->iof.output_path_name;
              file_ccpos.open((file_ccpos_name.append(to_string(i))).c_str(), ofstream::out);
              if (!file_ccpos.is_open()) {
-             cout << "Failed to open " << (char)i+fio->iof.output_path_name.c_str() << "\n";
+             cout << "Failed to open " << (char)i+fio->iof.output_path_name.c_str() << endl;
              return 1;
              }
              int temp_z = 32;
@@ -204,7 +204,7 @@ int main(int argc, const char * argv[]) {
              for (int k = 0; k != fio->paras.dimensions[0]; k++) {
              file_ccpos << setw(15) << scientific << vf->cd_vector[0].data[temp_z][j][k][2]/vf->cd_scalar[0].data[temp_z][j][k];
              }
-             file_ccpos << "\n";
+             file_ccpos << endl;
              }
              file_ccpos.close();
              //*/
@@ -261,7 +261,7 @@ int main(int argc, const char * argv[]) {
 #endif
             }
         }
-        cout << "Processor " << myMPI->myrank << ": I'm done." << "\n";
+        cout << "Processor " << myMPI->myrank << ": I'm done." << endl;
         myMPI->Barrier();
         
         if (myMPI->myrank == myMPI->master) {
@@ -269,7 +269,7 @@ int main(int argc, const char * argv[]) {
             fio->Output_Data();
             /*
              for (int i = 0; i != fio->n_file; i++) {
-             cout << "time = " << fio->Otime[i] << "; Max_Rhop = " << fio->Max_Rhop[i] << "; Hp = " << fio->Hp[i] << "\n";
+             cout << "time = " << fio->Otime[i] << "; Max_Rhop = " << fio->Max_Rhop[i] << "; Hp = " << fio->Hp[i] << endl;
              }
              */
             fio->Print_Stars("Master: Finishing Program");
@@ -291,7 +291,7 @@ int main(int argc, const char * argv[]) {
 #else
             << elapsed_secs
 #endif
-            << "\n";
+            << endl;
 #ifdef ENABLE_MPI
         }
         myMPI->Finalize();
