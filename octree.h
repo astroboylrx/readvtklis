@@ -61,7 +61,6 @@ public:
     double s3o2;                                    /*!< sqrt(3)/2 */
     double Radius;                                  /*!< half etar */
     double MaxD[3];                                 /*!< max allowed distance that we do not consider periodic boundary */
-    double RpEtar;                                  /*!< weighted particle density computed by summing all the related cells around each particle, using eta*r as the radius; define "related" by measuing the distance between cell center and particle */
     
     double *maxrhop;
     

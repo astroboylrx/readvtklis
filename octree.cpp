@@ -53,7 +53,6 @@ int Octree::Initialize()
     RpAV = 0;
     RpSQ = 0;
     RpQU = 0;
-    RpEtar = 0;
     return 0;
 }
 

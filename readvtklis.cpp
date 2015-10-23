@@ -132,7 +132,6 @@ int main(int argc, const char * argv[]) {
                 myMPI->paras.RpAV[i] = ot->RpAV;
                 myMPI->paras.RpSQ[i] = ot->RpSQ;
                 myMPI->paras.RpQU[i] = ot->RpQU;
-                myMPI->paras.RpEtar[i] = ot->RpEtar;
             }
             if (fio->HeiPar_flag) {
                 pl->ScaleHeight(myMPI->paras.Hp[i], myMPI->paras.Hp_in1sigma[i]);
@@ -167,7 +166,6 @@ int main(int argc, const char * argv[]) {
                 fio->paras.RpAV[i] = ot->RpAV;
                 fio->paras.RpSQ[i] = ot->RpSQ;
                 fio->paras.RpQU[i] = ot->RpQU;
-                fio->paras.RpEtar[i] = ot->RpEtar;
             }
             if (fio->HeiPar_flag) {
                 pl->ScaleHeight(fio->paras.Hp[i], fio->paras.Hp_in1sigma[i]);
@@ -230,7 +228,6 @@ int main(int argc, const char * argv[]) {
             MPI::COMM_WORLD.Allreduce(myMPI->paras.RpAV, fio->paras.RpAV, fio->n_file, MPI::DOUBLE, MPI::SUM);
             MPI::COMM_WORLD.Allreduce(myMPI->paras.RpSQ, fio->paras.RpSQ, fio->n_file, MPI::DOUBLE, MPI::SUM);
             MPI::COMM_WORLD.Allreduce(myMPI->paras.RpQU, fio->paras.RpQU, fio->n_file, MPI::DOUBLE, MPI::SUM);
-            MPI::COMM_WORLD.Allreduce(myMPI->paras.RpEtar, fio->paras.RpEtar, fio->n_file, MPI::DOUBLE, MPI::SUM);
         }
         if (fio->HeiPar_flag) {
             MPI::COMM_WORLD.Allreduce(myMPI->paras.Hp, fio->paras.Hp, fio->n_file, MPI::DOUBLE, MPI::SUM);

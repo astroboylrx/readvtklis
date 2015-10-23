@@ -407,7 +407,6 @@ int FileIO::Output_Data()
             file << setw(15) << setfill(' ') << "RpAV";
             file << setw(15) << setfill(' ') << "RpSQ";
             file << setw(15) << setfill(' ') << "RpQU";
-            file << setw(15) << setfill(' ') << "RpEtar";
         }
         if (HeiPar_flag) {
             file << setw(15) << setfill(' ') << "H_p";
@@ -427,7 +426,6 @@ int FileIO::Output_Data()
                 file << setw(15) << scientific << paras.RpAV[i];
                 file << setw(15) << scientific << paras.RpSQ[i];
                 file << setw(15) << scientific << paras.RpQU[i];
-                file << setw(15) << scientific << paras.RpEtar[i];
             }
             if (HeiPar_flag) {
                 file << setw(15) << scientific << paras.Hp[i];
