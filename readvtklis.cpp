@@ -35,6 +35,8 @@ int main(int argc, const char * argv[]) {
     ParticleList *pl = new ParticleList;
     VtkFile *vf = new VtkFile;
     Octree *ot = new Octree;
+    cout << sizeof(FileIO) << " " << sizeof(ParticleList) << " " << sizeof(VtkFile) << " " << sizeof(Octree) << " " << sizeof(Particle) << " " << sizeof(OctreeNode) << " " << sizeof(double) << " " << sizeof(float) << " " << sizeof(int) << endl;
+    
     
 #ifdef ENABLE_MPI
     if (myMPI->myrank == myMPI->master) {

@@ -98,23 +98,15 @@ public:
      *  \brief assign particle to one node */
     int AddParticle(float x[3]);
     
-    /*! \fn int GetRpEtar()
-     *  \brief calculate the weighted Rho_{p, etar} */
-    int GetRpEtar();
-    
-    /*! \fn void EvaluateOneP(OctreeNode *p, float x[3], double *rp)
-     *  \brief calculate RpEtar for one particle */
+    /*! \fn void EvaluateOnePoint(OctreeNode *p, T x[3], double *rp)
+     *  \brief calculate rhop for a sphere centered at x with r=Radius */
     template<typename T>
-    void EvaluateOneP(OctreeNode *p, T x[3], double *rp);
+    void EvaluateOnePoint(OctreeNode *p, T x[3], double *rp);
     
     /*! \fn double Distance(OctreeNode *p, float x[3])
      *  \brief calculate distance between cell center and particle */
     template<typename T>
     double Distance(OctreeNode *p, T x[3]);
-    
-    void EstimateRpEtar(OctreeNode *p);
-    void maxrhopPerlevel(OctreeNode *p);
-    
 };
 
 

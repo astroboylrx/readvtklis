@@ -131,28 +131,9 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
         AddParticle(it->x);
     } //*/
     
-    //GetRpEtar();
-    p = root;
-    maxrhopPerlevel(p);
-    for (int i = 0; i != level; i++) {
-        maxrhop[i] /= pow(root->Nx/pow(2, i), 3);
-        cout << "Level = " << i << ": rhop = " << maxrhop[i] << endl;
-    }
     
-    delete [] maxrhop;
+    free(maxrhop);
     return 0;
-}
-
-void Octree::maxrhopPerlevel(OctreeNode *p)
-{
-    if (p->rhop > maxrhop[p->level]) {
-        maxrhop[p->level] = p->rhop;
-    }
-    for (int i = 0; i != 8; i++){
-        if (p->Daughter[i] != NULL) {
-            maxrhopPerlevel(p->Daughter[i]);
-        }
-    }
 }
 
 /********** AddCell **********/
@@ -233,10 +214,10 @@ double Octree::Distance(OctreeNode *p, T x[3])
 
 
 /********** EvaluateOneP **********/
-/*! \fn void EvaluateOneP(OctreeNode *p, T x[3], double *rp)
- *  \brief calculate RpEtar for one particle */
+/*! \fn void EvaluateOnePoint(OctreeNode *p, T x[3], double *rp)
+ *  \brief calculate rhop for a sphere centered at x with r=Radius */
 template<typename T>
-void Octree::EvaluateOneP(OctreeNode *p, T x[3], double *rp)
+void Octree::EvaluateOnePoint(OctreeNode *p, T x[3], double *rp)
 {
     double d;
     d = Distance<T>(p, x);
@@ -251,59 +232,12 @@ void Octree::EvaluateOneP(OctreeNode *p, T x[3], double *rp)
     } else {
         for (int i = 0; i != 8; i++) {
             if (p->Daughter[i] != NULL) {
-                EvaluateOneP(p->Daughter[i], x, rp);
+                EvaluateOnePoint(p->Daughter[i], x, rp);
             }
         }
     }
 }
 
-void Octree::EstimateRpEtar(OctreeNode *p)
-{
-    if (p->np != 0 && p->level != level) {
-        for (int i = 0; i != 8; i++) {
-            if (p->Daughter[i] != NULL) {
-                EstimateRpEtar(p->Daughter[i]);
-            }
-        }
-    } else if (p->np != 0 && p->level == level) {
-        double rp = 0;
-        EvaluateOneP<double>(root, p->center, &rp);
-        RpEtar += rp*p->np;
-    }
-}
-
-
-/********** GetRpEtar **********/
-/*! \fn int GetRpEtar()
- *  \brief calculate the weighted Rho_{p, etar} */
-int Octree::GetRpEtar()
-{
-    long count = 0;
-    Radius = (etar/2.0)*vf->spacing[0];
-    s3o2 = sqrt(3)/2.0;
-    for (int i = 0; i != 3; i++) {
-        MaxD[i] = vf->L[i] - Radius;
-    }
-    /* the most exact way
-    for (vector<Particle>::iterator it = pl->List.begin(); it != pl->List.end(); ++it) {
-        double rp = 0;
-        EvaluateOneP<float>(root, it->x, &rp);
-        RpEtar += rp;
-        count++;
-        if (count % 1000 == 0) {
-            cout << "count=" << count << endl;
-        }
-    } //*/
-    
-    // the way that saves computations
-    OctreeNode *p = root;
-    EstimateRpEtar(p);
-    
-    if (pl->n != 0) {
-        RpEtar /= pl->n;
-    }
-    return 0;
-}
 
 
 
