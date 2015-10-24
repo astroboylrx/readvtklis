@@ -106,6 +106,10 @@ public:
      *  \brief calculate distance between cell center and particle */
     template<typename T>
     double Distance(OctreeNode *p, T x[3]);
+    
+    /*! \fn void MaxRhopPerLevel()
+     *  \brief Find the max rhop within a sphere with radius of N*dx */
+    void MaxRhopPerLevel();
 };
 
 

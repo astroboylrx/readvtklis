@@ -114,6 +114,7 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
                         Max_Rhop = p->rhop;
                     }
                     if (iz >= vf->kps and iz < vf->kpe) {
+                        RpAV += p->rhop;
                         tempSQ = p->rhop * p->rhop;
                         RpSQ += tempSQ;
                         RpQU += tempSQ * tempSQ;
@@ -123,7 +124,7 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
         }
     }
     tempV = (vf->kpe-vf->kps)*vf->dimensions[1]*vf->dimensions[0];
-    RpAV = root->rhop/tempV;
+    RpAV = RpAV/tempV;
     RpSQ = sqrt(RpSQ/tempV);
     RpQU = sqrt(sqrt(RpQU/tempV));
     
@@ -239,6 +240,13 @@ void Octree::EvaluateOnePoint(OctreeNode *p, T x[3], double *rp)
     }
 }
 
+/********** MaxRhopPerLevel **********/
+/*! \fn void MaxRhopPerLevel()
+ *  \brief Find the max rhop within a sphere with radius of N*dx */
+void Octree::MaxRhopPerLevel()
+{
+    
+}
 
 
 
