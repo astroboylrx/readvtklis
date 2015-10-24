@@ -113,9 +113,11 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
                     if (Max_Rhop < p->rhop) {
                         Max_Rhop = p->rhop;
                     }
-                    tempSQ = p->rhop * p->rhop;
-                    RpSQ += tempSQ;
-                    RpQU += tempSQ * tempSQ;
+                    if (iz >= vf->kps and iz < vf->kpe) {
+                        tempSQ = p->rhop * p->rhop;
+                        RpSQ += tempSQ;
+                        RpQU += tempSQ * tempSQ;
+                    }
                 }
             }
         }
