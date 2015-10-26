@@ -112,9 +112,9 @@ int ParticleList::ReadLis(string filename)
 }
 
 /********** Calculate the scale height of partiles **********/
-/*! \fn float ScaleHeight(double &Hp, double &Hp_in1sigma);
+/*! \fn float ScaleHeight(float &Hp, float &Hp_in1sigma);
  *  \brief calculate the scale height of partiles */
-int ParticleList::ScaleHeight(double &Hp, double &Hp_in1sigma)
+int ParticleList::ScaleHeight(float &Hp, float &Hp_in1sigma)
 {
     double one_sigma = 0.682689492137;
     if (n == 0) {
@@ -133,8 +133,8 @@ int ParticleList::ScaleHeight(double &Hp, double &Hp_in1sigma)
     
     sort(par_z.begin(), par_z.end());
     vector<float> par_z_reverse(par_z);
-    sort(par_z_reverse.begin(), par_z_reverse.end(), std::greater<double>());
-    while ((par_z.size()+par_z_reverse.size()-List.size())/((double)List.size()) > one_sigma) {
+    sort(par_z_reverse.begin(), par_z_reverse.end(), std::greater<float>());
+    while ((par_z.size()+par_z_reverse.size()-List.size())/((float)List.size()) > one_sigma) {
         if (par_z.back() > fabs(par_z_reverse.back())) {
             par_z.pop_back();
         } else {

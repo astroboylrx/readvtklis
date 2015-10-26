@@ -236,7 +236,7 @@ VtkFile::~VtkFile()
  *  \brief consturct coordinate grid */
 int VtkFile::Construct_Coor(int *dimensions_been_told)
 {
-    cell_center = allocate3d_vector_array<double>(dimensions);
+    cell_center = allocate3d_vector_array<float>(dimensions);
     // actually, here what we construct is the center coordinate of each cell, along [z][y][x], from ORIGIN
     
     for (int i = 0; i != dimensions[2]; i++) {
@@ -249,19 +249,19 @@ int VtkFile::Construct_Coor(int *dimensions_been_told)
         }
     }
     //if (fio->paras.ccz == NULL) {
-    fio->paras.ccz = new double[dimensions[2]];
+    fio->paras.ccz = new float[dimensions[2]];
     //}
     for (int k = 0; k != dimensions[2]; k++) {
         fio->paras.ccz[k] = origin[2]+spacing[2]*(k+0.5);
     }
     //if (fio->paras.ccy == NULL) {
-    fio->paras.ccy = new double[dimensions[1]];
+    fio->paras.ccy = new float[dimensions[1]];
     //}
     for (int j = 0; j != dimensions[1]; j++) {
         fio->paras.ccy[j] = origin[1]+spacing[1]*(j+0.5);
     }
     //if (fio->paras.ccx == NULL) {
-    fio->paras.ccx = new double[dimensions[0]];
+    fio->paras.ccx = new float[dimensions[0]];
     //}
     for (int i = 0; i != dimensions[0]; i++) {
         fio->paras.ccx[i] = origin[0]+spacing[0]*(i+0.5);
@@ -383,7 +383,7 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     //cout << "CELL_DATA " << n_CellData << endl;
     
     int n_cd_scalar = 0, n_cd_vector = 0;
-    if (cell_center == NULL) {
+    if (cell_center == NULL) { //cout << myMPI->myrank << " is here." << endl;
         Construct_Coor(dimensions);
     }
     kps = dimensions[2]/2 - int(0.075/spacing[2]);
@@ -542,7 +542,7 @@ int VtkFile::Calculate_Mass_Find_Max()
             //m_gas = m_temp*cell_volume;
             //Max_Rhog = maximum;
         } else if (it->dataname.compare("particle_density") == 0) {
-            double m_temp = 0, maximum = 0, tempdata;
+            float m_temp = 0, maximum = 0, tempdata;
             for (int k = 0; k != dimensions[2]; k++) {
                 for (int j = 0; j != dimensions[1]; j++) {
                     for (int i = 0; i != dimensions[0]; i++) {
@@ -558,7 +558,7 @@ int VtkFile::Calculate_Mass_Find_Max()
             Max_Rhop = maximum;
             
             RpAV = 0; RpSQ = 0; RpQU = 0;
-            double tempSQ = 0, tempV = 0;
+            float tempSQ = 0, tempV = 0;
             for (int k = kps; k != kpe; k++) {
                 for (int j = 0; j != dimensions[1]; j++) {
                     for (int i = 0; i != dimensions[0]; i++) {
@@ -579,7 +579,7 @@ int VtkFile::Calculate_Mass_Find_Max()
         }
     } //*/
     
-    //int inflow_count = 0; double inflow = 0.0, outflow = 0.0;
+    //int inflow_count = 0; float inflow = 0.0, outflow = 0.0;
     for (vector<CellData_Vector>::iterator it = cd_vector.begin(); it != cd_vector.end(); it++) {
         if (it->dataname.compare("momentum") == 0) {
             dSigma = 0; //int inflow_count = 0;
@@ -623,11 +623,11 @@ int VtkFile::Calculate_Mass_Find_Max()
 }
 
 /********** Calculate gas peculiar velocity **********/
-/*! \fn int VpecG(double *VpecGx)
+/*! \fn int VpecG(float *VpecGx)
  *  \brief return gas peculiar velocity components averaged horizontally at each z, weighted by rho_g */
-int VtkFile::VpecG(double *VpecG)
+int VtkFile::VpecG(float *VpecG)
 {
-    double temp_rhog = 0, temp_momentum[3];
+    float temp_rhog = 0, temp_momentum[3];
     for (int iz = 0; iz != dimensions[2]; iz++) {
         temp_rhog = 0;
         temp_momentum[0] = 0; temp_momentum[1] = 0; temp_momentum[2] = 0;
@@ -647,9 +647,9 @@ int VtkFile::VpecG(double *VpecG)
 }
 
 /********** Calculate mean column density **********/
-/*! \fn int MeanSigma(double *MeanSigma)
+/*! \fn int MeanSigma(float *MeanSigma)
  *  \brief calculate sigma_g and sigma_p averaged over y */
-int VtkFile::MeanSigma(double *MeanSigma)
+int VtkFile::MeanSigma(float *MeanSigma)
 {
     for (int ix = 0; ix != dimensions[0]; ix++) {
         MeanSigma[ix] = 0;
@@ -667,9 +667,9 @@ int VtkFile::MeanSigma(double *MeanSigma)
 }
 
 /********** Calculate vertical rho_g and rho_p **********/
-/*! \fn int VertRho(double *VertRho)
+/*! \fn int VertRho(float *VertRho)
  *  \brief calculate vertical rho_g and rho_p */
-int VtkFile::VertRho(double *VertRho)
+int VtkFile::VertRho(float *VertRho)
 {
     for (int iz = 0; iz != dimensions[2]; iz++) {
         VertRho[iz] = 0;
@@ -687,21 +687,21 @@ int VtkFile::VertRho(double *VertRho)
 }
 
 /********** Calculate correlation length **********/
-/*! \fn int CorrLen(double *CoorL, double *CorrV)
+/*! \fn int CorrLen(float *CoorL, float *CorrV)
  *  \brief calculate the correlation length */
-int VtkFile::CorrLen(double *CorrL
+int VtkFile::CorrLen(float *CorrL
 #ifdef CorrValue
-                    , double *CorrV
+                    , float *CorrV
 #endif
                      )
 {
     int Nx = dimensions[0], Ny = dimensions[1], Nz = dimensions[2];
     int l = 0, Nl = Nx/2+1, Nlines = Nz * Nl, lcMx, lcVx, lcRho;
-    double MxMx, RhoRho, MxBar, RhoBar, VxBar;
-    double *corrMx = new double[Nl];
-    double *corrVx = new double[Nl];
-    double *corrRho = new double[Nl];
-    double NxNy = Nx*Ny;
+    float MxMx, RhoRho, MxBar, RhoBar, VxBar;
+    float *corrMx = new float[Nl];
+    float *corrVx = new float[Nl];
+    float *corrRho = new float[Nl];
+    float NxNy = Nx*Ny;
     for (int iz = 0; iz != Nz; iz++) {
         // Initilization
         CorrL[iz] = 0;      lcMx = Nl-1;    MxBar = 0;

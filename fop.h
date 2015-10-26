@@ -29,6 +29,7 @@ public:
 #ifdef CorrValue
     string output_corrv_path_name;                  /*!< the name for output of Correlation Value */
 #endif
+    string output_RMPL_path_name;                   /*!< the name for output of Max(Rhop) at each level */
     string data_level;                              /*!< the level of data */
     string data_domain;                             /*!< the domain of data */
 
@@ -59,6 +60,7 @@ public:
         VpecG_flag,                                 /*!< flag: gas peculiar velocity components averaged equatorially, weighted by rho_g */
         VertRho_flag,                               /*!< flag: vertical structure of rho_g and rho_p */
         CorrL_flag,                                 /*!< flag: correlation length of Vgas */
+        RhopMaxPerLevel_flag,                       /*!< flag: max(rhop) in a sphere with a radius of N*dx */
         //New_flag,                                 /*!< flag: example of new flag */
         UselessEnd_flag;                            /*!< flag: just in order to add flag conveniently */
     // after adding a flag:

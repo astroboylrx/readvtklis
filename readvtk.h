@@ -90,7 +90,7 @@ private:
 public:
     string Version;                             /*!< vtk version */
     string Header;                              /*!< vtk header */
-    double time;                                /*!< current time */
+    float time;                                 /*!< current time */
     string FileFormat;                          /*!< file format, ACSII or BINARY */
     string DatasetStructure;                    /*!< dataset structure, now we are only dealing with STRUCTURED_POINTS */
     // DATASET STRUCTURED_POINTS
@@ -99,25 +99,25 @@ public:
     // SPACING s_x s_y s_z
     int dimensions[3];                          /*!< the number of cells in each dimension */
     int kps, kpe;                               /*!< the begin/end indices of the cells that correspond to the lower/upper initial Hp */
-    double origin[3];                           /*!< the coordinate of origin point */
-    double spacing[3];                          /*!< the spacing of coordinate */
-    double L[3];                                /*!< the length of box */
-    double cell_volume;                         /*!< the cell volume */
-    double ****cell_center;                     /*!< the coordinate cell center */
+    float origin[3];                            /*!< the coordinate of origin point */
+    float spacing[3];                           /*!< the spacing of coordinate */
+    float L[3];                                 /*!< the length of box */
+    float cell_volume;                          /*!< the cell volume */
+    float ****cell_center;                      /*!< the coordinate cell center */
     long n_CellData;                            /*!< number of CELL_DATA, should be equal to the product of dimensions */
     // in fact, now we are only dealing with CELL_DATA
     vector<CellData_Scalar> cd_scalar;          /*!< vector of cell data */
     vector<CellData_Vector> cd_vector;          /*!< vector of vector data */
-    double Sigma_gas_0;                         /*!< initial column density of gas */
-    double Sigma_gas_0_inbox;                   /*!< initial column density of gas truncated by vertical box size */
-    double m_gas;                               /*!< total gas mass */
-    double m_par;                               /*!< total particle mass */
-    double Max_Rhog;                            /*!< maximum density of gas */
-    double Max_Rhop;                            /*!< maximum density of particle */
-    double RpAV;                                /*!< <rho_p> */
-    double RpSQ;                                /*!< <rho_p^2>^0.5 */
-    double RpQU;                                /*!< <rho_p^4>^0.25 */
-    double dSigma;                              /*!< change of gas surface density due to outflow */
+    float Sigma_gas_0;                          /*!< initial column density of gas */
+    float Sigma_gas_0_inbox;                    /*!< initial column density of gas truncated by vertical box size */
+    float m_gas;                                /*!< total gas mass */
+    float m_par;                                /*!< total particle mass */
+    float Max_Rhog;                             /*!< maximum density of gas */
+    float Max_Rhop;                             /*!< maximum density of particle */
+    float RpAV;                                 /*!< <rho_p> */
+    float RpSQ;                                 /*!< <rho_p^2>^0.5 */
+    float RpQU;                                 /*!< <rho_p^4>^0.25 */
+    float dSigma;                               /*!< change of gas surface density due to outflow */
     
     VtkFile();                                  /*!< constructor */
     ~VtkFile();                                 /*!< destructor */
@@ -142,24 +142,24 @@ public:
      *  \brief calculate mass and find maximum and mass loss */
     int Calculate_Mass_Find_Max();
     
-    /*! \fn int VpecG(double *VpecG)
+    /*! \fn int VpecG(float *VpecG)
      *  \brief return gas peculiar velocity components averaged horizontally at each z, weighted by rho_g 
      */
-    int VpecG(double *VpecG);
+    int VpecG(float *VpecG);
     
-    /*! \fn int MeanSigma(double *MeanSigma)
+    /*! \fn int MeanSigma(float *MeanSigma)
      *  \brief calculate sigma_g and sigma_p averaged over y */
-    int MeanSigma(double *MeanSigma);
+    int MeanSigma(float *MeanSigma);
     
-    /*! \fn int VertRho(double *VertRho)
+    /*! \fn int VertRho(float *VertRho)
      *  \brief calculate vertical rho_g and rho_p */
-    int VertRho(double *VertRho);
+    int VertRho(float *VertRho);
     
-    /*! \fn int CorrLen(double *CoorL)
+    /*! \fn int CorrLen(float *CoorL)
      *  \brief calculate the correlation length */
-    int CorrLen(double *CorrL
+    int CorrLen(float *CorrL
 #ifdef CorrValue
-                , double *CorrV
+                , float *CorrV
 #endif
                 );
     
