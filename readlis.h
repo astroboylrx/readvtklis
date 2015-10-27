@@ -32,7 +32,7 @@ private:
     
 public:
     int ntype;                      /*!< number of par types */
-    long n, npar_ghost;             /*!< number of particles */
+    long n;                         /*!< number of particles */
     float coorlim[12];              /*!< the coordinate limit */
     float *typeinfo;                /*!< info of par type */
     float time;                     /*!< current time */
@@ -52,9 +52,9 @@ public:
      *  \brief Read particle list from file */
     int ReadLis(string filename);
     
-    /*! \fn int ScaleHeight(double &Hp, double &Hp_in1sigma);
+    /*! \fn int ScaleHeight(float &Hp, float &Hp_in1sigma);
      *  \brief calculate the scale height of partiles */
-    int ScaleHeight(double &Hp, double &Hp_in1sigma);
+    int ScaleHeight(float &Hp, float &Hp_in1sigma);
     
     /*! \fn int InitializeList()
      *  \brief free List to control memory */

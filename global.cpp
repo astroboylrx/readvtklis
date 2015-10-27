@@ -17,15 +17,15 @@
  */
 int Paras2probe::AllocateMemory(int n_file)
 {
-    Otime = new double[n_file];
+    Otime = new float[n_file];
     N_par = new long[n_file];
-    Max_Rhop = new double[n_file];
-    RpAV = new double[n_file];
-    RpSQ = new double[n_file];
-    RpQU = new double[n_file];
-    Hp = new double[n_file];
-    Hp_in1sigma = new double[n_file];
-    dSigma = new double[n_file];
+    Max_Rhop = new float[n_file];
+    RpAV = new float[n_file];
+    RpSQ = new float[n_file];
+    RpQU = new float[n_file];
+    Hp = new float[n_file];
+    Hp_in1sigma = new float[n_file];
+    dSigma = new float[n_file];
     for (int i = 0; i != n_file; i++) {
         // initialize if you don't assign all of them values but use them for calculation eventually
         Otime[i] = 0;
@@ -39,12 +39,12 @@ int Paras2probe::AllocateMemory(int n_file)
         dSigma[i] = 0;
     }
     
-    MeanSigma = new double*[n_file];
-    VpecG = new double*[n_file];
-    VertRho = new double*[n_file];
-    CorrL = new double*[n_file];
+    MeanSigma = new float*[n_file];
+    VpecG = new float*[n_file];
+    VertRho = new float*[n_file];
+    CorrL = new float*[n_file];
 #ifdef CorrValue
-    CorrV = new double*[n_file];
+    CorrV = new float*[n_file];
 #endif
     return 0;
 }
@@ -55,25 +55,25 @@ int Paras2probe::AllocateMemory(int n_file)
 int Paras2probe::AllocateSubMemory(int n_file, int *dimensions)
 {
     for (int i = 0; i != n_file; i++) {
-        MeanSigma[i] = new double[2*dimensions[0]];
+        MeanSigma[i] = new float[2*dimensions[0]];
         for (int j = 0; j != 2*dimensions[0]; j++) {
             MeanSigma[i][j] = 0;
         }
-        VpecG[i] = new double[3*dimensions[2]];
+        VpecG[i] = new float[3*dimensions[2]];
         for (int j = 0; j != 3*dimensions[2]; j++) {
             VpecG[i][j] = 0;
         }
-        VertRho[i] = new double[2*dimensions[2]];
+        VertRho[i] = new float[2*dimensions[2]];
         for (int j = 0; j != 2*dimensions[2]; j++) {
             VertRho[i][j] = 0;
         }
-        CorrL[i] = new double[3*dimensions[2]];
+        CorrL[i] = new float[3*dimensions[2]];
         for (int j = 0; j != 3*dimensions[2]; j++) {
             CorrL[i][j] = 0;
         }
 #ifdef CorrValue
         int Nz = dimensions[2], Nlines = Nz * (dimensions[0]/2+1);
-        CorrV[i] = new double[3*Nlines];
+        CorrV[i] = new float[3*Nlines];
         for (int j = 0; j != 3*Nlines; j++) {
             CorrV[i][j] = 0;
         }

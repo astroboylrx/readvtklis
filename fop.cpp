@@ -26,8 +26,8 @@ int FileIO::Print_Stars(string info)
  *  \brief print usage */
 int FileIO::Print_Usage(const char *progname)
 {
-    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -l <level> -d <domain> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL]\n" << endl;
-    cout << "Example: ./readvtklis -c 16 -i comb -b Cout -l 1 -d 0 -s all -f 0:100 -o result.txt --ParNum  --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL" << endl;
+    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -l <level> -d <domain> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL --RhopMaxPerLevel]\n" << endl;
+    cout << "Example: ./readvtklis -c 16 -i comb -b Cout -l 1 -d 0 -s all -f 0:100 -o result.txt --ParNum  --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL --RhopMaxPerLevel" << endl;
     return 0;
 }
 
@@ -56,6 +56,7 @@ int FileIO::Initialize(int argc, const char * argv[])
     VpecG_flag = 0;
     VertRho_flag = 0;
     CorrL_flag = 0;
+    RhopMaxPerLevel_flag = 0;
     
     //Specifying the expected options
     static struct option long_options[] = {
@@ -68,6 +69,7 @@ int FileIO::Initialize(int argc, const char * argv[])
         {"VpecG", no_argument, &VpecG_flag, 1},
         {"VertRho", no_argument, &VertRho_flag, 1},
         {"CorrL", no_argument, &CorrL_flag, 1},
+        {"RhopMaxPerLevel", no_argument, &RhopMaxPerLevel_flag, 1},
         // These options don't set a flag
         {"ncpu", required_argument, 0, 'c'},
         {"input", required_argument, 0, 'i'},
@@ -91,18 +93,6 @@ int FileIO::Initialize(int argc, const char * argv[])
 #endif
         exit(1);
     } else {
-        /* for debug
-#ifdef ENABLE_MPI
-        if (myMPI->myrank == myMPI->master) {
-#endif
-            cout << "argc = " << argc << "\n";
-            for (int i = 0; i != argc; i++) {
-                cout << "argv[" << i << "]: " << argv[i] << "\n";
-            }
-#ifdef ENABLE_MPI
-        }
-#endif
-         */
 
         while (1) {
             // getopt_long stores the option
@@ -241,6 +231,11 @@ int FileIO::Initialize(int argc, const char * argv[])
     }
     paras.AllocateMemory(n_file);
     
+    if (RhopMaxPerLevel_flag) {
+        if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag || CorrL_flag) {
+            cout << "For flag RhopMaxPerLevel, it is not recommended to use it with other flags. " << endl;
+        }
+    }
     return 0;
 }
 
@@ -262,6 +257,12 @@ int FileIO::Generate_Filename()
     if (iof.data_domain.compare("0") != 0) {
         temp_name = temp_name+"-dom"+iof.data_domain;
     }
+    if (fio->RhopMaxPerLevel_flag) {
+        if (start_no != end_no) {
+            cout << "The RhopMaxPerLevel flag only applies to single data snapshot." << endl;
+            exit(1);
+        }
+    }
     for (int i = start_no; i <= end_no; i+=interval) {
         stringstream ss;
         ss << setw(4) << setfill('0') << i;
@@ -269,13 +270,7 @@ int FileIO::Generate_Filename()
         lis_filenames.push_back(lis_temp_name+'.'+file_no+'.'+iof.post_name+".lis");
         vtk_filenames.push_back(temp_name+'.'+file_no+".vtk");
     }
-    /*
-     Print_Stars("Check Filenames");
-     cout << "We generate " << lis_filenames.size() << " lis_filenames in total." << "\n";
-     cout << "The first one is " << *lis_filenames.begin() << "\n";
-     cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << "\n";
-     cout << "The first one is " << *vtk_filenames.begin() << "\n";
-     */
+
     if (iof.output_path_name.length() == 0) {
         cout << "Error: No output path/name. " << endl;
         return 1;
@@ -301,6 +296,9 @@ int FileIO::Generate_Filename()
         iof.output_corrv_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_CorrV.txt";
 #endif
     }
+    if (RhopMaxPerLevel_flag) {
+        iof.output_RMPL_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_RMPL.txt";
+    }
     return 0;
 }
 
@@ -310,51 +308,54 @@ int FileIO::Generate_Filename()
 int FileIO::Check_Input_Path_Filename()
 {
     Print_Stars("Check Input");
-    cout << "data_path is " << iof.data_path << "\n";
-    cout << "data_basename is " << iof.data_basename << "\n";
-    cout << "data_level is " << iof.data_level << "\n";
-    cout << "data_domain is " << iof.data_domain << "\n";
-    cout << "post_name is " << iof.post_name << "\n";
-    cout << "start_no=" << start_no << ", end_no=" << end_no << ", interval=" << interval << "\n";
-    cout << "output_path_name is " << iof.output_path_name << "\n";
-    cout << "n_cpu is " << n_cpu << "\n";
+    cout << "data_path is " << iof.data_path << endl;;
+    cout << "data_basename is " << iof.data_basename << endl;
+    cout << "data_level is " << iof.data_level << endl;
+    cout << "data_domain is " << iof.data_domain << endl;
+    cout << "post_name is " << iof.post_name << endl;
+    cout << "start_no=" << start_no << ", end_no=" << end_no << ", interval=" << interval << endl;
+    cout << "output_path_name is " << iof.output_path_name << endl;
+    cout << "n_cpu is " << n_cpu << endl;
     Print_Stars("Check Filenames");
-    cout << "We generate " << lis_filenames.size() << " lis_filenames in total." << "\n";
-    cout << "The first one is " << *lis_filenames.begin() << "\n";
-    cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << "\n";
-    cout << "The first one is " << *vtk_filenames.begin() << "\n";
+    cout << "We generate " << lis_filenames.size() << " lis_filenames in total." << endl;
+    cout << "The first one is " << *lis_filenames.begin() << endl;
+    cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
+    cout << "The first one is " << *vtk_filenames.begin() << endl;
     Print_Stars("Check Output");
-    if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag || CorrL_flag) {
-        cout << "Output includes: " << "\n";
+    if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag || CorrL_flag || RhopMaxPerLevel_flag) {
+        cout << "Output includes: " << endl;
         if (ParNum_flag) {
-            cout << "particle numbers" << "\n";
+            cout << "particle numbers" << endl;
         }
         if (RhoParMax_flag) {
-            cout << "Max particle density" << "\n";
+            cout << "Max particle density" << endl;
         }
         if (HeiPar_flag) {
-            cout << "Particle scale height" << "\n";
+            cout << "Particle scale height" << endl;
         }
         if (dSigma_flag) {
-            cout << "Change of gas surface density" << "\n";
+            cout << "Change of gas surface density" << endl;
         }
         if (MeanSigma_flag) {
-            cout << "<Sigma_g> and <Sigma_p>" << "\n";
+            cout << "<Sigma_g> and <Sigma_p>" << endl;
         }
         if (VpecG_flag) {
-            cout << "Gas peculiar velocity components" << "\n";
+            cout << "Gas peculiar velocity components" << endl;
         }
         if (VertRho_flag) {
-            cout << "Vertical Rho_g and Rho_p" << "\n";
+            cout << "Vertical Rho_g and Rho_p" << endl;
         }
         if (CorrL_flag) {
-            cout << "Correlation Length" << "\n";
+            cout << "Correlation Length" << endl;
 #ifdef CorrValue
-            cout << "Correlation Value" << "\n";
+            cout << "Correlation Value" << endl;
 #endif
         }
+        if (RhopMaxPerLevel_flag) {
+            cout << "Max particle density in various size level" << endl;
+        }
     } else {
-        cout << "Need output choices." << "\n";
+        cout << "Need output choices." << endl;
         exit(1);
     }
     return 0;
@@ -384,7 +385,7 @@ int FileIO::Output_Data()
 {
     // shouldn't happen
     if (iof.output_path_name.length() == 0) {
-        cout << "Error: No output path/name. " << "\n";
+        cout << "Error: No output path/name. " << endl;
         return 1;
     }
     
@@ -394,7 +395,7 @@ int FileIO::Output_Data()
         file.open(iof.output_path_name.c_str(), ofstream::out);
         
         if (!file.is_open()) {
-            cout << "Failed to open " << iof.output_path_name << "\n";
+            cout << "Failed to open " << iof.output_path_name << endl;
             return 1;
         }
         
@@ -444,7 +445,7 @@ int FileIO::Output_Data()
         ofstream file_MeanSigma;
         file_MeanSigma.open(iof.output_sigma_path_name.c_str(), ofstream::out);
         if (!file_MeanSigma.is_open()) {
-            cout << "Failed to open " << iof.output_sigma_path_name << "\n";
+            cout << "Failed to open " << iof.output_sigma_path_name << endl;
             return 1;
         }
         file_MeanSigma << "#The first row of data is orbit time. The first column is x (radial direction) coordinate. Others is data, but divided into two blocks, first is for gas, then for particles.";
@@ -469,7 +470,7 @@ int FileIO::Output_Data()
         ofstream file_VpecG;
         file_VpecG.open(iof.output_vpecg_path_name.c_str(), ofstream::out);
         if (!file_VpecG.is_open()) {
-            cout << "Failed to open " << iof.output_vpecg_path_name << "\n";
+            cout << "Failed to open " << iof.output_vpecg_path_name << endl;
             return 1;
         }
         file_VpecG << "#The first row is orbit time, The first column is z  (vertical direction) coordinate. Others is data, but divided into three blocks, first is Vx, then Vy and then Vz.";
@@ -494,7 +495,7 @@ int FileIO::Output_Data()
         ofstream file_VertRho;
         file_VertRho.open(iof.output_vertrho_path_name.c_str(), ofstream::out);
         if (!file_VertRho.is_open()) {
-            cout << "Failed to open " << iof.output_vertrho_path_name << "\n";
+            cout << "Failed to open " << iof.output_vertrho_path_name << endl;
             return 1;
         }
         file_VertRho << "#The first row of data is orbit time. The first column is z (vertical direction) coordinate. Others is data, but divided into two blocks, first is for gas, then for particles.";
@@ -518,7 +519,7 @@ int FileIO::Output_Data()
         ofstream file_CorrL;
         file_CorrL.open(iof.output_corrl_path_name.c_str(), ofstream::out);
         if (!file_CorrL.is_open()) {
-            cout << "Failed to open " << iof.output_corrl_path_name << "\n";
+            cout << "Failed to open " << iof.output_corrl_path_name << endl;
             return 1;
         }
         file_CorrL << "#The first row of data is orbit time. The first column is z (vertical direction) coordinate. Others is data, but divided into three blocks, first is for Mx, then for Vx, then for density.";
@@ -542,7 +543,7 @@ int FileIO::Output_Data()
         ofstream file_CorrV;
         file_CorrV.open(iof.output_corrv_path_name.c_str(), ofstream::out);
         if (!file_CorrV.is_open()) {
-            cout << "Failed to open " << iof.output_corrv_path_name << "\n";
+            cout << "Failed to open " << iof.output_corrv_path_name << endl;
             return 1;
         }
         file_CorrV << "#The first row of data is orbit time. The first column is z (vertical direction) coordinate. The second column is length of correlation calculations. The other is data, but divided into all different LC and different Z.";
@@ -566,6 +567,25 @@ int FileIO::Output_Data()
         file_CorrV.close();
 #endif
         
+    }
+    
+    if (RhopMaxPerLevel_flag) {
+        ofstream file_RhopMax;
+        file_RhopMax.open(iof.output_RMPL_path_name.c_str(), ofstream::out);
+        if (!file_RhopMax.is_open()) {
+            cout << "Failed to open " << iof.output_RMPL_path_name << endl;
+            return 1;
+        }
+        file_RhopMax << setw(15) << setfill(' ') << "#Diameter";
+        file_RhopMax << setw(15) << setfill(' ') << "Max(Rho_p)" << "\n";
+        
+        int level = int(log10(fio->paras.dimensions[0])/log10(2.0));
+        for (int i = 0; i <= level; i++) {
+            file_RhopMax << setw(15) << scientific << fio->paras.spacing[0]*pow(2.0, i);
+            file_RhopMax << setw(15) << scientific << fio->paras.RMPL[i] << "\n";
+        }
+        
+        file_RhopMax.close();
     }
 
     return 0;

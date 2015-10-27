@@ -13,6 +13,7 @@
 #include "fop.h"
 #include "readvtk.h"
 #include "readlis.h"
+const float PI = 3.1415927;
 
 /*! \class OctreeNode
  *  \brief the node class of Octree
@@ -24,11 +25,12 @@ public:
     int level;                                      /*!< the level of this node */
     OctreeNode *Father;                             /*!< father node pointer of this node */
     vector<OctreeNode *> Daughter;                  /*!< eight daughters in the increasing order of x, y and z */
-    double rhop;                                    /*!< the sum of particle density for all the cells in this node */
-    int Nx;                                         /*!< the number of cells,  forced to be the same in each directions */
-    double Lx;                                      /*!< length of this node */
-    double center[3];                               /*!< the coordinates of the center of this node */
+    float rhop;                                     /*!< the sum of particle density for all the cells in this node */
+    int Nx;                                         /*!< the number of cells in 1 direction,  forced to be the same in each directions */
+    float Lx;                                       /*!< length of this node */
+    float center[3];                                /*!< the coordinates of the center of this node */
     long np;                                        /*!< number of particles in this node */
+    vector<long> parlist;                           /*!< particle indices list in this node */
     
     /*! \fn OctreeNode()
      *  \brief Constructor of tree node */
@@ -48,21 +50,23 @@ private:
     
 public:
     int level;                                      /*!< total levels of the tree */
+    long *NxCubic;                                  /*!< Nx^3 at each level */
     OctreeNode *root;                               /*!< the root of the whole tree */
     VtkFile *vf;                                    /*!< the VtkFile pointer used to build this tree */
     ParticleList *pl;                               /*!< the ParticleList pointer used to build this tree */
     
-    double Max_Rhop;                                /*!< maximum density of particle */
-    double RpAV;                                    /*!< <rho_p> */
-    double RpSQ;                                    /*!< <rho_p^2>^0.5 */
-    double RpQU;                                    /*!< <rho_p^4>^0.25 */
+    float Max_Rhop;                                 /*!< maximum density of particle */
+    float RpAV;                                     /*!< <rho_p> */
+    float RpSQ;                                     /*!< <rho_p^2>^0.5 */
+    float RpQU;                                     /*!< <rho_p^4>^0.25 */
     
     enum { etar = 16 };                             /*!< etar in # of cells */
-    double s3o2;                                    /*!< sqrt(3)/2 */
-    double Radius;                                  /*!< half etar */
-    double MaxD[3];                                 /*!< max allowed distance that we do not consider periodic boundary */
-    
-    double *maxrhop;
+    float s3o2;                                     /*!< sqrt(3)/2 */
+    float foPio3;                                   /*!< 4*pi/3 */
+    float Radius;                                   /*!< half etar */
+    float **MaxD;                                   /*!< max allowed distance that we do not consider periodic boundary */
+    float m1par;                                    /*!< mass of 1 particle */
+    float *RMPL;                                    /*!< Rhop_Max Per Level, in reverse order */
     
     /*! \fn Octree();
      *  \brief Constructor of tree sturcture */
@@ -84,32 +88,37 @@ public:
      *  \brief Build the whole tree */
     int BuildTree(VtkFile *VF, ParticleList *PL);
     
-    /*! \fn OctreeNode *AddCell(double cc[3], double rhop)
+    /*! \fn OctreeNode *AddCell(float cc[], float &rhop)
      *  \brief using cell center to find the tree node, create nodes if needed */
-    OctreeNode *AddCell(double cc[3], double rhop);
+    OctreeNode *AddCell(float cc[], float &rhop);
     
-    /*! \fn int GetOctant(double center[3], T pos[3]);
+    /*! \fn int GetOctant(float center[3], T pos[3]);
      *  \brief return the index of the daughter */
     template<typename T>
-    int GetOctant(double center[3], T pos[3]);
+    int GetOctant(float center[3], T pos[3]);
     
-    /*! \fn int AddParticle(float x[3])
+    /*! \fn int AddParticle(Particle &it)
      *  \brief assign particle to one node */
-    int AddParticle(float x[3]);
+    int AddParticle(Particle &it);
     
-    /*! \fn void EvaluateOnePoint(OctreeNode *p, T x[3], double *rp)
-     *  \brief calculate rhop for a sphere centered at x with r=Radius */
+    /*! \fn void EvaluateOctreeSphere(OctreeNode *p, T x[3], float *rp, long *cells)
+     *  \brief calculate rhop for an octree-approximate sphere centered at x with r=Radius */
     template<typename T>
-    void EvaluateOnePoint(OctreeNode *p, T x[3], double *rp);
+    void EvaluateOctreeSphere(OctreeNode *p, T x[3], float *rp, long *cells);
     
-    /*! \fn double Distance(OctreeNode *p, float x[3])
+    /*! \fn void EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar)
+     *  \brief calculate rhop for an accurate sphere centered at x with r=Radius */
+    template<typename T>
+    void EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar);
+    
+    /*! \fn float Distance(OctreeNode *p, float x[3])
      *  \brief calculate distance between cell center and particle */
     template<typename T>
-    double Distance(OctreeNode *p, T x[3]);
+    float Distance(OctreeNode *p, T x[3]);
     
-    /*! \fn void MaxRhopPerLevel()
+    /*! \fn void RhopMaxPerLevel()
      *  \brief Find the max rhop within a sphere with radius of N*dx */
-    void MaxRhopPerLevel();
+    void RhopMaxPerLevel();
 };
 
 

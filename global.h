@@ -32,7 +32,7 @@ using namespace::std;
 /*****Pre-defined Compiler Macros*****/
 /*************************************/
 
-//#define ENABLE_MPI
+#define ENABLE_MPI
 
 //#define RESERVE_PUSH_BACK
 //#define FROM_ARRAY_TO_VECTOR
@@ -142,35 +142,38 @@ public:
     // rule of thumb: if multiple parameters are written to a single file, then gas properties always go first
     
     // output to result_Par.txt (in column-order)
-    double *Otime;                                  /*!< orbit time */
+    float *Otime;                                  /*!< orbit time */
     long *N_par;                                    /*!< number of par */
-    double *Max_Rhop;                               /*!< max partical density */
-    double *RpAV;                                   /*!< <rho_p> */
-    double *RpSQ;                                   /*!< <rho_p^2>^0.5 */
-    double *RpQU;                                   /*!< <rho_p^4>^0.25 */
-    double *Hp;                                     /*!< par scale height */
-    double *Hp_in1sigma;                            /*!< par scale height derived from Gaussian 1sigma range */
-    double *dSigma;                                 /*!< the change of gas surface density due to outflow */
+    float *Max_Rhop;                               /*!< max partical density */
+    float *RpAV;                                   /*!< <rho_p> */
+    float *RpSQ;                                   /*!< <rho_p^2>^0.5 */
+    float *RpQU;                                   /*!< <rho_p^4>^0.25 */
+    float *Hp;                                     /*!< par scale height */
+    float *Hp_in1sigma;                            /*!< par scale height derived from Gaussian 1sigma range */
+    float *dSigma;                                 /*!< the change of gas surface density due to outflow */
     
     // output to result_MeanSigma.txt, first sigma_g and then sigma_p
-    double **MeanSigma;                             /*!< sigma_g and sigma_p averaged over y */
+    float **MeanSigma;                             /*!< sigma_g and sigma_p averaged over y */
     
     // output to result_VpecG.txt, first x, then y, and then z
-    double **VpecG;                                 /*!< Vpec_g averaged horizontally at each z, weighted by rho_g */
+    float **VpecG;                                 /*!< Vpec_g averaged horizontally at each z, weighted by rho_g */
     
     // output to result_VertRho.txt, first rho_g and then rho_p
-    double **VertRho;                               /*!< Vertical Structure of rho_g and rho_p */
+    float **VertRho;                               /*!< Vertical Structure of rho_g and rho_p */
     
-    double **CorrL;                                 /*!< Correlation Length  */
+    float **CorrL;                                 /*!< Correlation Length  */
 #ifdef CorrValue
-    double **CorrV;                                 /*!< Correlation Value */
+    float **CorrV;                                 /*!< Correlation Value */
 #endif
+    
+    // output to result_RMPL.txt
+    float *RMPL;                                    /*!< Rhop_Max Per Level */
     
     /******relative to calculation********/
     float ****V_gas_0;                              /*!< initial v_gas */
     int dimensions[3];                              /*!< the number of cells in each dimension */
-    double spacing[3];                              /*!< the spacing of coordinate */
-    double *ccx, *ccy, *ccz;                        /*!< cell center coordinates for plots */
+    float spacing[3];                              /*!< the spacing of coordinate */
+    float *ccx, *ccy, *ccz;                        /*!< cell center coordinates for plots */
     
     
     /*! \fn int AllocateMemory(int n_file)
@@ -202,6 +205,7 @@ public:
     int myrank;                                     /*!< rank of cpu */
     int master;                                     /*!< rank of master cpu */
     int loop_begin, loop_end, loop_offset;          /*!< begin/end/offset of loop */
+    MPI::Status status;                             /*!< status of recv function */
     
     Paras2probe paras;                              /*!< contains parameters for the use of MPIAllreduce */
     
