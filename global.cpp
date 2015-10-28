@@ -124,13 +124,15 @@ int MPI_info::Initialize(int argc, const char * argv[])
     loop_begin = myrank;
     loop_end = myrank;
     loop_offset = numprocs;
+    wait_time = 0;
     return 0;
 }
 
 /********** Determine loop parameter **********/
 /*! \fn int Determine_Loop(int n_file)
  *  \brief determine the begin/end/offset for loop */
-int MPI_info::Determine_Loop(int n_file) {
+int MPI_info::Determine_Loop(int n_file)
+{
     if (n_file < numprocs) {
         if (myrank > n_file - 1) {
             loop_end = -1;
@@ -148,15 +150,35 @@ int MPI_info::Determine_Loop(int n_file) {
 /********** Barrier **********/
 /*! \fn int Barrier()
  *  \brief wrapper of MPI Barrier */
-int MPI_info::Barrier() {
+int MPI_info::Barrier()
+{
     MPI::COMM_WORLD.Barrier();
     return 0;
+}
+
+/********** T **********/
+/*! \fn double T()
+ *  \brief wrapper of MPI WTime */
+double MPI_info::T()
+{
+    return MPI::Wtime();
+}
+
+/********** prank **********/
+/*! \fn string prank()
+ *  \brief return string of Processor myrank: */
+string MPI_info::prank()
+{
+    ostringstream oss;
+    oss << "Processor " << myrank << ": ";
+    return oss.str();
 }
 
 /********** Finalization **********/
 /*! \fn int Finalize()
  *  \brief wrapper of MPI Finalize() */
-int MPI_info::Finalize() {
+int MPI_info::Finalize()
+{
     MPI::Finalize();
     return 0;
 }

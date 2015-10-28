@@ -36,7 +36,7 @@ int FileIO::Print_Usage(const char *progname)
  *  \brief constructor */
 FileIO::FileIO()
 {
-    ;
+    paras.RMPL = NULL;
 }
 
 /********** Initialization **********/
@@ -234,6 +234,7 @@ int FileIO::Initialize(int argc, const char * argv[])
     if (RhopMaxPerLevel_flag) {
         if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag || CorrL_flag) {
             cout << "For flag RhopMaxPerLevel, it is not recommended to use it with other flags. " << endl;
+            exit(1);
         }
     }
     return 0;
@@ -256,12 +257,6 @@ int FileIO::Generate_Filename()
     }
     if (iof.data_domain.compare("0") != 0) {
         temp_name = temp_name+"-dom"+iof.data_domain;
-    }
-    if (fio->RhopMaxPerLevel_flag) {
-        if (start_no != end_no) {
-            cout << "The RhopMaxPerLevel flag only applies to single data snapshot." << endl;
-            exit(1);
-        }
     }
     for (int i = start_no; i <= end_no; i+=interval) {
         stringstream ss;

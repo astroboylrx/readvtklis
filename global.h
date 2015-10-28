@@ -127,6 +127,16 @@ int deallocate3d_vector_array(T ****data, int *dimensions)
     return 0;
 }
 
+/*! \fn string pvector(T x[3])
+ *  \brief print vector */
+template<typename T>
+string pvector(T x[3])
+{
+    ostringstream oss;
+    oss << "[" << x[0] << "," << x[1] << "," << x[2] << "]";
+    return oss.str();
+}
+
 /*************************************/
 /***********Dividing Line*************/
 /*************************************/
@@ -205,6 +215,7 @@ public:
     int myrank;                                     /*!< rank of cpu */
     int master;                                     /*!< rank of master cpu */
     int loop_begin, loop_end, loop_offset;          /*!< begin/end/offset of loop */
+    double wait_time;                               /*!< time wasting on waiting */
     MPI::Status status;                             /*!< status of recv function */
     
     Paras2probe paras;                              /*!< contains parameters for the use of MPIAllreduce */
@@ -220,6 +231,14 @@ public:
     /*! \fn int Barrier()
      *  \brief wrapper of MPI Barrier */
     int Barrier();
+    
+    /*! \fn double T()
+     *  \brief wrapper of MPI WTime */
+    double T();
+    
+    /*! \fn string prank()
+     *  \brief return string of Processor myrank: */
+    string prank();
     
     /*! \fn int Finalize()
      *  \brief wrapper of MPI Finalize() */

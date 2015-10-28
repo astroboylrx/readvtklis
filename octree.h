@@ -13,7 +13,7 @@
 #include "fop.h"
 #include "readvtk.h"
 #include "readlis.h"
-const float PI = 3.1415927;
+const float PI = 3.141592653;
 
 /*! \class OctreeNode
  *  \brief the node class of Octree
@@ -63,10 +63,11 @@ public:
     enum { etar = 16 };                             /*!< etar in # of cells */
     float s3o2;                                     /*!< sqrt(3)/2 */
     float foPio3;                                   /*!< 4*pi/3 */
-    float Radius;                                   /*!< half etar */
+    float *Radius;                                   /*!< half etar */
     float **MaxD;                                   /*!< max allowed distance that we do not consider periodic boundary */
     float m1par;                                    /*!< mass of 1 particle */
     float *RMPL;                                    /*!< Rhop_Max Per Level, in reverse order */
+    float tempcenter[3];
     
     /*! \fn Octree();
      *  \brief Constructor of tree sturcture */
@@ -101,20 +102,25 @@ public:
      *  \brief assign particle to one node */
     int AddParticle(Particle &it);
     
-    /*! \fn void EvaluateOctreeSphere(OctreeNode *p, T x[3], float *rp, long *cells)
+    /*! \fn void EvaluateOctreeSphere(OctreeNode *p, T x[3], float &rp, long &cells, float &R)
      *  \brief calculate rhop for an octree-approximate sphere centered at x with r=Radius */
     template<typename T>
-    void EvaluateOctreeSphere(OctreeNode *p, T x[3], float *rp, long *cells);
+    void EvaluateOctreeSphere(OctreeNode *p, T x[3], float &rp, long &cells, float &R);
     
-    /*! \fn void EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar)
+    /*! \fn void EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar, float &R)
      *  \brief calculate rhop for an accurate sphere centered at x with r=Radius */
     template<typename T>
-    void EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar);
+    void EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar, float &R);
     
     /*! \fn float Distance(OctreeNode *p, float x[3])
      *  \brief calculate distance between cell center and particle */
     template<typename T>
     float Distance(OctreeNode *p, T x[3]);
+    
+    /*! \fn float RealPointDistance(T x[3], T y[3]);
+     *  \brief calculate distance between two location */
+    template<typename T>
+    float RealPointDistance(T x[3], T y[3]);
     
     /*! \fn void RhopMaxPerLevel()
      *  \brief Find the max rhop within a sphere with radius of N*dx */

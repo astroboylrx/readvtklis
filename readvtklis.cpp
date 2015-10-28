@@ -53,15 +53,17 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
     }
     myMPI->Determine_Loop(fio->n_file);
+    if (fio->RhopMaxPerLevel_flag) {
+        myMPI->loop_end = -1;
+    }
     myMPI->paras.AllocateMemory(fio->n_file);
-    if (fio->RhopMaxPerLevel_flag) myMPI->loop_end = -1;
     myMPI->Barrier();
     // for debug
     cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << endl;
 #endif
     
     // reading initial gas properties if needed
-    if (fio->MeanSigma_flag || fio->RhopMaxPerLevel_flag) {
+    if (fio->MeanSigma_flag) {
         // don't worry, letting multi-cpus read the same address is efficient enough
         if (vf->Read_Header_Record_Pos(fio->vtk_filenames[0])) {
             cout << "Having problem reading header..." << endl;
@@ -81,15 +83,6 @@ int main(int argc, const char * argv[]) {
                 vf->Sigma_gas_0_inbox += temp_sigma_gas_0_in_box;
             }
             vf->Sigma_gas_0_inbox /= vf->dimensions[0];
-        }
-        
-        if (fio->RhopMaxPerLevel_flag) {
-            pl->ReadLis(fio->lis_filenames[0]);
-            ot->BuildTree(vf, pl);
-            fio->paras.RMPL = new float[ot->level+1];
-            for (int i = 0; i <= ot->level; i++) {
-                fio->paras.RMPL[i] = 0;
-            }
         }
     }
     if (fio->MeanSigma_flag || fio->VpecG_flag || fio->VertRho_flag || fio->CorrL_flag) {
@@ -147,7 +140,37 @@ int main(int argc, const char * argv[]) {
 #endif
     
     if (fio->RhopMaxPerLevel_flag) {
-        ot->RhopMaxPerLevel();
+#ifdef ENABLE_MPI
+        for (int i = 0; i < fio->n_file; i++) {
+            // read data
+            if (vf->Read_Header_Record_Pos(fio->vtk_filenames[i])) {
+                cout << "Having problem reading header..." << endl;
+                exit(1);
+            }
+            vf->Read_Data(fio->vtk_filenames[i]);
+            pl->ReadLis(fio->lis_filenames[i]);
+            // build tree
+            ot->BuildTree(vf, pl);
+            if (fio->paras.RMPL == NULL) {
+                fio->paras.RMPL = new float[ot->level+1];
+                for (int i = 0; i <= ot->level; i++) {
+                    fio->paras.RMPL[i] = 0;
+                }
+            }
+            double temp_t = myMPI->T();
+            myMPI->Barrier();
+            myMPI->wait_time += myMPI->T() - temp_t;
+            
+            ot->RhopMaxPerLevel();
+        }
+        for (int i = 0; i <= ot->level; i++) {
+            ot->RMPL[i] = ot->m1par * ot->RMPL[i] / (ot->foPio3 * ot->Radius[i] * ot->Radius[i] * ot->Radius[i]);
+        }
+        
+#else /* ENABLE_MPI */
+        cout << "Such a heavy computation will take forever in single CPU. Please consider using parallel computing." << endl;
+        exit(1);
+#endif /* ENABLE_MPI */
     }
     
     /************************** Data Output **************************/
@@ -155,7 +178,7 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
     myMPI->Barrier();
     IntegrateData(vf, ot);
-    cout << "Processor " << myMPI->myrank << ": I'm done." << endl;
+    cout << "Processor " << myMPI->myrank << ": I'm done. (waiting " << myMPI->wait_time << "sec" << endl;
     myMPI->Barrier();
     
     if (myMPI->myrank == myMPI->master) {

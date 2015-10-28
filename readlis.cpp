@@ -89,6 +89,7 @@ int ParticleList::ReadLis(string filename)
         if (List.size() != n) {
             List.resize(n);
         }
+        long pid = 0;
         for (vector<Particle>::iterator it = List.begin(); it != List.end(); it++) {
             for (int j = 0; j < 3; j++) {
                 file.read((char *)(&it->x[j]), sizeof(float));
@@ -99,6 +100,9 @@ int ParticleList::ReadLis(string filename)
             file.read((char *)(&it->rad), sizeof(float));
             file.read((char *)(&it->mass), sizeof(float));
             file.read((char *)(&it->pid), sizeof(long));
+            // pid only has meaning in one grid, but we need read it
+            // to skip a data block in the file
+            it->pid = pid++;
             file.read((char *)(&it->cpuid), sizeof(int));
         }
         /*** resize list ***/
