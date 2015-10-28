@@ -103,7 +103,7 @@ int main(int argc, const char * argv[]) {
             // vtk part
             cout
 #ifdef ENABLE_MPI
-            << "Processor " << myMPI->myrank << ": "
+            << myMPI->prank()
 #endif
             << "Reading " << fio->iof.data_basename+"." << setw(4) << setfill('0') << i*fio->interval+fio->start_no << endl;
             if (vf->Read_Header_Record_Pos(fio->vtk_filenames[i])) {
@@ -143,6 +143,9 @@ int main(int argc, const char * argv[]) {
 #ifdef ENABLE_MPI
         for (int i = 0; i < fio->n_file; i++) {
             // read data
+            if (myMPI->myrank == 0) {
+                cout << myMPI->prank() << "Reading " << fio->vtk_filenames[i] << endl;
+            }
             if (vf->Read_Header_Record_Pos(fio->vtk_filenames[i])) {
                 cout << "Having problem reading header..." << endl;
                 exit(1);

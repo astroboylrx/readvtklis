@@ -426,7 +426,7 @@ void Octree::RhopMaxPerLevel()
             //sender = myMPI->status.Get_source();
             //tag = myMPI->status.Get_tag();
             MPI::COMM_WORLD.Send(&index, 1, MPI::INT, goodboy, goodboy);
-            if (index % 2500 == 0) {
+            if (index % 10000 == 0) {
                 cout << "Master: sent point " << index << " to Processor " << goodboy << endl;
             }
             index++;
@@ -494,11 +494,11 @@ void Octree::RhopMaxPerLevel()
                         }
                     }
                 }
-                
+                /*
                 if (myMPI->myrank == 2 && mine_contribution == 6750) {
                     cout << "z=" << temp_cellcenter[2] << ", R=" << Radius[i] << ", npar=" << npar << endl;
                 }
-                
+                 */
             }
             mine_contribution++;
             MPI::COMM_WORLD.Send(&myMPI->myrank, 1, MPI::INT, 0, 0);
