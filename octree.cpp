@@ -346,9 +346,6 @@ void Octree::RhopMaxPerLevel()
     // in case needed
     //RMPL[0] = Max_Rhop;
     //RMPL[level] = RpAV * (vf->kpe-vf->kps) / vf->dimensions[2];
-    if (myMPI->myrank == 0) {
-        cout << myMPI->prank() << "Max_Rhop=" << Max_Rhop << endl;
-    }
     
     // certainly those outside the center zone (with rhop = 0) can be omitted
     for (iz = vf->dimensions[2]/2-1; iz != 0; iz--) {

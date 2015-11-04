@@ -67,6 +67,10 @@ public:
     /*! \fn int GetNumprocs()
      *  \brief get the number of processors */
     int GetNumprocs();
+    
+    /*! \fn int Lis2Vtk(string filename, string header)
+     *  \brief convert lis file to vtk file */
+    int Lis2Vtk(string filename, string header);
 
 };
 

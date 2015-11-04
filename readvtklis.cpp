@@ -111,20 +111,23 @@ int main(int argc, const char * argv[]) {
                 exit(1);
             }
 
-            if (fio->RhoParMax_flag || fio->MeanSigma_flag || fio->VpecG_flag || fio->VertRho_flag || fio->dSigma_flag || fio->CorrL_flag) {
+            if (fio->RhoParMax_flag || fio->MeanSigma_flag || fio->VpecG_flag || fio->VertRho_flag || fio->dSigma_flag || fio->CorrL_flag || fio->PointCloud_flag) {
                 vf->Read_Data(fio->vtk_filenames[i]);
                 vf->Calculate_Mass_Find_Max();
                 // I have checked the total gas mass and par mass, which is corresponding to mratio = 0.02
             }
             
             // lis part
-            if (fio->RhoParMax_flag || fio->ParNum_flag || fio->HeiPar_flag) {
+            if (fio->RhoParMax_flag || fio->ParNum_flag || fio->HeiPar_flag || fio->PointCloud_flag) {
                 pl->ReadLis(fio->lis_filenames[i]);
             }
             
             // Then something based on both vtk and lis
             if (fio->RhoParMax_flag) {
                 ot->BuildTree(vf, pl);
+            }
+            if (fio->PointCloud_flag) {
+                pl->Lis2Vtk(fio->lis2vtk_filenames[i], vf->Header);
             }
             
             // record_data
@@ -301,7 +304,7 @@ int RecordData(int i, VtkFile *vf, ParticleList *pl, Octree * ot) {
     return 0;
 }
 
-
+#ifdef ENABLE_MPI
 /*! \fn int IntegrateData(VtkFile *vf, Octree *ot)
  *  \brief integrate data in each processor */
 int IntegrateData(VtkFile *vf, Octree *ot)
@@ -354,6 +357,6 @@ int IntegrateData(VtkFile *vf, Octree *ot)
     return 0;
 }
 
-
+#endif
 
 

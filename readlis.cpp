@@ -190,6 +190,47 @@ int ParticleList::GetNumprocs()
     return n_cpu+1;
 }
 
+/********** Lis 2 vtk **********/
+/*! \fn int Lis2Vtk(string filename, string header)
+ *  \brief convert lis file to vtk file */
+int ParticleList::Lis2Vtk(string filename, string header)
+{
+    ofstream file_lis2vtk;
+    file_lis2vtk.open(filename.c_str(), ofstream::out);
+    if (!file_lis2vtk.is_open()) {
+        cout << "Failed to open " << filename << endl;
+        return 1;
+    }
+    
+    file_lis2vtk << "# vtk DataFile Version 2.0\n";
+    file_lis2vtk << header << "\n";
+    file_lis2vtk << "ASCII\n";
+    file_lis2vtk << "DATASET UNSTRUCTURED_POINTS\n";
+    file_lis2vtk << "POINTS " << n << " float\n";
+    
+    for (vector<Particle>::iterator it = List.begin(); it != List.end(); ++it) {
+        file_lis2vtk << it->x[0] << " " << it->x[1] << " " << it->x[2] << "\n";
+    }
+    file_lis2vtk.close();
+    
+    /*
+    file_lis2vtk.open(filename.c_str(), ofstream::app|ofstream::binary);
+    if (!file_lis2vtk.is_open()) {
+        cout << "Failed to open " << filename << endl;
+        return 1;
+    }
+    
+    for (vector<Particle>::iterator it = List.begin(); it != List.end(); ++it) {
+        file_lis2vtk.write((char*)&it->x[0], sizeof(float));
+        file_lis2vtk.write((char*)&it->x[1], sizeof(float));
+        file_lis2vtk.write((char*)&it->x[2], sizeof(float));
+    }
+    
+    file_lis2vtk.close();
+     */
+    return 0;
+}
+
 /********** Destructor **********/
 ParticleList::~ParticleList()
 {

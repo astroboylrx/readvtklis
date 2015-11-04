@@ -46,8 +46,9 @@ public:
     
     vector<string> lis_filenames;                   /*!< the vecotr for lis filenames */
     vector<string> vtk_filenames;                   /*!< the vector for vtk filenames */
+    vector<string> lis2vtk_filenames;               /*!< if converting lis file to vtk file */
     
-    int start_no, end_no, interval;               /*!< the start_number/end_number/interval for file */
+    int start_no, end_no, interval;                 /*!< the start_number/end_number/interval for file */
     int n_file;                                     /*!< the number of file */
     int n_cpu;                                      /*!< the number of processors */
     
@@ -61,6 +62,7 @@ public:
         VertRho_flag,                               /*!< flag: vertical structure of rho_g and rho_p */
         CorrL_flag,                                 /*!< flag: correlation length of Vgas */
         RhopMaxPerLevel_flag,                       /*!< flag: max(rhop) in a sphere with a radius of N*dx */
+        PointCloud_flag,                            /*!< flag: convert lis file to vtk point file */
         //New_flag,                                 /*!< flag: example of new flag */
         UselessEnd_flag;                            /*!< flag: just in order to add flag conveniently */
     // after adding a flag:

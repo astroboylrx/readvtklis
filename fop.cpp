@@ -26,8 +26,8 @@ int FileIO::Print_Stars(string info)
  *  \brief print usage */
 int FileIO::Print_Usage(const char *progname)
 {
-    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -l <level> -d <domain> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL --RhopMaxPerLevel]\n" << endl;
-    cout << "Example: ./readvtklis -c 16 -i comb -b Cout -l 1 -d 0 -s all -f 0:100 -o result.txt --ParNum  --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL --RhopMaxPerLevel" << endl;
+    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -l <level> -d <domain> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL --RhopMaxPerLevel --PointCloud]\n" << endl;
+    cout << "Example: ./readvtklis -c 16 -i comb -b Cout -l 1 -d 0 -s all -f 0:100 -o result.txt --RhoParMax --MeanSigma" << endl;
     return 0;
 }
 
@@ -57,6 +57,7 @@ int FileIO::Initialize(int argc, const char * argv[])
     VertRho_flag = 0;
     CorrL_flag = 0;
     RhopMaxPerLevel_flag = 0;
+    PointCloud_flag = 0;
     
     //Specifying the expected options
     static struct option long_options[] = {
@@ -70,6 +71,7 @@ int FileIO::Initialize(int argc, const char * argv[])
         {"VertRho", no_argument, &VertRho_flag, 1},
         {"CorrL", no_argument, &CorrL_flag, 1},
         {"RhopMaxPerLevel", no_argument, &RhopMaxPerLevel_flag, 1},
+        {"PointCloud", no_argument, &PointCloud_flag, 1},
         // These options don't set a flag
         {"ncpu", required_argument, 0, 'c'},
         {"input", required_argument, 0, 'i'},
@@ -232,7 +234,7 @@ int FileIO::Initialize(int argc, const char * argv[])
     paras.AllocateMemory(n_file);
     
     if (RhopMaxPerLevel_flag) {
-        if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag || CorrL_flag) {
+        if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag || CorrL_flag || PointCloud_flag) {
             cout << "For flag RhopMaxPerLevel, it is not recommended to use it with other flags. " << endl;
             exit(1);
         }
@@ -294,6 +296,14 @@ int FileIO::Generate_Filename()
     if (RhopMaxPerLevel_flag) {
         iof.output_RMPL_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_RMPL.txt";
     }
+    if (PointCloud_flag) {
+        for (int i = start_no; i <= end_no; i+=interval) {
+            stringstream ss;
+            ss << setw(4) << setfill('0') << i;
+            string file_no = ss.str();
+            lis2vtk_filenames.push_back(lis_temp_name+'.'+file_no+'.'+iof.post_name+".vtk");
+        }
+    }
     return 0;
 }
 
@@ -317,7 +327,7 @@ int FileIO::Check_Input_Path_Filename()
     cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
     cout << "The first one is " << *vtk_filenames.begin() << endl;
     Print_Stars("Check Output");
-    if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag || CorrL_flag || RhopMaxPerLevel_flag) {
+    if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag || CorrL_flag || RhopMaxPerLevel_flag || PointCloud_flag) {
         cout << "Output includes: " << endl;
         if (ParNum_flag) {
             cout << "particle numbers" << endl;
@@ -348,6 +358,9 @@ int FileIO::Check_Input_Path_Filename()
         }
         if (RhopMaxPerLevel_flag) {
             cout << "Max particle density in various size level" << endl;
+        }
+        if (PointCloud_flag) {
+            cout << "Convert lis file to vtk points file" << endl;
         }
     } else {
         cout << "Need output choices." << endl;
