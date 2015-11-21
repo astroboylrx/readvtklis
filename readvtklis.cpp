@@ -111,14 +111,14 @@ int main(int argc, const char * argv[]) {
                 exit(1);
             }
 
-            if (fio->RhoParMax_flag || fio->MeanSigma_flag || fio->VpecG_flag || fio->VertRho_flag || fio->dSigma_flag || fio->CorrL_flag || fio->PointCloud_flag) {
+            if (fio->RhoParMax_flag || fio->MeanSigma_flag || fio->VpecG_flag || fio->VertRho_flag || fio->dSigma_flag || fio->CorrL_flag || fio->PointCloud_flag || fio->GasPar_flag) {
                 vf->Read_Data(fio->vtk_filenames[i]);
                 vf->Calculate_Mass_Find_Max();
                 // I have checked the total gas mass and par mass, which is corresponding to mratio = 0.02
             }
             
             // lis part
-            if (fio->RhoParMax_flag || fio->ParNum_flag || fio->HeiPar_flag || fio->PointCloud_flag) {
+            if (fio->RhoParMax_flag || fio->ParNum_flag || fio->HeiPar_flag || fio->PointCloud_flag || fio->GasPar_flag) {
                 pl->ReadLis(fio->lis_filenames[i]);
             }
             
@@ -264,8 +264,14 @@ int RecordData(int i, VtkFile *vf, ParticleList *pl, Octree * ot) {
 #endif
                     );
     }
-    
-#else
+    if (fio->GasPar_flag) {
+        vf->GasPar();
+        pl->GasPar(vf->dimensions, vf->spacing);
+        std::copy(&(vf->dynscal[0]), &(vf->dynscal[16]), &(myMPI->paras.GasHst[i][0]));
+        std::copy(&(vf->dynscal[16]), &(vf->dynscal[32]), &(myMPI->paras.ParHst[i][0]));
+        std::copy(&(pl->dynscal[0]), &(pl->dynscal[20]), &(myMPI->paras.ParLis[i][0]));
+    }
+#else /* ENABLE_MPI */
     fio->paras.Otime[i] = vf->time;
     if (fio->ParNum_flag) {
         fio->paras.N_par[i] = pl->n;
@@ -298,8 +304,14 @@ int RecordData(int i, VtkFile *vf, ParticleList *pl, Octree * ot) {
 #endif
                     );
     }
-    
-#endif
+    if (fio->GasPar_flag) {
+        vf->GasPar();
+        pl->GasPar(vf->dimensions, vf->spacing);
+        std::copy(&(vf->dynscal[0]), &(vf->dynscal[16]), &(fio->paras.GasHst[i][0]));
+        std::copy(&(vf->dynscal[16]), &(vf->dynscal[32]), &(fio->paras.ParHst[i][0]));
+        std::copy(&(pl->dynscal[0]), &(pl->dynscal[20]), &(fio->paras.ParLis[i][0]));
+    }
+#endif /* ENABLE_MPI */
     
     return 0;
 }
@@ -352,6 +364,13 @@ int IntegrateData(VtkFile *vf, Octree *ot)
     }
     if (fio->RhopMaxPerLevel_flag) {
         MPI::COMM_WORLD.Allreduce(ot->RMPL, fio->paras.RMPL, ot->level+1, MPI::FLOAT, MPI::MAX);
+    }
+    if (fio->GasPar_flag) {
+        for (int i = 0; i != fio->n_file; i++) {
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.GasHst[i], fio->paras.GasHst[i], 16, MPI::FLOAT, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.ParHst[i], fio->paras.ParHst[i], 16, MPI::FLOAT, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.ParLis[i], fio->paras.ParLis[i], 20, MPI::FLOAT, MPI::SUM);
+        }
     }
 
     return 0;

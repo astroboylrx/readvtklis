@@ -152,29 +152,71 @@ public:
     // rule of thumb: if multiple parameters are written to a single file, then gas properties always go first
     
     // output to result_Par.txt (in column-order)
-    float *Otime;                                  /*!< orbit time */
+    float *Otime;                                   /*!< orbit time */
     long *N_par;                                    /*!< number of par */
-    float *Max_Rhop;                               /*!< max partical density */
-    float *RpAV;                                   /*!< <rho_p> */
-    float *RpSQ;                                   /*!< <rho_p^2>^0.5 */
-    float *RpQU;                                   /*!< <rho_p^4>^0.25 */
-    float *Hp;                                     /*!< par scale height */
-    float *Hp_in1sigma;                            /*!< par scale height derived from Gaussian 1sigma range */
-    float *dSigma;                                 /*!< the change of gas surface density due to outflow */
+    float *Max_Rhop;                                /*!< max partical density */
+    float *RpAV;                                    /*!< <rho_p> */
+    float *RpSQ;                                    /*!< <rho_p^2>^0.5 */
+    float *RpQU;                                    /*!< <rho_p^4>^0.25 */
+    float *Hp;                                      /*!< par scale height */
+    float *Hp_in1sigma;                             /*!< par scale height derived from Gaussian 1sigma range */
+    float *dSigma;                                  /*!< the change of gas surface density due to outflow */
     
     // output to result_MeanSigma.txt, first sigma_g and then sigma_p
-    float **MeanSigma;                             /*!< sigma_g and sigma_p averaged over y */
+    float **MeanSigma;                              /*!< sigma_g and sigma_p averaged over y */
     
     // output to result_VpecG.txt, first x, then y, and then z
-    float **VpecG;                                 /*!< Vpec_g averaged horizontally at each z, weighted by rho_g */
+    float **VpecG;                                  /*!< Vpec_g averaged horizontally at each z, weighted by rho_g */
     
     // output to result_VertRho.txt, first rho_g and then rho_p
-    float **VertRho;                               /*!< Vertical Structure of rho_g and rho_p */
+    float **VertRho;                                /*!< Vertical Structure of rho_g and rho_p */
     
-    float **CorrL;                                 /*!< Correlation Length  */
+    float **CorrL;                                  /*!< Correlation Length  */
 #ifdef CorrValue
-    float **CorrV;                                 /*!< Correlation Value */
+    float **CorrV;                                  /*!< Correlation Value */
 #endif
+    
+    // output to result_GasPar.txt
+    ////////////////////////////////////////////////////////////////////
+    // For volume-averaged properties, gas momentum or kinetic energy,
+    // P_tot = SUM_cells(m_gas*F) = dV_cell * SUM_cells(rho_gas*F)
+    // P_tot/V = SUM_cells(rho_gas*F) * dV_cell/V
+    //         = SUM_cells(rho_gas*F) * dx*dy*dz / (Nx*dx*Ny*dy*Nz*dz)
+    //         = SUM_cells(rho_gas*F) / (Nx*Ny*Nz)
+    // here F is u_gas or 0.5*u_gas^2, respectively. Similar formula can
+    // be applied to the Particle-in-Mesh momentum or kinetic energy.
+    ////////////////////////////////////////////////////////////////////
+    // For area-averaged properties, gas momentum or kinetic energy,
+    // P_tot/A = SUM_cells(rho_gas*F) * dV_cell/A
+    //         = SUM_cells(rho_gas*F) * dx*dy*dz / (Nx*dx*Ny*dy)
+    //         = SUM_cells(rho_gas*F) * dz / (Nx*Ny)
+    // here F is u_gas or 0.5*u_gas^2, respectively. Similar formula can
+    // be applied to the Particle-in-Mesh momentum or kinetic energy.
+    ////////////////////////////////////////////////////////////////////
+    // There is no point to calculate volume-averaged or area-averaged
+    // velocity. Since what is averaged is the mass, velocity is the
+    // weight.
+    ////////////////////////////////////////////////////////////////////
+    // For the particle properties computed directly from all the
+    // particles, note that you need to calculate the mass of one single
+    // particle in the simulations.
+    // Sigma_gas = Integrate[Exp[-z^2/2], {z, -Infinity, Infinity}]
+    //           = Sigma_gas_0 = sqrt(2*Pi) = 2.506628274631000502415765
+    // m_par = Z * Sigma_gas * A / N_par (if only one species)
+    // So,
+    // V_par = SUM_pars(v_par)/N_par
+    // P_tot/V = SUM_pars(m_par*v_par)/V
+    // P_tot/A = SUM_pars(m_par*v_par)/A
+    // Ek_par/V = SUM_pars(0.5*m_par*v_par*v_par)/V
+    // Ek_par/A = SUM_pars(0.5*m_par*v_par*v_par)/A
+    ////////////////////////////////////////////////////////////////////
+    
+    
+    
+    
+    float **GasHst;                                /*!< volume-averaged gas properties, in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A */
+    float **ParHst;                                /*!< volume-averaged particle properties, in the order of p_par[x,y,z,tot]/V, Ek_par[x,y,z,tot]/V, then area-averaged particle properties, in the order of p_par[x,y,z,tot]/A, Ek_par[x,y,z,tot]/A */
+    float **ParLis;                                 /*!< particle dynamical properties directly from all the particles, in the order of SUM(v_par[x,y,z,tot])/Npar, SUM(p_par[x,y,z,tot])/V, SUM(p_par[x,y,z,tot])/A, SUM(Ek_par[x,y,z,tot])/V, SUM(Ek_par[x,y,z,tot])/A */
     
     // output to result_RMPL.txt
     float *RMPL;                                    /*!< Rhop_Max Per Level */
@@ -182,9 +224,8 @@ public:
     /******relative to calculation********/
     float ****V_gas_0;                              /*!< initial v_gas */
     int dimensions[3];                              /*!< the number of cells in each dimension */
-    float spacing[3];                              /*!< the spacing of coordinate */
-    float *ccx, *ccy, *ccz;                        /*!< cell center coordinates for plots */
-    
+    float spacing[3];                               /*!< the spacing of coordinate */
+    float *ccx, *ccy, *ccz;                         /*!< cell center coordinates for plots */
     
     /*! \fn int AllocateMemory(int n_file)
      *  \brief allocate memory to parameters (first level)

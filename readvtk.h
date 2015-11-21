@@ -98,7 +98,7 @@ public:
     // ORIGIN x y z
     // SPACING s_x s_y s_z
     int dimensions[3];                          /*!< the number of cells in each dimension */
-    int kps, kpe;                               /*!< the begin/end indices of the cells that correspond to the lower/upper initial Hp */
+    int kps, kpe;                               /*!< the begin/end indices of the cells that correspond to the lower/upper initial 4*Hp=0.1 */
     float origin[3];                            /*!< the coordinate of origin point */
     float spacing[3];                           /*!< the spacing of coordinate */
     float L[3];                                 /*!< the length of box */
@@ -118,6 +118,7 @@ public:
     float RpSQ;                                 /*!< <rho_p^2>^0.5 */
     float RpQU;                                 /*!< <rho_p^4>^0.25 */
     float dSigma;                               /*!< change of gas surface density due to outflow */
+    float dynscal[32];                           /*!< volume-averaged gas properties, in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A, then volume-averaged particle properties, in the order of p_par[x,y,z,tot]/V, Ek_par[x,y,z,tot]/V, then area-averaged particle properties, in the order of p_par[x,y,z,tot]/A, Ek_par[x,y,z,tot]/A */
     
     VtkFile();                                  /*!< constructor */
     ~VtkFile();                                 /*!< destructor */
@@ -162,6 +163,10 @@ public:
                 , float *CorrV
 #endif
                 );
+    
+    /*! \fn int GasPar()
+     *  \brief calculate the basic dynamic info */
+    int GasPar();
     
 };
 

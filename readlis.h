@@ -44,6 +44,7 @@ public:
     float x2dl, x2du;               /*!< lower/upper x2 range for data in this domain  */
     float x3dl, x3du;               /*!< lower/upper x3 range for data in this domain  */
     vector <Particle> List;         /*!< particle list vector */
+    float dynscal[20];              /*!< particle dynamical properties directly from all the particles, in the order of SUM(v_par[x,y,z,tot])/Npar, SUM(p_par[x,y,z,tot])/V, SUM(Ek_par[x,y,z,tot])/V, SUM(p_par[x,y,z,tot])/A, SUM(Ek_par[x,y,z,tot])/A */
     
     ParticleList();                 /*!< constructor */
     ~ParticleList();                /*!< destructor */
@@ -71,6 +72,10 @@ public:
     /*! \fn int Lis2Vtk(string filename, string header)
      *  \brief convert lis file to vtk file */
     int Lis2Vtk(string filename, string header);
+    
+    /*! \fn int GasPar(int dimension[3], float spacing[3])
+     *  \brief calculate the basic dynamic info */
+    int GasPar(int dimension[3], float spacing[3]);
 
 };
 

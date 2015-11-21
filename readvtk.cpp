@@ -386,8 +386,8 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     if (cell_center == NULL) { //cout << myMPI->myrank << " is here." << endl;
         Construct_Coor(dimensions);
     }
-    kps = dimensions[2]/2 - int(0.075/spacing[2]);
-    kpe = dimensions[2]/2 + int(0.075/spacing[2]);
+    kps = dimensions[2]/2 - int(round(0.1/spacing[2]));
+    kpe = dimensions[2]/2 + int(round(0.1/spacing[2]));
     for (int i = 0; i != 3; i++) {
         L[i] = dimensions[i] * spacing[i];
     }
@@ -792,6 +792,54 @@ int VtkFile::CorrLen(float *CorrL
     delete [] corrMx;
     delete [] corrVx;
     delete [] corrRho;
+    return 0;
+}
+
+/********** GasPar **********/
+/*! \fn int GasPar()
+ *  \brief calculate the basic dynamic info */
+int VtkFile::GasPar()
+{
+    float temp_p_gas_i, temp_p_par_i;
+    // initialization
+    for (int i = 0; i != 32; i++) {
+        dynscal[i] = 0;
+    }
+    
+    // serious compuation
+    for (int iz = 0; iz != dimensions[2]; iz++) {
+        for (int iy = 0; iy != dimensions[1]; iy++) {
+            for (int ix = 0; ix != dimensions[0]; ix++) {
+                //std::copy(&(cd_vector[0].data[iz][iy][ix][0]), &(cd_vector[0].data[iz][iy][ix][4]), &(dynscal[3]));
+                for (int i = 0; i != 3; i++) {
+                    temp_p_gas_i = cd_vector[0].data[iz][iy][ix][i];
+                    dynscal[i] += temp_p_gas_i; // p_gas
+                    dynscal[i+4] += 0.5*temp_p_gas_i*temp_p_gas_i/cd_scalar[0].data[iz][iy][ix]; // Ek_gas
+                    temp_p_par_i = cd_vector[1].data[iz][iy][ix][i];
+                    dynscal[i+16] += temp_p_par_i; // p_par
+                    // notice rho_par might be ~0 (or smaller)
+                    if (cd_scalar[1].data[iz][iy][ix] > 1e-15 || cd_scalar[1].data[iz][iy][ix] < -1e-15) {
+                        dynscal[i+20] += 0.5*temp_p_par_i*temp_p_par_i/cd_scalar[1].data[iz][iy][ix]; // Ek_par
+                    }
+                }
+            }
+        }
+    }
+    dynscal[3] = sqrt(dynscal[0]*dynscal[0]+dynscal[1]*dynscal[1]+dynscal[2]*dynscal[2]); // p_gas_tot
+    dynscal[7] = dynscal[4]+dynscal[5]+dynscal[6]; // Ek_gas_tot
+    dynscal[19] = sqrt(dynscal[16]*dynscal[16]+dynscal[17]*dynscal[17]+dynscal[18]*dynscal[18]); // p_par_tot
+    dynscal[23] = dynscal[20]+dynscal[21]+dynscal[22]; // Ek_par_tot
+    
+    // See global.h
+    // volume-averaged: *1/Nx/Ny/Nz
+    // area-averaged: *dz/Nx/Ny
+    
+    for (int i = 0; i != 8; i++) {
+        dynscal[i+8] = dynscal[i] * spacing[2] / dimensions[1] / dimensions[0];
+        dynscal[i] /= (dimensions[2]*dimensions[1]*dimensions[0]);
+        dynscal[i+24] = dynscal[i+16] * spacing[2] / dimensions[1] / dimensions[0];
+        dynscal[i+16] /= (dimensions[2]*dimensions[1]*dimensions[0]);
+    }
     return 0;
 }
 

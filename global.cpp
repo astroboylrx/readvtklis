@@ -46,6 +46,23 @@ int Paras2probe::AllocateMemory(int n_file)
 #ifdef CorrValue
     CorrV = new float*[n_file];
 #endif
+    GasHst = new float*[n_file];
+    ParHst = new float*[n_file];
+    ParLis = new float*[n_file];
+    for (int i = 0; i != n_file; i++) {
+        GasHst[i] = new float[16];
+        ParHst[i] = new float[16];
+        ParLis[i] = new float[20];
+        for (int j = 0; j != 16; j++) {
+            GasHst[i][j] = 0;
+            ParHst[i][j] = 0;
+            ParLis[i][j] = 0;
+        }
+        for (int j = 16; j != 20; j++) {
+            ParLis[i][j] = 0;
+        }
+    }
+    
     return 0;
 }
 

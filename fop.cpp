@@ -26,7 +26,7 @@ int FileIO::Print_Stars(string info)
  *  \brief print usage */
 int FileIO::Print_Usage(const char *progname)
 {
-    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -l <level> -d <domain> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL --RhopMaxPerLevel --PointCloud]\n" << endl;
+    cout << "USAGE: " << progname << " -c <n_cpu> -i <data_path> -b <data_basename> -l <level> -d <domain> -s <post_name> -f <# (range(f1:f2))> -o <output_path_name> [--ParNum --RhoParMax --HeiPar --MeanSigma --VpecG --VertRho --dSigma --CorrL --RhopMaxPerLevel --PointCloud --GasPar]\n" << endl;
     cout << "Example: ./readvtklis -c 16 -i comb -b Cout -l 1 -d 0 -s all -f 0:100 -o result.txt --RhoParMax --MeanSigma" << endl;
     return 0;
 }
@@ -58,6 +58,7 @@ int FileIO::Initialize(int argc, const char * argv[])
     CorrL_flag = 0;
     RhopMaxPerLevel_flag = 0;
     PointCloud_flag = 0;
+    GasPar_flag = 0;
     
     //Specifying the expected options
     static struct option long_options[] = {
@@ -72,6 +73,7 @@ int FileIO::Initialize(int argc, const char * argv[])
         {"CorrL", no_argument, &CorrL_flag, 1},
         {"RhopMaxPerLevel", no_argument, &RhopMaxPerLevel_flag, 1},
         {"PointCloud", no_argument, &PointCloud_flag, 1},
+        {"GasPar", no_argument, &GasPar_flag, 1},
         // These options don't set a flag
         {"ncpu", required_argument, 0, 'c'},
         {"input", required_argument, 0, 'i'},
@@ -234,7 +236,7 @@ int FileIO::Initialize(int argc, const char * argv[])
     paras.AllocateMemory(n_file);
     
     if (RhopMaxPerLevel_flag) {
-        if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag || CorrL_flag || PointCloud_flag) {
+        if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag || CorrL_flag || PointCloud_flag || GasPar_flag) {
             cout << "For flag RhopMaxPerLevel, it is not recommended to use it with other flags. " << endl;
             exit(1);
         }
@@ -304,6 +306,9 @@ int FileIO::Generate_Filename()
             lis2vtk_filenames.push_back(lis_temp_name+'.'+file_no+'.'+iof.post_name+".vtk");
         }
     }
+    if (GasPar_flag) {
+        iof.output_gaspar_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_GasPar.txt";
+    }
     return 0;
 }
 
@@ -327,7 +332,7 @@ int FileIO::Check_Input_Path_Filename()
     cout << "We generate " << vtk_filenames.size() << " vtk_filenames in total." << endl;
     cout << "The first one is " << *vtk_filenames.begin() << endl;
     Print_Stars("Check Output");
-    if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag || CorrL_flag || RhopMaxPerLevel_flag || PointCloud_flag) {
+    if (ParNum_flag || RhoParMax_flag || HeiPar_flag || MeanSigma_flag || VpecG_flag || VertRho_flag || dSigma_flag || CorrL_flag || RhopMaxPerLevel_flag || PointCloud_flag || GasPar_flag) {
         cout << "Output includes: " << endl;
         if (ParNum_flag) {
             cout << "particle numbers" << endl;
@@ -361,6 +366,9 @@ int FileIO::Check_Input_Path_Filename()
         }
         if (PointCloud_flag) {
             cout << "Convert lis file to vtk points file" << endl;
+        }
+        if (GasPar_flag) {
+            cout << "Basic averaged dynamical info of gas and particles" << endl;
         }
     } else {
         cout << "Need output choices." << endl;
@@ -576,7 +584,6 @@ int FileIO::Output_Data()
 #endif
         
     }
-    
     if (RhopMaxPerLevel_flag) {
         ofstream file_RhopMax;
         file_RhopMax.open(iof.output_RMPL_path_name.c_str(), ofstream::out);
@@ -594,6 +601,84 @@ int FileIO::Output_Data()
         }
         
         file_RhopMax.close();
+    }
+    if (GasPar_flag) {
+        ofstream file_GasPar;
+        file_GasPar.open(iof.output_gaspar_name.c_str(), ofstream::out);
+        if (!file_GasPar.is_open()) {
+            cout << "Failed to open " << iof.output_RMPL_path_name << endl;
+            return 1;
+        }
+        file_GasPar << "# The first part of particle dynamic info (column 17-32) is calculated from the Particle-in-Mesh output (vtk files), the second part of particle dynamic info (column 33 - 42) is computed directly from all the particle data (lis files).\n";
+        file_GasPar << setw(15) << setfill(' ') << "#orbit_time";
+        file_GasPar << setw(15) << setfill(' ') << "P_g,x/V";
+        file_GasPar << setw(15) << setfill(' ') << "P_g,y/V";
+        file_GasPar << setw(15) << setfill(' ') << "P_g,z/V";
+        file_GasPar << setw(15) << setfill(' ') << "P_g/V";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g,x/V";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g,y/V";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g,z/V";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g/V";
+        file_GasPar << setw(15) << setfill(' ') << "P_g,x/A";
+        file_GasPar << setw(15) << setfill(' ') << "P_g,y/A";
+        file_GasPar << setw(15) << setfill(' ') << "P_g,z/A";
+        file_GasPar << setw(15) << setfill(' ') << "P_g/A";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g,x/A";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g,y/A";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g,z/A";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g/A";
+        file_GasPar << setw(15) << setfill(' ') << "P_p,x/V";
+        file_GasPar << setw(15) << setfill(' ') << "P_p,y/V";
+        file_GasPar << setw(15) << setfill(' ') << "P_p,z/V";
+        file_GasPar << setw(15) << setfill(' ') << "P_p/V";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p,x/V";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p,y/V";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p,z/V";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p/V";
+        file_GasPar << setw(15) << setfill(' ') << "P_p,x/A";
+        file_GasPar << setw(15) << setfill(' ') << "P_p,y/A";
+        file_GasPar << setw(15) << setfill(' ') << "P_p,z/A";
+        file_GasPar << setw(15) << setfill(' ') << "P_p/A";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p,x/A";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p,y/A";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p,z/A";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p/A";
+        file_GasPar << setw(15) << setfill(' ') << "v_p,x/Npar";
+        file_GasPar << setw(15) << setfill(' ') << "v_p,y/Npar";
+        file_GasPar << setw(15) << setfill(' ') << "v_p,z/Npar";
+        file_GasPar << setw(15) << setfill(' ') << "v_p/Npar";
+        file_GasPar << setw(15) << setfill(' ') << "P_p,x/V";
+        file_GasPar << setw(15) << setfill(' ') << "P_p,y/V";
+        file_GasPar << setw(15) << setfill(' ') << "P_p,z/V";
+        file_GasPar << setw(15) << setfill(' ') << "P_p/V";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p,x/V";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p,y/V";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p,z/V";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p/V";
+        file_GasPar << setw(15) << setfill(' ') << "P_p,x/A";
+        file_GasPar << setw(15) << setfill(' ') << "P_p,y/A";
+        file_GasPar << setw(15) << setfill(' ') << "P_p,z/A";
+        file_GasPar << setw(15) << setfill(' ') << "P_p/A";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p,x/A";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p,y/A";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p,z/A";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_p/A";
+        file_GasPar << endl;
+        
+        for (int i = 0; i != n_file; i++) {
+            file_GasPar << setw(15) << scientific << paras.Otime[i];
+            for (int j = 0; j != 16; j++) {
+                file_GasPar << setw(15) << scientific << fio->paras.GasHst[i][j];
+            }
+            for (int j = 0; j != 16; j++) {
+                file_GasPar << setw(15) << scientific << fio->paras.ParHst[i][j];
+            }
+            for (int j = 0; j != 20; j++) {
+                file_GasPar << setw(15) << scientific << fio->paras.ParLis[i][j];
+            }
+            file_GasPar << "\n";
+        }
+        file_GasPar.close();
     }
 
     return 0;

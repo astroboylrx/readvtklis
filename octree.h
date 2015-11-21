@@ -125,6 +125,7 @@ public:
     /*! \fn void RhopMaxPerLevel()
      *  \brief Find the max rhop within a sphere with radius of N*dx */
     void RhopMaxPerLevel();
+    
 };
 
 
