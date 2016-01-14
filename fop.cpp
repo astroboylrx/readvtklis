@@ -241,6 +241,12 @@ int FileIO::Initialize(int argc, const char * argv[])
             exit(1);
         }
     }
+    if (GasPar_flag) {
+        if (start_no == end_no) {
+            cout << "For basic gas/par dynamic info, only reading one snapshot is not allowed. " << endl;
+            exit(1);
+        }
+    }
     return 0;
 }
 
@@ -308,6 +314,7 @@ int FileIO::Generate_Filename()
     }
     if (GasPar_flag) {
         iof.output_gaspar_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_GasPar.txt";
+        iof.output_GPME_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_GPME.txt";
     }
     return 0;
 }
@@ -606,11 +613,12 @@ int FileIO::Output_Data()
         ofstream file_GasPar;
         file_GasPar.open(iof.output_gaspar_name.c_str(), ofstream::out);
         if (!file_GasPar.is_open()) {
-            cout << "Failed to open " << iof.output_RMPL_path_name << endl;
+            cout << "Failed to open " << iof.output_gaspar_name << endl;
             return 1;
         }
         file_GasPar << "# The first part of particle dynamic info (column 17-32) is calculated from the Particle-in-Mesh output (vtk files), the second part of particle dynamic info (column 33 - 42) is computed directly from all the particle data (lis files).\n";
         file_GasPar << setw(15) << setfill(' ') << "#orbit_time";
+        ////////////////////////////////////////////////////////
         file_GasPar << setw(15) << setfill(' ') << "P_g,x/V";
         file_GasPar << setw(15) << setfill(' ') << "P_g,y/V";
         file_GasPar << setw(15) << setfill(' ') << "P_g,z/V";
@@ -627,6 +635,24 @@ int FileIO::Output_Data()
         file_GasPar << setw(15) << setfill(' ') << "Ek_g,y/A";
         file_GasPar << setw(15) << setfill(' ') << "Ek_g,z/A";
         file_GasPar << setw(15) << setfill(' ') << "Ek_g/A";
+        ////////////////////////////////////////////////////////
+        file_GasPar << setw(15) << setfill(' ') << "P_g,x/V2";
+        file_GasPar << setw(15) << setfill(' ') << "P_g,y/V2";
+        file_GasPar << setw(15) << setfill(' ') << "P_g,z/V2";
+        file_GasPar << setw(15) << setfill(' ') << "P_g/V2";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g,x/V2";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g,y/V2";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g,z/V2";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g/V2";
+        file_GasPar << setw(15) << setfill(' ') << "P_g,x/A2";
+        file_GasPar << setw(15) << setfill(' ') << "P_g,y/A2";
+        file_GasPar << setw(15) << setfill(' ') << "P_g,z/A2";
+        file_GasPar << setw(15) << setfill(' ') << "P_g/A2";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g,x/A2";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g,y/A2";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g,z/A2";
+        file_GasPar << setw(15) << setfill(' ') << "Ek_g/A2";
+        ////////////////////////////////////////////////////////
         file_GasPar << setw(15) << setfill(' ') << "P_p,x/V";
         file_GasPar << setw(15) << setfill(' ') << "P_p,y/V";
         file_GasPar << setw(15) << setfill(' ') << "P_p,z/V";
@@ -643,6 +669,7 @@ int FileIO::Output_Data()
         file_GasPar << setw(15) << setfill(' ') << "Ek_p,y/A";
         file_GasPar << setw(15) << setfill(' ') << "Ek_p,z/A";
         file_GasPar << setw(15) << setfill(' ') << "Ek_p/A";
+        ////////////////////////////////////////////////////////
         file_GasPar << setw(15) << setfill(' ') << "v_p,x/Npar";
         file_GasPar << setw(15) << setfill(' ') << "v_p,y/Npar";
         file_GasPar << setw(15) << setfill(' ') << "v_p,z/Npar";
@@ -671,6 +698,9 @@ int FileIO::Output_Data()
                 file_GasPar << setw(15) << scientific << fio->paras.GasHst[i][j];
             }
             for (int j = 0; j != 16; j++) {
+                file_GasPar << setw(15) << scientific << fio->paras.GasHst2[i][j];
+            }
+            for (int j = 0; j != 16; j++) {
                 file_GasPar << setw(15) << scientific << fio->paras.ParHst[i][j];
             }
             for (int j = 0; j != 20; j++) {
@@ -679,6 +709,63 @@ int FileIO::Output_Data()
             file_GasPar << "\n";
         }
         file_GasPar.close();
+        
+        // Part II
+        ofstream file_GPME;
+        file_GPME.open(iof.output_GPME_name.c_str(), ofstream::out);
+        if (!file_GPME.is_open()) {
+            cout << "Failed to open " << iof.output_GPME_name << endl;
+            return 1;
+        }
+        
+        // first line, 0 + time
+        file_GPME << setw(15) << scientific << 0.0;
+        for (int i = 0; i != n_file; i++) {
+            file_GPME << setw(15) << scientific << paras.Otime[i];
+        }
+        file_GPME << "\n";
+        
+        float *ccz1 = new float[paras.dimensions[2]+1];
+        ccz1[0] = 0.0;
+        for (int iz = 0; iz != paras.dimensions[2]; iz++) {
+            ccz1[iz+1] = paras.ccz[iz];
+        }
+        
+        int Nz1 = paras.dimensions[2]+1;
+        for (int iz = 0; iz != 4*Nz1*9; iz++) {
+            if (iz%(4*Nz1) == 0) {
+                // put a cutting line
+                file_GPME << "#";
+                for (int i = 0; i != n_file+1; i++) {
+                    file_GPME << setw(15) << setfill('-') << "-";
+                }
+                file_GPME << "\n" << setfill(' ');
+            }
+
+            file_GPME << setw(15) << scientific << ccz1[iz%Nz1];
+            for (int i = 0; i != n_file; i++) {
+                file_GPME << setw(15) << scientific << paras.GPME[i][iz];
+            }
+            file_GPME << "\n";
+        }
+        for (int iz = 0; iz != 4*Nz1*9; iz++) {
+            if (iz%(4*Nz1) == 0) {
+                // put a cutting line
+                file_GPME << "#";
+                for (int i = 0; i != n_file+1; i++) {
+                    file_GPME << setw(15) << setfill('-') << "-";
+                }
+                file_GPME << "\n" << setfill(' ');
+            }
+            file_GPME << setw(15) << scientific << ccz1[iz%Nz1];
+            for (int i = 0; i != n_file; i++) {
+                file_GPME << setw(15) << scientific << paras.GPMEPar[i][iz];
+            }
+            file_GPME << "\n";
+        }
+        
+        file_GPME.close();
+        
     }
 
     return 0;

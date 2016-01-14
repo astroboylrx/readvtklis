@@ -47,14 +47,19 @@ int Paras2probe::AllocateMemory(int n_file)
     CorrV = new float*[n_file];
 #endif
     GasHst = new float*[n_file];
+    GasHst2 = new float*[n_file];
     ParHst = new float*[n_file];
     ParLis = new float*[n_file];
+    GPME = new double*[n_file];
+    GPMEPar = new double*[n_file];
     for (int i = 0; i != n_file; i++) {
         GasHst[i] = new float[16];
+        GasHst2[i] = new float[16];
         ParHst[i] = new float[16];
         ParLis[i] = new float[20];
         for (int j = 0; j != 16; j++) {
             GasHst[i][j] = 0;
+            GasHst2[i][j] = 0;
             ParHst[i][j] = 0;
             ParLis[i][j] = 0;
         }
@@ -95,6 +100,14 @@ int Paras2probe::AllocateSubMemory(int n_file, int *dimensions)
             CorrV[i][j] = 0;
         }
 #endif
+        GPME[i] = new double[4*(dimensions[2]+1)*9];
+        for (int j = 0; j != 4*(dimensions[2]+1)*9; j++) {
+            GPME[i][j] = 0;
+        }
+        GPMEPar[i] = new double[4*(dimensions[2]+1)*9];
+        for (int j = 0; j != 4*(dimensions[2]+1)*9; j++) {
+            GPMEPar[i][j] = 0;
+        }
     }
     return 0;
 }

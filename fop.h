@@ -23,6 +23,7 @@ public:
     string post_name;                               /*!< the post name for data file */
     string output_path_name;                        /*!< the name for output file */
     string output_gaspar_name;                      /*!< the basic dynamic info output file */
+    string output_GPME_name;                      /*!< the basic dynamic info output file */
     string output_sigma_path_name;                  /*!< the name for output of MeanSigma */
     string output_vpecg_path_name;                  /*!< the name for output of VpecG */
     string output_vertrho_path_name;                /*!< the name for output of VertRho */

@@ -118,7 +118,10 @@ public:
     float RpSQ;                                 /*!< <rho_p^2>^0.5 */
     float RpQU;                                 /*!< <rho_p^4>^0.25 */
     float dSigma;                               /*!< change of gas surface density due to outflow */
-    float dynscal[32];                           /*!< volume-averaged gas properties, in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A, then volume-averaged particle properties, in the order of p_par[x,y,z,tot]/V, Ek_par[x,y,z,tot]/V, then area-averaged particle properties, in the order of p_par[x,y,z,tot]/A, Ek_par[x,y,z,tot]/A */
+    float dynscal[32];                          /*!< volume-averaged gas properties, in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A, then volume-averaged particle properties, in the order of p_par[x,y,z,tot]/V, Ek_par[x,y,z,tot]/V, then area-averaged particle properties, in the order of p_par[x,y,z,tot]/A, Ek_par[x,y,z,tot]/A */
+    float dynscal2[16];                          /*!< volume-averaged gas properties inside z = +/- 0.1 (the overlap region with the smallest box), in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A */
+    double *GPME;                                /*!< see the definition in global.h */
+    double *GPMEPar;                             /*!< see the definition in global.h */
     
     VtkFile();                                  /*!< constructor */
     ~VtkFile();                                 /*!< destructor */

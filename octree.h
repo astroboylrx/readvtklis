@@ -26,7 +26,7 @@ public:
     OctreeNode *Father;                             /*!< father node pointer of this node */
     vector<OctreeNode *> Daughter;                  /*!< eight daughters in the increasing order of x, y and z */
     float rhop;                                     /*!< the sum of particle density for all the cells in this node */
-    int Nx;                                         /*!< the number of cells in 1 direction,  forced to be the same in each directions */
+    int Nx;                                         /*!< the number of cells in 1 direction,  forced to be the same in each directions (notice that the numerical domain might not be cubic) */
     float Lx;                                       /*!< length of this node */
     float center[3];                                /*!< the coordinates of the center of this node */
     long np;                                        /*!< number of particles in this node */

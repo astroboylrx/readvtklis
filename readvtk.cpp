@@ -206,6 +206,8 @@ inline bool operator!=(int (&dimensions)[3], VtkFile &vf)
 VtkFile::VtkFile()
 {
     cell_center = NULL;
+    GPME = NULL;
+    GPMEPar = NULL;
 }
 
 /********** Destructor **********/
@@ -390,6 +392,21 @@ int VtkFile::Read_Header_Record_Pos(string filename)
     kpe = dimensions[2]/2 + int(round(0.1/spacing[2]));
     for (int i = 0; i != 3; i++) {
         L[i] = dimensions[i] * spacing[i];
+    }
+    
+    if (GPME == NULL) {
+        GPME = new double[4*dimensions[2]];
+        for (int i = 0; i != 4*dimensions[2]; i++) {
+            GPME[i] = 0;
+        }
+        //cout << "GPME initial allocation done!\n";
+    }
+    if (GPMEPar == NULL) {
+        GPMEPar = new double[4*dimensions[2]];
+        for (int i = 0; i != 4*dimensions[2]; i++) {
+            GPMEPar[i] = 0;
+        }
+        //cout << "GPMEPar initial allocation done!\n";
     }
     
     //long filepos1, filepos2;
@@ -696,7 +713,7 @@ int VtkFile::CorrLen(float *CorrL
                      )
 {
     int Nx = dimensions[0], Ny = dimensions[1], Nz = dimensions[2];
-    int l = 0, Nl = Nx/2+1, Nlines = Nz * Nl, lcMx, lcVx, lcRho;
+    int l = 0, Nl = Nx/2+1, lcMx, lcVx, lcRho;
     float MxMx, RhoRho, MxBar, RhoBar, VxBar;
     float *corrMx = new float[Nl];
     float *corrVx = new float[Nl];
@@ -751,6 +768,7 @@ int VtkFile::CorrLen(float *CorrL
             corrVx[l] /= corrVx[0];
             corrRho[l] /= corrRho[0];
 #ifdef CorrValue
+            int Nlines = Nz * Nl;
             CorrV[Nl*iz+l] = corrMx[l];
             CorrV[Nlines+Nl*iz+l] = corrVx[l];
             CorrV[2*Nlines+Nl*iz+l] = corrRho[l];            
@@ -801,12 +819,20 @@ int VtkFile::CorrLen(float *CorrL
 int VtkFile::GasPar()
 {
     float temp_p_gas_i, temp_p_par_i;
-    // initialization
+    // initialization to zero since they only use +=
     for (int i = 0; i != 32; i++) {
         dynscal[i] = 0;
     }
+    for (int i = 0; i != 16; i++) {
+        dynscal2[i] = 0;
+    }
+    for (int i = 0; i != 4*dimensions[2]; i++) {
+        GPME[i] = 0;
+        GPMEPar[i] = 0;
+    }
     
-    // serious compuation
+    
+    // serious compuation for dynscal
     for (int iz = 0; iz != dimensions[2]; iz++) {
         for (int iy = 0; iy != dimensions[1]; iy++) {
             for (int ix = 0; ix != dimensions[0]; ix++) {
@@ -814,8 +840,10 @@ int VtkFile::GasPar()
                 for (int i = 0; i != 3; i++) {
                     temp_p_gas_i = cd_vector[0].data[iz][iy][ix][i];
                     dynscal[i] += temp_p_gas_i; // p_gas
+                    GPME[i*dimensions[2]+iz] += temp_p_gas_i;
                     dynscal[i+4] += 0.5*temp_p_gas_i*temp_p_gas_i/cd_scalar[0].data[iz][iy][ix]; // Ek_gas
                     temp_p_par_i = cd_vector[1].data[iz][iy][ix][i];
+                    GPMEPar[i*dimensions[2]+iz] += temp_p_par_i;
                     dynscal[i+16] += temp_p_par_i; // p_par
                     // notice rho_par might be ~0 (or smaller)
                     if (cd_scalar[1].data[iz][iy][ix] > 1e-15 || cd_scalar[1].data[iz][iy][ix] < -1e-15) {
@@ -824,7 +852,37 @@ int VtkFile::GasPar()
                 }
             }
         }
+        for (int i = 0; i != 3; i++) {
+            GPME[i*dimensions[2]+iz] /= (dimensions[1]*dimensions[0]);
+            GPMEPar[i*dimensions[2]+iz] /= (dimensions[1]*dimensions[0]);
+        }
+        GPME[3*dimensions[2]+iz] = sqrt(GPME[iz]*GPME[iz]+GPME[dimensions[2]+iz]*GPME[dimensions[2]+iz]+GPME[2*dimensions[2]+iz]*GPME[2*dimensions[2]+iz]);
+        GPMEPar[3*dimensions[2]+iz] = sqrt(GPMEPar[iz]*GPMEPar[iz]+GPMEPar[dimensions[2]+iz]*GPMEPar[dimensions[2]+iz]+GPMEPar[2*dimensions[2]+iz]*GPMEPar[2*dimensions[2]+iz]);
     }
+    
+    /* Calculate sigma of
+    float rho_g[256] = {0}, sigma_rho_g[256] = {0};
+    for (int iz = 0; iz != dimensions[2]; iz++) {
+        for (int iy = 0; iy != dimensions[1]; iy++) {
+            for (int ix = 0; ix != dimensions[0]; ix++) {
+                rho_g[iz] += cd_scalar[0].data[iz][iy][ix];
+            }
+        }
+        rho_g[iz] /= (dimensions[1]*dimensions[0]);
+        for (int iy = 0; iy != dimensions[1]; iy++) {
+            for (int ix = 0; ix != dimensions[0]; ix++) {
+                sigma_rho_g[iz] += (cd_scalar[0].data[iz][iy][ix]-rho_g[iz])*(cd_scalar[0].data[iz][iy][ix]-rho_g[iz]);
+            }
+        }
+        sigma_rho_g[iz]/= (dimensions[1]*dimensions[0]);
+        sigma_rho_g[iz] = sqrt(sigma_rho_g[iz]);
+    }
+    for (int i = 0; i != 256; i++) {
+        cout << -0.4+0.003125*(i+0.5) << " " << sigma_rho_g[i] << endl;
+    }
+    exit(0);
+     */ 
+    
     dynscal[3] = sqrt(dynscal[0]*dynscal[0]+dynscal[1]*dynscal[1]+dynscal[2]*dynscal[2]); // p_gas_tot
     dynscal[7] = dynscal[4]+dynscal[5]+dynscal[6]; // Ek_gas_tot
     dynscal[19] = sqrt(dynscal[16]*dynscal[16]+dynscal[17]*dynscal[17]+dynscal[18]*dynscal[18]); // p_par_tot
@@ -840,6 +898,33 @@ int VtkFile::GasPar()
         dynscal[i+24] = dynscal[i+16] * spacing[2] / dimensions[1] / dimensions[0];
         dynscal[i+16] /= (dimensions[2]*dimensions[1]*dimensions[0]);
     }
+    
+    // serious compuation for dynscal2
+    for (int iz = kps; iz != kpe; iz++) {
+        for (int iy = 0; iy != dimensions[1]; iy++) {
+            for (int ix = 0; ix != dimensions[0]; ix++) {
+                //std::copy(&(cd_vector[0].data[iz][iy][ix][0]), &(cd_vector[0].data[iz][iy][ix][4]), &(dynscal[3]));
+                for (int i = 0; i != 3; i++) {
+                    temp_p_gas_i = cd_vector[0].data[iz][iy][ix][i];
+                    dynscal2[i] += temp_p_gas_i; // p_gas
+                    dynscal2[i+4] += 0.5*temp_p_gas_i*temp_p_gas_i/cd_scalar[0].data[iz][iy][ix]; // Ek_gas
+                }
+            }
+        }
+    }
+    
+    dynscal2[3] = sqrt(dynscal[0]*dynscal[0]+dynscal[1]*dynscal[1]+dynscal[2]*dynscal[2]); // p_gas_tot
+    dynscal2[7] = dynscal[4]+dynscal[5]+dynscal[6]; // Ek_gas_tot
+    
+    // See global.h
+    // volume-averaged: *1/Nx/Ny/Nz
+    // area-averaged: *dz/Nx/Ny
+    
+    for (int i = 0; i != 8; i++) {
+        dynscal2[i+8] = dynscal[i] * spacing[2] / dimensions[1] / dimensions[0];
+        dynscal2[i] /= (dimensions[2]*dimensions[1]*dimensions[0]);
+    }
+    
     return 0;
 }
 

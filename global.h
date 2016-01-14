@@ -9,6 +9,8 @@
 #ifndef __readvtklis__global__
 #define __readvtklis__global__
 
+#define ENABLE_MPI
+
 #include <cstdio>
 #include <iostream>
 #include <iomanip>
@@ -24,15 +26,15 @@
 #include <ctime>
 #include <cassert>
 #include <algorithm>
+#ifdef ENABLE_MPI
 #include "mpi.h"
+#endif
 
 using namespace::std;
 
 /*************************************/
 /*****Pre-defined Compiler Macros*****/
 /*************************************/
-
-#define ENABLE_MPI
 
 //#define RESERVE_PUSH_BACK
 //#define FROM_ARRAY_TO_VECTOR
@@ -210,13 +212,70 @@ public:
     // Ek_par/V = SUM_pars(0.5*m_par*v_par*v_par)/V
     // Ek_par/A = SUM_pars(0.5*m_par*v_par*v_par)/A
     ////////////////////////////////////////////////////////////////////
-    
-    
-    
+    // Consider a component of momentum density M = rho*u of either gas
+    // or particles. Break into 3 components:
+    // M = M_0 + M_1 + M_2, which represent
+    // 0: the space and time-averaged motion, i.e. drift;
+    // 1: space-averaged motion corrected for drift, i.e. epicycles;
+    // 2: ﬂuctuations with vanishing spatial and time averages, i.e.
+    //    waves and turbulence.
+    // So,
+    // M_0 = <M>_VT
+    // M_1 = <M>_V - M_0
+    // M_2 = M - M_0 - M_1
+    // From this point of view, the kinetic energy density
+    // e = M^2/(2*rho) = SUM_i(e_i) + SUM_i(SUM_j(M_i*M_j/(2*rho))) i!=j
+    // Do we expect the cross terms to be significant? Since <M_2>_V = 0
+    // by definition, <M_2/rho>_V would only vanish for a perfectly
+    // incompressible fluid. M_0 and M_1 is already spatial averaged, so
+    // <e_cross>_V = M_0*<M_2/rho>_V + M_1*<M_2/rho>_V
+    // If we want to understand how much energy was contributed by the
+    // epicyclic motion we could consider
+    // e_1,tot = e_1 + M_1*(M_0+M_2)/rho
+    ////////////////////////////////////////////////////////////////////
     
     float **GasHst;                                /*!< volume-averaged gas properties, in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A */
+    float **GasHst2;                               /*!< volume-averaged gas properties inside z = +/- 0.1 (the overlap region with the smallest box), in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A */
     float **ParHst;                                /*!< volume-averaged particle properties, in the order of p_par[x,y,z,tot]/V, Ek_par[x,y,z,tot]/V, then area-averaged particle properties, in the order of p_par[x,y,z,tot]/A, Ek_par[x,y,z,tot]/A */
     float **ParLis;                                 /*!< particle dynamical properties directly from all the particles, in the order of SUM(v_par[x,y,z,tot])/Npar, SUM(p_par[x,y,z,tot])/V, SUM(p_par[x,y,z,tot])/A, SUM(Ek_par[x,y,z,tot])/V, SUM(Ek_par[x,y,z,tot])/A */
+    double **GPME;                                   /*!< Investigate the budget of Gas/Particle Momentum/Energy for Gas, in the below order (<...>_V indicates the average is from definitions, .../V means we average it on purpose.) */
+        /* In the output file, it looks like
+         between each two dash lines are (Nz+1) lines of data, N_row = n_file
+         ---------------------------------------------------------------------
+         <M_0>_VT(x,y,z,tot],           <M_0>_VT[x,y,z,tot] per orbit,
+         <M_0(z)>_VT[x,y,z,tot] per dz, <M_0(z)>_VT[x,y,z,tot] per orbit
+         ---------------------------------------------------------------------
+         <M_1(t)>_V[x,y,z,tot]
+         <M_1(z,t)>_V[x,y,z,tot] per dz
+         ---------------------------------------------------------------------
+         std of M_2(t)[x,y,z,tot]/V
+         std of M_2(z,t)[x,y,z,tot]/A
+         ---------------------------------------------------------------------
+         <e_0>_VT[x,y,z,tot],           <e_0>_VT[x,y,z,tot] per orbit,
+         <e_0(z)>_VT[x,y,z,tot] per dz, <e_0(z,t)>_VT[x,y,z,tot] per orbit
+         ---------------------------------------------------------------------
+         <e_1(t)>_V[x,y,z,tot]
+         <e_1(z,t)>_V[x,y,z,tot] per dz
+         ---------------------------------------------------------------------
+         e_2(t)[x,y,z,tot]/V
+         e_2(z,t)[x,y,z,tot]/A
+         ---------------------------------------------------------------------
+         <M_0*M_1/rho>_V(t)[x,y,z,tot]
+         <M_0*M_1/rho>_V(z,t)[x,y,z,tot] per dz
+         ---------------------------------------------------------------------
+         M_0*M_2/rho(t)[x,y,z,tot]/V
+         M_0*M_2/rho(z,t)[x,y,z,tot]/A
+         ---------------------------------------------------------------------
+         M_1*M_2/rho(t)[x,y,z,tot]/V
+         M_1*M_2/rho(z,t)[x,y,z,tot]/A
+         ---------------------------------------------------------------------
+         Note: 
+         a, M_0 and e_0 won't consume all the rows, only 1+ceil(n_file/8Pi)
+         But in program we use [i][j] to denote [time][...]->N_column=n_file
+         b, M_2/V is 0.0 by the definition, so the std of M2/V is used instead
+         */
+    
+    double **GPMEPar;                                /*!< Investigate the budget of Gas/Particle Momentum/Energy for Par, in the order above (<...>_V indicates the average is from definitions, .../V means we average it on purpose.)  */
     
     // output to result_RMPL.txt
     float *RMPL;                                    /*!< Rhop_Max Per Level */

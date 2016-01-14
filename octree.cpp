@@ -108,10 +108,10 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
     }
     root->Lx = root->Nx * vf->spacing[0]; // assuming spacing are all the same
     m1par = 0.02*sqrt(2*PI)*root->Lx*root->Lx/pl->n;
-    if (vf->L[0] != vf->L[1] || vf->L[1] != vf->L[2]) {
-        cout << "WARNING: this code should be used only for simualations in cubic boxes. " << endl;
-        exit(1);
-    }
+    //if (vf->L[0] != vf->L[1] || vf->L[1] != vf->L[2]) {
+    //    cout << "WARNING: this code should be used only for simualations in cubic boxes. " << endl;
+    //    exit(1);
+    //}
     
     /***** The following need the "level" to allocate space *****/
     level = int(log10(root->Nx)/log10(2.0)); // count root level
@@ -352,7 +352,7 @@ void Octree::RhopMaxPerLevel()
         ks = -1;
         for (iy = 0; iy != vf->dimensions[1]; iy++) {
             for (ix = 0; ix != vf->dimensions[0]; ix++) {
-                if (vf->cd_scalar[1].data[iz][iy][iz] != 0) {
+                if (vf->cd_scalar[1].data[iz][iy][ix] > 0) {
                     ks = -2; break;
                 }
             }
@@ -371,7 +371,7 @@ void Octree::RhopMaxPerLevel()
         ke = -1;
         for (iy = 0; iy != vf->dimensions[1]; iy++) {
             for (ix = 0; ix != vf->dimensions[0]; ix++) {
-                if (vf->cd_scalar[1].data[iz][iy][iz] != 0) {
+                if (vf->cd_scalar[1].data[iz][iy][ix] > 0) {
                     ke = -2; break;
                 }
             }
