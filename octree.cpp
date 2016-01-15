@@ -231,9 +231,18 @@ int Octree::AddParticle(Particle &it)
     for (int l = 0; l != level; l++) {
         int di = GetOctant<float>(p->center, it.x); // daughter index
         if (p->Daughter[di] == NULL) {
-            cout << "Should not create node while adding particles.\n";
-            cout << "par.x=" << pvector(it.x) << endl;
-            exit(1);
+            // check if the point is on the domain surface
+            int i = 0;
+            i += (it.x[0]>=p->center[0]);     // x
+            i += (it.x[1]>=p->center[1])<<1;  // y
+            i += (it.x[2]>=p->center[2])<<2;  // z
+            if (p->Daughter[i] == NULL) {
+                cout << "Should not create node while adding particles.\n";
+                cout << "par.x=" << pvector(it.x) << " center=" << pvector(p->center) << " di=" << di << " level=" << p->level << endl;
+                exit(1);
+            } else {
+                di = i;
+            }
         }
         p->np++;
         p = p->Daughter[di];
