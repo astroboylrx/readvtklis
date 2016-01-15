@@ -107,7 +107,7 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
         root->center[i] = 0.0; // this code only considers special cases
     }
     root->Lx = root->Nx * vf->spacing[0]; // assuming spacing are all the same
-    m1par = 0.02*sqrt(2*PI)*root->Lx*root->Lx/pl->n;
+    m1par = 0.02*sqrt(2*PI)*vf->L[0]*vf->L[1]/pl->n;
     //if (vf->L[0] != vf->L[1] || vf->L[1] != vf->L[2]) {
     //    cout << "WARNING: this code should be used only for simualations in cubic boxes. " << endl;
     //    exit(1);
@@ -115,7 +115,7 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
     
     /***** The following need the "level" to allocate space *****/
     level = int(log10(root->Nx)/log10(2.0)); // count root level
-    if (NxCubic == NULL) {
+    if (NxCubic == NULL) { // only used in EvaluateOctreeSphere()
         NxCubic = new long[level+1];
         for (int i = 0; i <= level; i++) {
             NxCubic[i] = long(pow(root->Nx/pow(2.0, i), 3));
@@ -128,7 +128,7 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
         }
         for (int i = 0; i <= level; i++) {
             MaxD[i] = new float[3];
-            Radius[i] = root->Lx/pow(2.0, i+1);
+            Radius[i] = vf->spacing[0] * pow(2.0, i-1); // used in later func
             MaxD[i][0] = vf->L[0] - Radius[i];
             MaxD[i][1] = vf->L[1] - Radius[i];
             MaxD[i][2] = vf->L[2] - Radius[i];
@@ -137,8 +137,7 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
             // let it bigger than any distance so no periodic computation happen in x3 direction
             // in fact all particles are in the middle plane, and the RMPL[root_level] is calculated by another way. This is not main concern
 #endif
-            //cout << myMPI->prank() << "MaxD[" << i << "]=" << pvector<float>(MaxD[i]) << endl;
-            Radius[i] = vf->spacing[0] * pow(2.0, i-1); // used in later func
+            cout << myMPI->prank() << "MaxD[" << i << "]=" << pvector<float>(MaxD[i]) << ", R[i]=" << Radius[i] << endl;
         }
     }
     if (RMPL == NULL) {
@@ -254,31 +253,17 @@ int Octree::AddParticle(Particle &it)
 }
 
 /********** Distance **********/
-/*! \fn float Distance(OctreeNode *p, float x[3])
- *  \brief calculate distance between cell center and particle */
+/*! \fn float Distance(T x[3], T y[3], int &i_MaxD)
+ *  \brief calculate distance between two locations, i_MaxD is index of MaxD */
 template<typename T>
-float Octree::Distance(OctreeNode *p, T x[3])
-{
-    float d = 0, dr[3];
-    for (int i = 0; i != 3; i++) {
-        dr[i] = fabs(x[i] - p->center[i]);
-        if (dr[i] > MaxD[p->level][i]) {
-            dr[i] = vf->L[i] - dr[i];
-        }
-        d += dr[i] * dr[i];
-    }
-    return sqrt(d);
-}
-
-/********** RealPointDistance **********/
-/*! \fn float RealPointDistance(T x[3], T y[3]);
- *  \brief calculate distance between two location */
-template<typename T>
-float Octree::RealPointDistance(T x[3], T y[3])
+float Octree::Distance(T x[3], T y[3], int &i_MaxD)
 {
     float d = 0, dr[3];
     for (int i = 0; i != 3; i++) {
         dr[i] = fabs(x[i] - y[i]);
+        if (dr[i] > MaxD[i_MaxD][i]) {
+            dr[i] = vf->L[i] - dr[i];
+        }
         d += dr[i] * dr[i];
     }
     return sqrt(d);
@@ -315,12 +300,12 @@ void Octree::EvaluateOctreeSphere(OctreeNode *p, T x[3], float &rp, long &cells,
     }
 }
 
-/*! \fn void EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar, float &R)
+/*! \fn void EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar, float &R, int &i_MaxD)
  *  \brief calculate rhop for an accurate sphere centered at x with r=Radius */
 template<typename T>
-void Octree::EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar, float &R)
+void Octree::EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar, float &R, int &i_MaxD)
 {
-    float d = Distance<T>(p, x);
+    float d = Distance<T>(p->center, x, i_MaxD);
     if (d > R + s3o2 * p->Lx) {
         // completely outside radius
         ;
@@ -331,14 +316,14 @@ void Octree::EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar, float &R)
         // intersect
         if (p->level == level) {
             for (long it = 0; it < p->parlist.size(); it++) {
-                if (RealPointDistance<float>(x, pl->List[p->parlist[it]].x) <= R) {
+                if (Distance<float>(x, pl->List[p->parlist[it]].x, i_MaxD) <= R) {
                     npar++;
                 }
             }
         } else {
             for (int i = 0; i != 8; i++) {
                 if (p->Daughter[i] != NULL) {
-                    EvaluateAccurateSphere(p->Daughter[i], x, npar, R);
+                    EvaluateAccurateSphere(p->Daughter[i], x, npar, R, i_MaxD);
                 }
             }
         }
@@ -398,7 +383,7 @@ void Octree::RhopMaxPerLevel()
     
 #ifdef ENABLE_MPI
     if (myMPI->myrank == 0) {
-        cout << "Pr" << myMPI->myrank << ": ks = " << ks << ", ke = " << ke << endl;
+        cout << "Pr" << myMPI->myrank << ": ks = " << ks << ", ke = " << ke << ", m1par = " << m1par << endl;
     }
     
     int Npoints = vf->dimensions[0]*vf->dimensions[1]*(ke-ks+1), temp = vf->dimensions[0]*vf->dimensions[1];
@@ -457,6 +442,9 @@ void Octree::RhopMaxPerLevel()
             // workers do the calculations
             temp_cellcenter = vf->cell_center[indices[index][2]][indices[index][1]][indices[index][0]];
             for (int i = 0; i <= level; i++) {
+                if (Radius[i] >= vf->L[0]) {
+                    break; // save some computation time
+                }
                 rp = 0; cells = 0; npar = 0;
 
                 /* Count octree-style approximate sphere
@@ -465,7 +453,7 @@ void Octree::RhopMaxPerLevel()
                 //*/
                 
                 // Count real particle numbers in accurate sphere
-                EvaluateAccurateSphere<float>(root, temp_cellcenter, npar, Radius[i]);
+                EvaluateAccurateSphere<float>(root, temp_cellcenter, npar, Radius[i], i);
                 
                 if (npar > RMPL[i]) {
                     RMPL[i] = npar;
@@ -479,7 +467,7 @@ void Octree::RhopMaxPerLevel()
                             yesorno = (selection >> xyz) & used_for_and_op;
                             tempcenter[xyz] = temp_cellcenter[xyz] - yesorno * Radius[0];
                         }
-                        EvaluateAccurateSphere(root, tempcenter, npar, Radius[i]);
+                        EvaluateAccurateSphere(root, tempcenter, npar, Radius[i], i);
                         if (npar > RMPL[i]) {
                             RMPL[i] = npar;
                         }
@@ -492,7 +480,7 @@ void Octree::RhopMaxPerLevel()
                                     yesorno2 = (selection2 >> xyz2) & used_for_and_op;
                                     tempcenter2[xyz2] = tempcenter[xyz2] - yesorno2 * Radius[0]/2.0;
                                 }
-                                EvaluateAccurateSphere(root, tempcenter2, npar, Radius[i]);
+                                EvaluateAccurateSphere(root, tempcenter2, npar, Radius[i], i);
                                 if (npar > RMPL[i]) {
                                     RMPL[i] = npar;
                                 }

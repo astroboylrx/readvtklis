@@ -107,20 +107,15 @@ public:
     template<typename T>
     void EvaluateOctreeSphere(OctreeNode *p, T x[3], float &rp, long &cells, float &R);
     
-    /*! \fn void EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar, float &R)
+    /*! \fn void EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar, float &R, int &i_MaxD)
      *  \brief calculate rhop for an accurate sphere centered at x with r=Radius */
     template<typename T>
-    void EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar, float &R);
+    void EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar, float &R, int &i_MaxD);
     
-    /*! \fn float Distance(OctreeNode *p, float x[3])
-     *  \brief calculate distance between cell center and particle */
+    /*! \fn float Distance(T x[3], T y[3], int &i_MaxD)
+     *  \brief calculate distance between two locations, i_MaxD is index of MaxD */
     template<typename T>
-    float Distance(OctreeNode *p, T x[3]);
-    
-    /*! \fn float RealPointDistance(T x[3], T y[3]);
-     *  \brief calculate distance between two location */
-    template<typename T>
-    float RealPointDistance(T x[3], T y[3]);
+    float Distance(T x[3], T y[3], int &i_MaxD);
     
     /*! \fn void RhopMaxPerLevel()
      *  \brief Find the max rhop within a sphere with radius of N*dx */
