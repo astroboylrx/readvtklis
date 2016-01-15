@@ -60,6 +60,7 @@ int Octree::Initialize()
     RpAV = 0;
     RpSQ = 0;
     RpQU = 0;
+    shortestL = 1e10;
     return 0;
 }
 
@@ -102,6 +103,9 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
         if (root->Nx < vf->dimensions[i]) {
             root->Nx = vf->dimensions[i];
         }
+        if (shortestL > vf->L[i]) {
+            shortestL = vf->L[i];
+        }
     }
     for (int i = 0; i != 3; i++) {
         root->center[i] = 0.0; // this code only considers special cases
@@ -137,7 +141,7 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
             // let it bigger than any distance so no periodic computation happen in x3 direction
             // in fact all particles are in the middle plane, and the RMPL[root_level] is calculated by another way. This is not main concern
 #endif
-            cout << myMPI->prank() << "MaxD[" << i << "]=" << pvector<float>(MaxD[i]) << ", R[i]=" << Radius[i] << endl;
+            //cout << myMPI->prank() << "MaxD[" << i << "]=" << pvector<float>(MaxD[i]) << ", R[i]=" << Radius[i] << endl;
         }
     }
     if (RMPL == NULL) {
@@ -407,7 +411,7 @@ void Octree::RhopMaxPerLevel()
         vector<int> working (myMPI->numprocs-1, 1); // used for ending the jobs
         for (int i = 1; i < min(Npoints, myMPI->numprocs); i++) {
             MPI::COMM_WORLD.Send(&index, 1, MPI::INT, i, i);
-            cout << "Master: sent point " << index << " to Processor " << i << endl;
+            //cout << "Master: sent point " << index << " to Processor " << i << endl;
             index++;
         }
         
@@ -417,7 +421,7 @@ void Octree::RhopMaxPerLevel()
             //sender = myMPI->status.Get_source();
             //tag = myMPI->status.Get_tag();
             MPI::COMM_WORLD.Send(&index, 1, MPI::INT, goodboy, goodboy);
-            if (index % 10000 == 0) {
+            if (index % 50000 == 0) {
                 cout << "Master: sent point " << index << " to Processor " << goodboy << endl;
             }
             index++;
@@ -436,14 +440,14 @@ void Octree::RhopMaxPerLevel()
         float *temp_cellcenter;
         short used_for_and_op = 1, selection, xyz, yesorno;
         
-        cout << "Worker " << myMPI->myrank << ": I'm in. " << endl;
+        //cout << "Worker " << myMPI->myrank << ": I'm in. " << endl;
         MPI::COMM_WORLD.Recv(&index, 1, MPI::INT, 0, myMPI->myrank, myMPI->status);
         while (index != -1) {
             // workers do the calculations
             temp_cellcenter = vf->cell_center[indices[index][2]][indices[index][1]][indices[index][0]];
             for (int i = 0; i <= level; i++) {
-                if (Radius[i] >= vf->L[0]) {
-                    break; // save some computation time
+                if (Radius[i] >= shortestL) {
+                    break; // further step make no sense, so save some computation time
                 }
                 rp = 0; cells = 0; npar = 0;
 

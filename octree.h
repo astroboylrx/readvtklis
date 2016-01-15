@@ -63,10 +63,11 @@ public:
     enum { etar = 16 };                             /*!< etar in # of cells */
     float s3o2;                                     /*!< sqrt(3)/2 */
     float foPio3;                                   /*!< 4*pi/3 */
-    float *Radius;                                   /*!< half etar */
+    float *Radius;                                  /*!< half etar */
     float **MaxD;                                   /*!< max allowed distance that we do not consider periodic boundary */
     float m1par;                                    /*!< mass of 1 particle */
     float *RMPL;                                    /*!< Rhop_Max Per Level, in reverse order */
+    float shortestL;                                /*!< The shortest side length of the numerical domain */
     float tempcenter[3];
     
     /*! \fn Octree();
