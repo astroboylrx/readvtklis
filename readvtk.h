@@ -108,22 +108,22 @@ public:
     // in fact, now we are only dealing with CELL_DATA
     vector<CellData_Scalar> cd_scalar;          /*!< vector of cell data */
     vector<CellData_Vector> cd_vector;          /*!< vector of vector data */
-    float Sigma_gas_0;                          /*!< initial column density of gas */
-    float Sigma_gas_0_inbox;                    /*!< initial column density of gas truncated by vertical box size */
-    float Sigma_gas_0_mid;                      /*!< initial gas density in the midplane's 2 cells */
-    float Sigma_gas_0_in2Hp;                    /*!< initial gas density inside the particle scale height */
+    double Sigma_gas_0;                         /*!< initial column density of gas */
+    double Sigma_gas_0_inbox;                   /*!< initial column density of gas truncated by vertical box size */
+    double Sigma_gas_0_mid;                     /*!< initial gas density in the midplane's 2 cells */
+    double Sigma_gas_0_in2Hp;                   /*!< initial gas density inside the particle scale height */
     float m_gas;                                /*!< total gas mass */
     float m_par;                                /*!< total particle mass */
     float Max_Rhog;                             /*!< maximum density of gas */
     float Max_Rhop;                             /*!< maximum density of particle */
-    float RpAV;                                 /*!< <rho_p> */
-    float RpSQ;                                 /*!< <rho_p^2>^0.5 */
-    float RpQU;                                 /*!< <rho_p^4>^0.25 */
-    float dSigma;                               /*!< change of gas surface density due to outflow */
-    float dynscal[32];                          /*!< volume-averaged gas properties, in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A, then volume-averaged particle properties, in the order of p_par[x,y,z,tot]/V, Ek_par[x,y,z,tot]/V, then area-averaged particle properties, in the order of p_par[x,y,z,tot]/A, Ek_par[x,y,z,tot]/A */
-    float dynscal2[16];                          /*!< volume-averaged gas properties inside z = +/- 0.1 (the overlap region with the smallest box), in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A */
-    double *GPME;                                /*!< see the definition in global.h */
-    double *GPMEPar;                             /*!< see the definition in global.h */
+    double RpAV;                                /*!< <rho_p> */
+    double RpSQ;                                /*!< <rho_p^2>^0.5 */
+    double RpQU;                                /*!< <rho_p^4>^0.25 */
+    double dSigma;                              /*!< change of gas surface density due to outflow */
+    double dynscal[32];                         /*!< volume-averaged gas properties, in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A, then volume-averaged particle properties, in the order of p_par[x,y,z,tot]/V, Ek_par[x,y,z,tot]/V, then area-averaged particle properties, in the order of p_par[x,y,z,tot]/A, Ek_par[x,y,z,tot]/A */
+    double dynscal2[16];                        /*!< volume-averaged gas properties inside z = +/- 0.1 (the overlap region with the smallest box), in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A */
+    double *GPME;                               /*!< see the definition in global.h */
+    double *GPMEPar;                            /*!< see the definition in global.h */
     
     VtkFile();                                  /*!< constructor */
     ~VtkFile();                                 /*!< destructor */
@@ -148,18 +148,18 @@ public:
      *  \brief calculate mass and find maximum and mass loss */
     int Calculate_Mass_Find_Max();
     
-    /*! \fn int VpecG(float *VpecG)
+    /*! \fn int VpecG(double *VpecG)
      *  \brief return gas peculiar velocity components averaged horizontally at each z, weighted by rho_g 
      */
-    int VpecG(float *VpecG);
+    int VpecG(double *VpecG);
     
-    /*! \fn int MeanSigma(float *MeanSigma)
+    /*! \fn int MeanSigma(double *MeanSigma)
      *  \brief calculate sigma_g and sigma_p averaged over y */
-    int MeanSigma(float *MeanSigma);
+    int MeanSigma(double *MeanSigma);
     
-    /*! \fn int VertRho(float *VertRho)
+    /*! \fn int VertRho(double *VertRho)
      *  \brief calculate vertical rho_g and rho_p */
-    int VertRho(float *VertRho);
+    int VertRho(double *VertRho);
     
     /*! \fn int CorrLen(float *CoorL)
      *  \brief calculate the correlation length */

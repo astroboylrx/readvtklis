@@ -157,21 +157,21 @@ public:
     float *Otime;                                   /*!< orbit time */
     long *N_par;                                    /*!< number of par */
     float *Max_Rhop;                                /*!< max partical density */
-    float *RpAV;                                    /*!< <rho_p> */
-    float *RpSQ;                                    /*!< <rho_p^2>^0.5 */
-    float *RpQU;                                    /*!< <rho_p^4>^0.25 */
-    float *Hp;                                      /*!< par scale height */
+    double *RpAV;                                   /*!< <rho_p> */
+    double *RpSQ;                                   /*!< <rho_p^2>^0.5 */
+    double *RpQU;                                   /*!< <rho_p^4>^0.25 */
+    double *Hp;                                     /*!< par scale height */
     float *Hp_in1sigma;                             /*!< par scale height derived from Gaussian 1sigma range */
-    float *dSigma;                                  /*!< the change of gas surface density due to outflow */
+    double *dSigma;                                 /*!< the change of gas surface density due to outflow */
     
     // output to result_MeanSigma.txt, first sigma_g and then sigma_p
-    float **MeanSigma;                              /*!< sigma_g and sigma_p averaged over y */
+    double **MeanSigma;                             /*!< sigma_g and sigma_p averaged over y */
     
     // output to result_VpecG.txt, first x, then y, and then z
-    float **VpecG;                                  /*!< Vpec_g averaged horizontally at each z, weighted by rho_g */
+    double **VpecG;                                 /*!< Vpec_g averaged horizontally at each z, weighted by rho_g */
     
     // output to result_VertRho.txt, first rho_g and then rho_p
-    float **VertRho;                                /*!< Vertical Structure of rho_g and rho_p */
+    double **VertRho;                               /*!< Vertical Structure of rho_g and rho_p */
     
     float **CorrL;                                  /*!< Correlation Length  */
 #ifdef CorrValue
@@ -234,11 +234,11 @@ public:
     // e_1,tot = e_1 + M_1*(M_0+M_2)/rho
     ////////////////////////////////////////////////////////////////////
     
-    float **GasHst;                                /*!< volume-averaged gas properties, in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A */
-    float **GasHst2;                               /*!< volume-averaged gas properties inside z = +/- 0.1 (the overlap region with the smallest box), in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A */
-    float **ParHst;                                /*!< volume-averaged particle properties, in the order of p_par[x,y,z,tot]/V, Ek_par[x,y,z,tot]/V, then area-averaged particle properties, in the order of p_par[x,y,z,tot]/A, Ek_par[x,y,z,tot]/A */
-    float **ParLis;                                 /*!< particle dynamical properties directly from all the particles, in the order of SUM(v_par[x,y,z,tot])/Npar, SUM(p_par[x,y,z,tot])/V, SUM(p_par[x,y,z,tot])/A, SUM(Ek_par[x,y,z,tot])/V, SUM(Ek_par[x,y,z,tot])/A */
-    double **GPME;                                   /*!< Investigate the budget of Gas/Particle Momentum/Energy for Gas, in the below order (<...>_V indicates the average is from definitions, .../V means we average it on purpose.) */
+    double **GasHst;                               /*!< volume-averaged gas properties, in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A */
+    double **GasHst2;                              /*!< volume-averaged gas properties inside z = +/- 0.1 (the overlap region with the smallest box), in the order of p_gas[x,y,z,tot]/V, Ek_gas[x,y,z,tot]/V, then area-averaged gas properties, in the order of p_gas[x,y,z,tot]/A, Ek_gas[x,y,z,tot]/A */
+    double **ParHst;                               /*!< volume-averaged particle properties, in the order of p_par[x,y,z,tot]/V, Ek_par[x,y,z,tot]/V, then area-averaged particle properties, in the order of p_par[x,y,z,tot]/A, Ek_par[x,y,z,tot]/A */
+    double **ParLis;                               /*!< particle dynamical properties directly from all the particles, in the order of SUM(v_par[x,y,z,tot])/Npar, SUM(p_par[x,y,z,tot])/V, SUM(p_par[x,y,z,tot])/A, SUM(Ek_par[x,y,z,tot])/V, SUM(Ek_par[x,y,z,tot])/A */
+    double **GPME;                                 /*!< Investigate the budget of Gas/Particle Momentum/Energy for Gas, in the below order (<...>_V indicates the average is from definitions, .../V means we average it on purpose.) */
         /* In the output file, it looks like
          between each two dash lines are (Nz+1) lines of data, N_row = n_file
          ---------------------------------------------------------------------
@@ -281,7 +281,6 @@ public:
     float *RMPL;                                    /*!< Rhop_Max Per Level */
     
     /******relative to calculation********/
-    float ****V_gas_0;                              /*!< initial v_gas */
     int dimensions[3];                              /*!< the number of cells in each dimension */
     float spacing[3];                               /*!< the spacing of coordinate */
     float *ccx, *ccy, *ccz;                         /*!< cell center coordinates for plots */

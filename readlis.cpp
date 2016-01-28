@@ -116,9 +116,9 @@ int ParticleList::ReadLis(string filename)
 }
 
 /********** Calculate the scale height of partiles **********/
-/*! \fn float ScaleHeight(float &Hp, float &Hp_in1sigma);
+/*! \fn int ScaleHeight(double &Hp, float &Hp_in1sigma);
  *  \brief calculate the scale height of partiles */
-int ParticleList::ScaleHeight(float &Hp, float &Hp_in1sigma)
+int ParticleList::ScaleHeight(double &Hp, float &Hp_in1sigma)
 {
     double one_sigma = 0.682689492137;
     if (n == 0) {

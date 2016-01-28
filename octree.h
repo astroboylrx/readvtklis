@@ -13,7 +13,7 @@
 #include "fop.h"
 #include "readvtk.h"
 #include "readlis.h"
-const float PI = 3.141592653;
+const double PI = 3.141592653589793;
 
 /*! \class OctreeNode
  *  \brief the node class of Octree
@@ -25,7 +25,7 @@ public:
     int level;                                      /*!< the level of this node */
     OctreeNode *Father;                             /*!< father node pointer of this node */
     vector<OctreeNode *> Daughter;                  /*!< eight daughters in the increasing order of x, y and z */
-    float rhop;                                     /*!< the sum of particle density for all the cells in this node */
+    double rhop;                                    /*!< the sum of particle density for all the cells in this node */
     int Nx;                                         /*!< the number of cells in 1 direction,  forced to be the same in each directions (notice that the numerical domain might not be cubic) */
     float Lx;                                       /*!< length of this node */
     float center[3];                                /*!< the coordinates of the center of this node */
@@ -56,9 +56,9 @@ public:
     ParticleList *pl;                               /*!< the ParticleList pointer used to build this tree */
     
     float Max_Rhop;                                 /*!< maximum density of particle */
-    float RpAV;                                     /*!< <rho_p> */
-    float RpSQ;                                     /*!< <rho_p^2>^0.5 */
-    float RpQU;                                     /*!< <rho_p^4>^0.25 */
+    double RpAV;                                    /*!< <rho_p> */
+    double RpSQ;                                    /*!< <rho_p^2>^0.5 */
+    double RpQU;                                    /*!< <rho_p^4>^0.25 */
     
     enum { etar = 16 };                             /*!< etar in # of cells */
     float s3o2;                                     /*!< sqrt(3)/2 */
@@ -103,10 +103,10 @@ public:
      *  \brief assign particle to one node */
     int AddParticle(Particle &it);
     
-    /*! \fn void EvaluateOctreeSphere(OctreeNode *p, T x[3], float &rp, long &cells, float &R)
+    /*! \fn void EvaluateOctreeSphere(OctreeNode *p, T x[3], double &rp, long &cells, float &R)
      *  \brief calculate rhop for an octree-approximate sphere centered at x with r=Radius */
     template<typename T>
-    void EvaluateOctreeSphere(OctreeNode *p, T x[3], float &rp, long &cells, float &R);
+    void EvaluateOctreeSphere(OctreeNode *p, T x[3], double &rp, long &cells, float &R);
     
     /*! \fn void EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar, float &R, int &i_MaxD)
      *  \brief calculate rhop for an accurate sphere centered at x with r=Radius */

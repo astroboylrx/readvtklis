@@ -559,7 +559,7 @@ int VtkFile::Calculate_Mass_Find_Max()
             //m_gas = m_temp*cell_volume;
             //Max_Rhog = maximum;
         } else if (it->dataname.compare("particle_density") == 0) {
-            float m_temp = 0, maximum = 0, tempdata;
+            double m_temp = 0, maximum = 0, tempdata;
             for (int k = 0; k != dimensions[2]; k++) {
                 for (int j = 0; j != dimensions[1]; j++) {
                     for (int i = 0; i != dimensions[0]; i++) {
@@ -575,7 +575,7 @@ int VtkFile::Calculate_Mass_Find_Max()
             Max_Rhop = maximum;
             
             RpAV = 0; RpSQ = 0; RpQU = 0;
-            float tempSQ = 0, tempV = 0;
+            double tempSQ = 0, tempV = 0;
             for (int k = kps; k != kpe; k++) {
                 for (int j = 0; j != dimensions[1]; j++) {
                     for (int i = 0; i != dimensions[0]; i++) {
@@ -640,11 +640,11 @@ int VtkFile::Calculate_Mass_Find_Max()
 }
 
 /********** Calculate gas peculiar velocity **********/
-/*! \fn int VpecG(float *VpecGx)
+/*! \fn int VpecG(double *VpecGx)
  *  \brief return gas peculiar velocity components averaged horizontally at each z, weighted by rho_g */
-int VtkFile::VpecG(float *VpecG)
+int VtkFile::VpecG(double *VpecG)
 {
-    float temp_rhog = 0, temp_momentum[3];
+    double temp_rhog = 0, temp_momentum[3];
     for (int iz = 0; iz != dimensions[2]; iz++) {
         temp_rhog = 0;
         temp_momentum[0] = 0; temp_momentum[1] = 0; temp_momentum[2] = 0;
@@ -664,9 +664,9 @@ int VtkFile::VpecG(float *VpecG)
 }
 
 /********** Calculate mean column density **********/
-/*! \fn int MeanSigma(float *MeanSigma)
+/*! \fn int MeanSigma(double *MeanSigma)
  *  \brief calculate sigma_g and sigma_p averaged over y */
-int VtkFile::MeanSigma(float *MeanSigma)
+int VtkFile::MeanSigma(double *MeanSigma)
 {
     int mid[2], TwoNx;
     mid[0] = dimensions[2]/2-1;
@@ -705,10 +705,10 @@ int VtkFile::MeanSigma(float *MeanSigma)
     return 0;
 }
 
-/********** Calculate vertical rho_g and rho_p **********/
-/*! \fn int VertRho(float *VertRho)
+/********** Calculate double rho_g and rho_p **********/
+/*! \fn int VertRho(double *VertRho)
  *  \brief calculate vertical rho_g and rho_p */
-int VtkFile::VertRho(float *VertRho)
+int VtkFile::VertRho(double *VertRho)
 {
     for (int iz = 0; iz != dimensions[2]; iz++) {
         VertRho[iz] = 0;
@@ -883,7 +883,7 @@ int VtkFile::GasPar()
     }
     
     /* Calculate sigma of
-    float rho_g[256] = {0}, sigma_rho_g[256] = {0};
+    double rho_g[256] = {0}, sigma_rho_g[256] = {0};
     for (int iz = 0; iz != dimensions[2]; iz++) {
         for (int iy = 0; iy != dimensions[1]; iy++) {
             for (int ix = 0; ix != dimensions[0]; ix++) {

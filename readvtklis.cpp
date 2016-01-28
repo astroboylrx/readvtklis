@@ -80,19 +80,26 @@ int main(int argc, const char * argv[]) {
         // MeanSigma need the initial average gas surface density
         if (fio->MeanSigma_flag) {
             vf->Sigma_gas_0_inbox = 0;
+            vf->Sigma_gas_0_mid = 0;
+            vf->Sigma_gas_0_in2Hp = 0;
             int mid[2] = {vf->dimensions[2]/2-1, vf->dimensions[2]/2};
             int Hp[2] = {vf->dimensions[2]/2-8, vf->dimensions[2]/2+7};
             
             for (int ix = 0; ix != vf->dimensions[0]; ix++) {
+                double temp_Sigma_gas_0 = 0;
                 for (int iy = 0; iy != vf->dimensions[1]; iy++) {
                     for (int iz = 0; iz != vf->dimensions[2]; iz++) {
-                        vf->Sigma_gas_0_inbox += vf->cd_scalar[0].data[iz][iy][ix];
+                        // letting vf->Sigma_gas_0_inbox to do calculations will induce large error (at the forth effective digit, which will affect the final results)
+                        // since there are Nx*Ny*Nz times of adding, so float cannot handle it very well
+                        //vf->Sigma_gas_0_inbox += vf->cd_scalar[0].data[iz][iy][ix];
+                        temp_Sigma_gas_0 += vf->cd_scalar[0].data[iz][iy][ix];
                     }
                     vf->Sigma_gas_0_mid += (vf->cd_scalar[0].data[mid[0]][iy][ix]+vf->cd_scalar[0].data[mid[1]][iy][ix]);
                     for (int iz = Hp[0]; iz != Hp[1]; iz++) {
                         vf->Sigma_gas_0_in2Hp += vf->cd_scalar[0].data[iz][iy][ix];
                     }
                 }
+                vf->Sigma_gas_0_inbox += temp_Sigma_gas_0;
             }
             vf->Sigma_gas_0_inbox /= vf->dimensions[0];
             vf->Sigma_gas_0_mid /= vf->dimensions[0];
@@ -214,7 +221,7 @@ int main(int argc, const char * argv[]) {
     /************************** Multi-Read **************************/
     // deal with the calculations that need read data many times
     if (fio->GasPar_flag) {
-        GasParDynamic();
+        //GasParDynamic();
     }
     
     /************************** Data Output **************************/
@@ -311,103 +318,6 @@ int RecordData(int i, VtkFile *vf, ParticleList *pl, Octree * ot) {
         std::copy(&(vf->GPMEPar[0]), &(vf->GPMEPar[4*vf->dimensions[2]]), &(paras->GPMEPar[i][0]));
     }
  
-    /* The code below is deprecated and reserve for check
-#ifdef ENABLE_MPI
-    myMPI->paras.Otime[i] = vf->time;
-    if (fio->ParNum_flag) {
-        myMPI->paras.N_par[i] = pl->n;
-    }
-    if (fio->RhoParMax_flag) {
-        myMPI->paras.Max_Rhop[i] = ot->Max_Rhop;
-        myMPI->paras.RpAV[i] = ot->RpAV;
-        myMPI->paras.RpSQ[i] = ot->RpSQ;
-        myMPI->paras.RpQU[i] = ot->RpQU;
-    }
-    if (fio->HeiPar_flag) {
-        pl->ScaleHeight(myMPI->paras.Hp[i], myMPI->paras.Hp_in1sigma[i]);
-    }
-    if (fio->dSigma_flag) {
-        myMPI->paras.dSigma[i] = vf->dSigma;
-    }
-    if (fio->MeanSigma_flag) {
-        vf->MeanSigma(myMPI->paras.MeanSigma[i]);
-    }
-    if (fio->VpecG_flag) {
-        vf->VpecG(myMPI->paras.VpecG[i]);
-    }
-    if (fio->VertRho_flag) {
-        vf->VertRho(myMPI->paras.VertRho[i]);
-    }
-    if (fio->CorrL_flag) {
-        vf->CorrLen(myMPI->paras.CorrL[i]
-#ifdef CorrValue
-                    , myMPI->paras.CorrV[i]
-#endif
-                    );
-    }
-    if (fio->GasPar_flag) {
-        vf->GasPar();
-        pl->GasPar(vf->dimensions, vf->spacing);
-        std::copy(&(vf->dynscal[0]), &(vf->dynscal[16]), &(myMPI->paras.GasHst[i][0]));
-        std::copy(&(vf->dynscal2[0]), &(vf->dynscal2[16]), &(myMPI->paras.GasHst2[i][0]));
-        std::copy(&(vf->dynscal[16]), &(vf->dynscal[32]), &(myMPI->paras.ParHst[i][0]));
-        std::copy(&(pl->dynscal[0]), &(pl->dynscal[20]), &(myMPI->paras.ParLis[i][0]));
-        std::copy(&(vf->GPME[0]), &(vf->GPME[4*vf->dimensions[2]]), &(myMPI->paras.GPME[i][0]));
-        std::copy(&(vf->GPMEPar[0]), &(vf->GPMEPar[4*vf->dimensions[2]]), &(myMPI->paras.GPMEPar[i][0]));
-        for (int j = 0; j != 4*vf->dimensions[2]; j++) {
-            myMPI->paras.GPME[i][j] = vf->GPME[j];
-            myMPI->paras.GPMEPar[i][j] = vf->GPMEPar[j];
-        }
-    }
-#else // ENABLE_MPI
-    fio->paras.Otime[i] = vf->time;
-    if (fio->ParNum_flag) {
-        fio->paras.N_par[i] = pl->n;
-    }
-    if (fio->RhoParMax_flag) {
-        fio->paras.Max_Rhop[i] = ot->Max_Rhop;
-        fio->paras.RpAV[i] = ot->RpAV;
-        fio->paras.RpSQ[i] = ot->RpSQ;
-        fio->paras.RpQU[i] = ot->RpQU;
-    }
-    if (fio->HeiPar_flag) {
-        pl->ScaleHeight(fio->paras.Hp[i], fio->paras.Hp_in1sigma[i]);
-    }
-    if (fio->dSigma_flag) {
-        fio->paras.dSigma[i] = vf->dSigma;
-    }
-    if (fio->MeanSigma_flag) {
-        vf->MeanSigma(fio->paras.MeanSigma[i]);
-    }
-    if (fio->VpecG_flag) {
-        vf->VpecG(fio->paras.VpecG[i]);
-    }
-    if (fio->VertRho_flag) {
-        vf->VertRho(fio->paras.VertRho[i]);
-    }
-    if (fio->CorrL_flag) {
-        vf->CorrLen(fio->paras.CorrL[i]
-#ifdef CorrValue
-                    , fio->paras.CorrV[i]
-#endif
-                    );
-    }
-    if (fio->GasPar_flag) {
-        vf->GasPar();
-        pl->GasPar(vf->dimensions, vf->spacing);
-        std::copy(&(vf->dynscal[0]), &(vf->dynscal[16]), &(fio->paras.GasHst[i][0]));
-        std::copy(&(vf->dynscal2[0]), &(vf->dynscal2[16]), &(fio->paras.GasHst2[i][0]));
-        std::copy(&(vf->dynscal[16]), &(vf->dynscal[32]), &(fio->paras.ParHst[i][0]));
-        std::copy(&(pl->dynscal[0]), &(pl->dynscal[20]), &(fio->paras.ParLis[i][0]));
-        std::copy(&(vf->GPME[0]), &(vf->GPME[4*vf->dimensions[2]]), &(fio->paras.GPME[i][0]));
-        std::copy(&(vf->GPMEPar[0]), &(vf->GPMEPar[4*vf->dimensions[2]]), &(fio->paras.GPMEPar[i][0]));
-        //for (int j = 0; j != 4*vf->dimensions[2]; j++) {
-        //    fio->paras.GPME[i][j] = vf->GPME[j];
-        //    fio->paras.GPMEPar[i][j] = vf->GPMEPar[j];
-        //}
-    }
-#endif // ENABLE_MPI */
-    
     return 0;
 }
 
@@ -422,30 +332,30 @@ int IntegrateData(VtkFile *vf, Octree *ot)
     }
     if (fio->RhoParMax_flag) {
         MPI::COMM_WORLD.Allreduce(myMPI->paras.Max_Rhop, fio->paras.Max_Rhop, fio->n_file, MPI::FLOAT, MPI::SUM);
-        MPI::COMM_WORLD.Allreduce(myMPI->paras.RpAV, fio->paras.RpAV, fio->n_file, MPI::FLOAT, MPI::SUM);
-        MPI::COMM_WORLD.Allreduce(myMPI->paras.RpSQ, fio->paras.RpSQ, fio->n_file, MPI::FLOAT, MPI::SUM);
-        MPI::COMM_WORLD.Allreduce(myMPI->paras.RpQU, fio->paras.RpQU, fio->n_file, MPI::FLOAT, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(myMPI->paras.RpAV, fio->paras.RpAV, fio->n_file, MPI::DOUBLE, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(myMPI->paras.RpSQ, fio->paras.RpSQ, fio->n_file, MPI::DOUBLE, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(myMPI->paras.RpQU, fio->paras.RpQU, fio->n_file, MPI::DOUBLE, MPI::SUM);
     }
     if (fio->HeiPar_flag) {
-        MPI::COMM_WORLD.Allreduce(myMPI->paras.Hp, fio->paras.Hp, fio->n_file, MPI::FLOAT, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(myMPI->paras.Hp, fio->paras.Hp, fio->n_file, MPI::DOUBLE, MPI::SUM);
         MPI::COMM_WORLD.Allreduce(myMPI->paras.Hp_in1sigma, fio->paras.Hp_in1sigma, fio->n_file, MPI::FLOAT, MPI::SUM);
     }
     if (fio->dSigma_flag) {
-        MPI::COMM_WORLD.Allreduce(myMPI->paras.dSigma, fio->paras.dSigma, fio->n_file, MPI::FLOAT, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(myMPI->paras.dSigma, fio->paras.dSigma, fio->n_file, MPI::DOUBLE, MPI::SUM);
     }
     if (fio->MeanSigma_flag) {
         for (int i = 0; i != fio->n_file; i++) {
-            MPI::COMM_WORLD.Allreduce(myMPI->paras.MeanSigma[i], fio->paras.MeanSigma[i], 4*vf->dimensions[0], MPI::FLOAT, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.MeanSigma[i], fio->paras.MeanSigma[i], 4*vf->dimensions[0], MPI::DOUBLE, MPI::SUM);
         }
     }
     if (fio->VpecG_flag) {
         for (int i = 0; i != fio->n_file; i++) {
-            MPI::COMM_WORLD.Allreduce(myMPI->paras.VpecG[i], fio->paras.VpecG[i], 3*vf->dimensions[2], MPI::FLOAT, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.VpecG[i], fio->paras.VpecG[i], 3*vf->dimensions[2], MPI::DOUBLE, MPI::SUM);
         }
     }
     if (fio->VertRho_flag) {
         for (int i = 0; i != fio->n_file; i++) {
-            MPI::COMM_WORLD.Allreduce(myMPI->paras.VertRho[i], fio->paras.VertRho[i], 2*vf->dimensions[2], MPI::FLOAT, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.VertRho[i], fio->paras.VertRho[i], 2*vf->dimensions[2], MPI::DOUBLE, MPI::SUM);
         }
     }
     if (fio->CorrL_flag) {
@@ -462,12 +372,12 @@ int IntegrateData(VtkFile *vf, Octree *ot)
     }
     if (fio->GasPar_flag) {
         for (int i = 0; i != fio->n_file; i++) {
-            MPI::COMM_WORLD.Allreduce(myMPI->paras.GasHst[i], fio->paras.GasHst[i], 16, MPI::FLOAT, MPI::SUM);
-            MPI::COMM_WORLD.Allreduce(myMPI->paras.GasHst2[i], fio->paras.GasHst2[i], 16, MPI::FLOAT, MPI::SUM);
-            MPI::COMM_WORLD.Allreduce(myMPI->paras.ParHst[i], fio->paras.ParHst[i], 16, MPI::FLOAT, MPI::SUM);
-            MPI::COMM_WORLD.Allreduce(myMPI->paras.ParLis[i], fio->paras.ParLis[i], 20, MPI::FLOAT, MPI::SUM);
-            MPI::COMM_WORLD.Allreduce(myMPI->paras.GPME[i], fio->paras.GPME[i], 4*(vf->dimensions[2]+1)*9, MPI::FLOAT, MPI::SUM);
-            MPI::COMM_WORLD.Allreduce(myMPI->paras.GPMEPar[i], fio->paras.GPMEPar[i], 4*(vf->dimensions[2]+1)*9, MPI::FLOAT, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.GasHst[i], fio->paras.GasHst[i], 16, MPI::DOUBLE, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.GasHst2[i], fio->paras.GasHst2[i], 16, MPI::DOUBLE, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.ParHst[i], fio->paras.ParHst[i], 16, MPI::DOUBLE, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.ParLis[i], fio->paras.ParLis[i], 20, MPI::DOUBLE, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.GPME[i], fio->paras.GPME[i], 4*(vf->dimensions[2]+1)*9, MPI::DOUBLE, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.GPMEPar[i], fio->paras.GPMEPar[i], 4*(vf->dimensions[2]+1)*9, MPI::DOUBLE, MPI::SUM);
         }
     }
     
@@ -484,7 +394,7 @@ int GasParDynamic()
     Paras2probe *paras = &fio->paras;
     int Nz = fio->paras.dimensions[2], Nz1 = Nz+1;
     int fourNz = 4*Nz, fourNz1=fourNz+4;
-    float toe = 1e-15; // tolerance of error for rho_p
+    double toe = 1e-15; // tolerance of error for rho_p
     
 #ifdef ENABLE_MPI
     paras = &myMPI->paras;
@@ -493,11 +403,11 @@ int GasParDynamic()
     /************************** GPME **************************/
     // !!!!!!!!!!! first, copy data to temporary place and caluclate M_0 (at each processor)
     
-    float **M_0 = new float*[fio->n_file];
-    float **MP_0 = new float*[fio->n_file];
+    double **M_0 = new double*[fio->n_file];
+    double **MP_0 = new double*[fio->n_file];
     for (int i = 0; i != fio->n_file; i++) {
-        M_0[i] = new float[fourNz];
-        MP_0[i] = new float[fourNz];
+        M_0[i] = new double[fourNz];
+        MP_0[i] = new double[fourNz];
         for (int j = 0; j != fourNz; j++) {
             M_0[i][j] = fio->paras.GPME[i][j];
             MP_0[i][j] = fio->paras.GPMEPar[i][j];
@@ -603,8 +513,8 @@ int GasParDynamic()
     
     // !!!!!!!!!!! Second, calcualte the factor of e_0 and M_1 (we need distribute tasks to each processors)
     float temp_p_gas_i, temp_p_par_i;
-    float Area =  (fio->paras.dimensions[1]*fio->paras.dimensions[0]);
-    float Volume = (fio->paras.dimensions[2]*fio->paras.dimensions[1]*fio->paras.dimensions[0]);
+    double Area =  (fio->paras.dimensions[1]*fio->paras.dimensions[0]);
+    double Volume = (fio->paras.dimensions[2]*fio->paras.dimensions[1]*fio->paras.dimensions[0]);
     //cout << "Area = " << Area << ", Volume = " << Volume << endl;
     
 #ifdef ENABLE_MPI
@@ -672,7 +582,7 @@ int GasParDynamic()
             int m01_s = 6*fourNz1; // start index of m0*m1
             int m02_s = 7*fourNz1; // start index of m0*m2
             int m12_s = 8*fourNz1; // start index of m1*m2
-            float tempM2;
+            double tempM2;
 
             for (int iz = 0; iz != vf->dimensions[2]; iz++) {
                 for (int iy = 0; iy != vf->dimensions[1]; iy++) {
@@ -803,16 +713,16 @@ int GasParDynamic()
     // !!!!!!!!!!! Third, if MPI collect data, then calculate e_0
 #ifdef ENABLE_MPI
     for (int i = 0; i != fio->n_file; i++) {
-        MPI::COMM_WORLD.Allreduce(&(myMPI->paras.GPME[i][fourNz1]), &(fio->paras.GPME[i][fourNz1]), fourNz1*8, MPI::FLOAT, MPI::SUM);
-        MPI::COMM_WORLD.Allreduce(&(myMPI->paras.GPMEPar[i][fourNz1]), &(fio->paras.GPMEPar[i][fourNz1]), fourNz1*8, MPI::FLOAT, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(&(myMPI->paras.GPME[i][fourNz1]), &(fio->paras.GPME[i][fourNz1]), fourNz1*8, MPI::DOUBLE, MPI::SUM);
+        MPI::COMM_WORLD.Allreduce(&(myMPI->paras.GPMEPar[i][fourNz1]), &(fio->paras.GPMEPar[i][fourNz1]), fourNz1*8, MPI::DOUBLE, MPI::SUM);
     }
 #endif
     int e0_s = 3*fourNz1;  // start index of e_0
-    float **e_0 = new float*[fio->n_file];
-    float **eP_0 = new float*[fio->n_file];
+    double **e_0 = new double*[fio->n_file];
+    double **eP_0 = new double*[fio->n_file];
     for (int i = 0; i != fio->n_file; i++) {
-        e_0[i] = new float[fourNz];
-        eP_0[i] = new float[fourNz];
+        e_0[i] = new double[fourNz];
+        eP_0[i] = new double[fourNz];
         for (int j = 0; j != fourNz; j++) {
             e_0[i][j] = fio->paras.GPME[i][e0_s+j];
             eP_0[i][j] = fio->paras.GPMEPar[i][e0_s+j];

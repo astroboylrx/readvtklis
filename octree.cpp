@@ -153,7 +153,7 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
     
     /***** Add cells to activate nodes *****/
     OctreeNode *p;
-    float temprhop, tempSQ, tempV;
+    double temprhop, tempSQ, tempV;
     for (int iz = 0; iz != vf->dimensions[2]; iz++) {
         for (int iy = 0; iy != vf->dimensions[1]; iy++) {
             for (int ix = 0; ix != vf->dimensions[0]; ix++) {
@@ -274,10 +274,10 @@ float Octree::Distance(T x[3], T y[3], int &i_MaxD)
 }
 
 /********** EvaluateOneP **********/
-/*! \fn void EvaluateOctreeSphere(OctreeNode *p, T x[3], float &rp, long &cells,  float &R)
+/*! \fn void EvaluateOctreeSphere(OctreeNode *p, T x[3], double &rp, long &cells,  float &R)
  *  \brief calculate rhop for a sphere centered at x with r=Radius */
 template<typename T>
-void Octree::EvaluateOctreeSphere(OctreeNode *p, T x[3], float &rp, long &cells, float &R)
+void Octree::EvaluateOctreeSphere(OctreeNode *p, T x[3], double &rp, long &cells, float &R)
 {
     float d = Distance<T>(p, x);
     if (d > R + s3o2 * p->Lx) {
@@ -434,7 +434,7 @@ void Octree::RhopMaxPerLevel()
         }
         cout << "Master: points distribution is done." << endl;
     } else {
-        float rp; long cells; long npar;
+        double rp; long cells; long npar;
         long mine_contribution = 0;
         // for increasing sample when it comes to smallest sphere
         float *temp_cellcenter;
