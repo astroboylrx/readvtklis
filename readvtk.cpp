@@ -668,6 +668,15 @@ int VtkFile::VpecG(float *VpecG)
  *  \brief calculate sigma_g and sigma_p averaged over y */
 int VtkFile::MeanSigma(float *MeanSigma)
 {
+    int mid[2], TwoNx;
+    mid[0] = dimensions[2]/2-1;
+    mid[1] = dimensions[2]/2;
+    TwoNx = dimensions[0]*2;
+    int Hp[2], ThreeNx;
+    Hp[0] = dimensions[2]/2-8;
+    Hp[1] = dimensions[2]/2+7;
+    ThreeNx = dimensions[0]*3;
+    
     for (int ix = 0; ix != dimensions[0]; ix++) {
         MeanSigma[ix] = 0;
         MeanSigma[ix+dimensions[0]] = 0;
@@ -679,6 +688,19 @@ int VtkFile::MeanSigma(float *MeanSigma)
         }
         MeanSigma[ix] /= Sigma_gas_0_inbox;
         MeanSigma[ix+dimensions[0]] /= (Sigma_gas_0 * spacing[0] * spacing[1] * dimensions[1]);
+
+        // Since the MeanSigma for gas over entire height contains too much gas structures, we want to
+        // check what if we only calculate the average near midplane
+        for (int iy = 0; iy != dimensions[1]; iy++) {
+            MeanSigma[ix+TwoNx] += (cd_scalar[0].data[mid[0]][iy][ix]+cd_scalar[0].data[mid[1]][iy][ix]);
+        }
+        for (int iz = Hp[0]; iz != Hp[1]; iz++) {
+            for (int iy = 0; iy != dimensions[1]; iy++) {
+                MeanSigma[ix+ThreeNx] += cd_scalar[0].data[iz][iy][ix];
+            }
+        }
+        MeanSigma[ix+TwoNx] /= Sigma_gas_0_mid;
+        MeanSigma[ix+ThreeNx] /= Sigma_gas_0_in2Hp;
     }
     return 0;
 }

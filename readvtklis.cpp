@@ -66,7 +66,7 @@ int main(int argc, const char * argv[]) {
     
     // reading initial gas properties if needed since the dimensions are needed
     if (fio->MeanSigma_flag || fio->VpecG_flag || fio->VertRho_flag || fio->CorrL_flag || fio->GasPar_flag) {
-        // don't worry, letting multi-cpus read the same address is efficient enough
+        // don't worry, letting multi-cpus read the same address is efficient enough for small tasks
         if (vf->Read_Header_Record_Pos(fio->vtk_filenames[0])) {
             cout << "Having problem reading header..." << endl;
             exit(1);
@@ -80,16 +80,23 @@ int main(int argc, const char * argv[]) {
         // MeanSigma need the initial average gas surface density
         if (fio->MeanSigma_flag) {
             vf->Sigma_gas_0_inbox = 0;
+            int mid[2] = {vf->dimensions[2]/2-1, vf->dimensions[2]/2};
+            int Hp[2] = {vf->dimensions[2]/2-8, vf->dimensions[2]/2+7};
+            
             for (int ix = 0; ix != vf->dimensions[0]; ix++) {
-                float temp_sigma_gas_0_in_box = 0;
                 for (int iy = 0; iy != vf->dimensions[1]; iy++) {
                     for (int iz = 0; iz != vf->dimensions[2]; iz++) {
-                        temp_sigma_gas_0_in_box += vf->cd_scalar[0].data[iz][iy][ix];
+                        vf->Sigma_gas_0_inbox += vf->cd_scalar[0].data[iz][iy][ix];
+                    }
+                    vf->Sigma_gas_0_mid += (vf->cd_scalar[0].data[mid[0]][iy][ix]+vf->cd_scalar[0].data[mid[1]][iy][ix]);
+                    for (int iz = Hp[0]; iz != Hp[1]; iz++) {
+                        vf->Sigma_gas_0_in2Hp += vf->cd_scalar[0].data[iz][iy][ix];
                     }
                 }
-                vf->Sigma_gas_0_inbox += temp_sigma_gas_0_in_box;
             }
             vf->Sigma_gas_0_inbox /= vf->dimensions[0];
+            vf->Sigma_gas_0_mid /= vf->dimensions[0];
+            vf->Sigma_gas_0_in2Hp /= vf->dimensions[0];            
         }
     }
 
@@ -139,6 +146,27 @@ int main(int argc, const char * argv[]) {
 #else
     }
 #endif
+    /* produce <rho_g>_xy(z)
+    float rhog[64], sigma_rhog[64];
+    for (int iz = 0; iz != vf->dimensions[2]; iz++) {
+        rhog[iz] = 0;
+        for (int iy = 0; iy != vf->dimensions[1]; iy++) {
+            for (int ix = 0; ix != vf->dimensions[0]; ix++) {
+                rhog[iz] += vf->cd_scalar[0].data[iz][iy][ix];
+            }
+        }
+        rhog[iz] /= vf->dimensions[0]*vf->dimensions[1];
+        sigma_rhog[iz] = 0;
+        for (int iy = 0; iy != vf->dimensions[1]; iy++) {
+            for (int ix = 0; ix != vf->dimensions[0]; ix++) {
+                sigma_rhog[iz] += (vf->cd_scalar[0].data[iz][iy][ix] - rhog[iz])*(vf->cd_scalar[0].data[iz][iy][ix] - rhog[iz]);
+            }
+        }
+        sigma_rhog[iz] /= vf->dimensions[0]*vf->dimensions[1];
+        sigma_rhog[iz] = sqrt(sigma_rhog[iz]);
+        cout << vf->cell_center[iz][0][0][2] << " " << rhog[iz] << " " << sigma_rhog[iz] << endl;
+    } // */
+    
 
     if (fio->RhopMaxPerLevel_flag) {
 #ifdef ENABLE_MPI
@@ -407,7 +435,7 @@ int IntegrateData(VtkFile *vf, Octree *ot)
     }
     if (fio->MeanSigma_flag) {
         for (int i = 0; i != fio->n_file; i++) {
-            MPI::COMM_WORLD.Allreduce(myMPI->paras.MeanSigma[i], fio->paras.MeanSigma[i], 2*vf->dimensions[0], MPI::FLOAT, MPI::SUM);
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.MeanSigma[i], fio->paras.MeanSigma[i], 4*vf->dimensions[0], MPI::FLOAT, MPI::SUM);
         }
     }
     if (fio->VpecG_flag) {

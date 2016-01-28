@@ -77,8 +77,8 @@ int Paras2probe::AllocateMemory(int n_file)
 int Paras2probe::AllocateSubMemory(int n_file, int *dimensions)
 {
     for (int i = 0; i != n_file; i++) {
-        MeanSigma[i] = new float[2*dimensions[0]];
-        for (int j = 0; j != 2*dimensions[0]; j++) {
+        MeanSigma[i] = new float[4*dimensions[0]];
+        for (int j = 0; j != 4*dimensions[0]; j++) {
             MeanSigma[i][j] = 0;
         }
         VpecG[i] = new float[3*dimensions[2]];

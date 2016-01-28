@@ -110,6 +110,8 @@ public:
     vector<CellData_Vector> cd_vector;          /*!< vector of vector data */
     float Sigma_gas_0;                          /*!< initial column density of gas */
     float Sigma_gas_0_inbox;                    /*!< initial column density of gas truncated by vertical box size */
+    float Sigma_gas_0_mid;                      /*!< initial gas density in the midplane's 2 cells */
+    float Sigma_gas_0_in2Hp;                    /*!< initial gas density inside the particle scale height */
     float m_gas;                                /*!< total gas mass */
     float m_par;                                /*!< total particle mass */
     float Max_Rhog;                             /*!< maximum density of gas */

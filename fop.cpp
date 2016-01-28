@@ -471,14 +471,14 @@ int FileIO::Output_Data()
             cout << "Failed to open " << iof.output_sigma_path_name << endl;
             return 1;
         }
-        file_MeanSigma << "#The first row of data is orbit time. The first column is x (radial direction) coordinate. Others is data, but divided into two blocks, first is for gas, then for particles.";
+        file_MeanSigma << "#The first row of data is orbit time. The first column is x (radial direction) coordinate. Others is data, but divided into two blocks, first is for gas, then for particles, then for gas in mid-plane (just 2 cells), then for gas between initial particle scale height.";
         file_MeanSigma << "\n";
         file_MeanSigma << setw(15) << setfill(' ') << 0.0;
         for (int i = 0; i != n_file; i++) {
             file_MeanSigma << setw(15) << scientific << paras.Otime[i];
         }
         file_MeanSigma << "\n";
-        for (int i = 0; i != 2*paras.dimensions[0]; i++) {
+        for (int i = 0; i != 4*paras.dimensions[0]; i++) {
             file_MeanSigma << setw(15) << scientific << paras.ccx[i%paras.dimensions[0]];
             for (int j = 0; j != n_file; j++) {
                 file_MeanSigma << setw(15) << paras.MeanSigma[j][i];
