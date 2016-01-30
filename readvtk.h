@@ -157,6 +157,10 @@ public:
      *  \brief calculate sigma_g and sigma_p averaged over y */
     int MeanSigma(double *MeanSigma);
     
+    /*! \fn int Sigma(double **Sigma)
+     *  \brief calculate the real sigma_g and sigma_p */
+    int Sigma(double **Sigma);
+    
     /*! \fn int VertRho(double *VertRho)
      *  \brief calculate vertical rho_g and rho_p */
     int VertRho(double *VertRho);

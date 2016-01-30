@@ -76,6 +76,13 @@ int Paras2probe::AllocateMemory(int n_file)
  */
 int Paras2probe::AllocateSubMemory(int n_file, int *dimensions)
 {
+    Sigma = new double*[4*dimensions[0]];
+    for (int i = 0; i != 4*dimensions[0]; i++) {
+        Sigma[i] = new double[dimensions[1]];
+        for (int j = 0; j != dimensions[1]; j++) {
+            Sigma[i][j] = 0;
+        }
+    }
     for (int i = 0; i != n_file; i++) {
         MeanSigma[i] = new double[4*dimensions[0]];
         for (int j = 0; j != 4*dimensions[0]; j++) {
@@ -127,6 +134,7 @@ Paras2probe::~Paras2probe()
     delete [] Hp_in1sigma;
     delete [] dSigma;
     delete [] MeanSigma;
+    delete [] Sigma;
     delete [] VpecG;
     delete [] VertRho;
     delete [] CorrL;

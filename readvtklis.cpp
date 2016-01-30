@@ -174,7 +174,6 @@ int main(int argc, const char * argv[]) {
         cout << vf->cell_center[iz][0][0][2] << " " << rhog[iz] << " " << sigma_rhog[iz] << endl;
     } // */
     
-
     if (fio->RhopMaxPerLevel_flag) {
 #ifdef ENABLE_MPI
         for (int i = 0; i < fio->n_file; i++) {
@@ -293,6 +292,9 @@ int RecordData(int i, VtkFile *vf, ParticleList *pl, Octree * ot) {
     }
     if (fio->MeanSigma_flag) {
         vf->MeanSigma(paras->MeanSigma[i]);
+        if (i == fio->n_file-1) {
+            vf->Sigma(paras->Sigma);
+        }
     }
     if (fio->VpecG_flag) {
         vf->VpecG(paras->VpecG[i]);
@@ -346,6 +348,9 @@ int IntegrateData(VtkFile *vf, Octree *ot)
     if (fio->MeanSigma_flag) {
         for (int i = 0; i != fio->n_file; i++) {
             MPI::COMM_WORLD.Allreduce(myMPI->paras.MeanSigma[i], fio->paras.MeanSigma[i], 4*vf->dimensions[0], MPI::DOUBLE, MPI::SUM);
+        }
+        for (int i = 0; i != 4*vf->dimensions[0]; i++) {
+            MPI::COMM_WORLD.Allreduce(myMPI->paras.Sigma[i], fio->paras.Sigma[i], vf->dimensions[1], MPI::DOUBLE, MPI::SUM);
         }
     }
     if (fio->VpecG_flag) {

@@ -193,12 +193,13 @@ int FileIO::Initialize(int argc, const char * argv[])
 #ifdef ENABLE_MPI
                     if (myMPI->myrank == myMPI->master) {
 #endif
-                        if (optopt == 'i' || optopt == 'b' || optopt == 's' || optopt == 'f' || optopt == 'o' || optopt == 'c' || optopt == 'l' || optopt == 'd')
+                        if (optopt == 'i' || optopt == 'b' || optopt == 's' || optopt == 'f' || optopt == 'o' || optopt == 'c' || optopt == 'l' || optopt == 'd') {
                             fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-                        else if (isprint (optopt))
+                        } else if (isprint (optopt)) {
                             fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-                        else
+                        } else {
                             fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                        }
 #ifdef ENABLE_MPI
                     }
 #endif
@@ -288,6 +289,7 @@ int FileIO::Generate_Filename()
     }
     if (MeanSigma_flag) {
         iof.output_sigma_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_MeanSigma.txt";
+        iof.output_midplane_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_midplane.txt";
     }
     if (VpecG_flag) {
         iof.output_vpecg_path_name = iof.output_path_name.substr(0, iof.output_path_name.find_last_of('.'))+"_VpecG.txt";
@@ -354,7 +356,7 @@ int FileIO::Check_Input_Path_Filename()
             cout << "Change of gas surface density" << endl;
         }
         if (MeanSigma_flag) {
-            cout << "<Sigma_g> and <Sigma_p>" << endl;
+            cout << "<Sigma_g>_y, <Sigma_p>_y, Sigma_g and Sigma_p" << endl;
         }
         if (VpecG_flag) {
             cout << "Gas peculiar velocity components" << endl;
@@ -486,6 +488,26 @@ int FileIO::Output_Data()
             file_MeanSigma << "\n";
         }
         file_MeanSigma.close();
+        ofstream file_midplane;
+        file_midplane.open(iof.output_midplane_path_name.c_str(), ofstream::out);
+        if (!file_midplane.is_open()) {
+            cout << "Failed to open " << iof.output_midplane_path_name << endl;
+            return 1;
+        }
+        file_midplane << "# The first row of data is x coordinate, the first column is y coordinate. Others is data." << endl;
+        file_MeanSigma << setw(15) << setfill(' ') << 0.0;
+        for (int i = 0; i != paras.dimensions[1]; i++) {
+            file_midplane << setw(15) << scientific << paras.ccy[i];
+        }
+        file_midplane << "\n";
+        for (int i = 0; i != 4*paras.dimensions[0]; i++) {
+            file_midplane << setw(15) << scientific << paras.ccx[i%paras.dimensions[0]];
+            for (int j = 0; j != paras.dimensions[1]; j++) {
+                file_midplane << setw(15) << paras.Sigma[i][j];
+            }
+            file_midplane << "\n";
+        }
+        file_midplane.close();
     }
     
     // VpecG part

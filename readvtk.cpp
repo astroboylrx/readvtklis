@@ -668,14 +668,9 @@ int VtkFile::VpecG(double *VpecG)
  *  \brief calculate sigma_g and sigma_p averaged over y */
 int VtkFile::MeanSigma(double *MeanSigma)
 {
-    int mid[2], TwoNx;
-    mid[0] = dimensions[2]/2-1;
-    mid[1] = dimensions[2]/2;
-    TwoNx = dimensions[0]*2;
-    int Hp[2], ThreeNx;
-    Hp[0] = dimensions[2]/2-8;
-    Hp[1] = dimensions[2]/2+7;
-    ThreeNx = dimensions[0]*3;
+    int Nx = dimensions[0], TwoNx = 2*Nx, ThreeNx = 3*Nx;
+    int mid[2] = {dimensions[2]/2-1, dimensions[2]/2};
+    int Hp[2] = {dimensions[2]/2-8, dimensions[2]/2+7};
     
     for (int ix = 0; ix != dimensions[0]; ix++) {
         MeanSigma[ix] = 0;
@@ -704,6 +699,33 @@ int VtkFile::MeanSigma(double *MeanSigma)
     }
     return 0;
 }
+
+/*! \fn int Sigma(double **Sigma)
+ *  \brief calculate the real sigma_g and sigma_p */
+int VtkFile::Sigma(double **Sigma)
+{
+    int Nx = dimensions[0], TwoNx = 2*Nx, ThreeNx = 3*Nx;
+    int mid[2] = {dimensions[2]/2-1, dimensions[2]/2};
+    int Hp[2] = {dimensions[2]/2-8, dimensions[2]/2+7};
+    for (int ix = 0; ix != dimensions[0]; ix++) {
+        for (int iy = 0; iy != dimensions[1]; iy++) {
+            for (int iz = 0; iz != dimensions[2]; iz++) {
+                Sigma[ix][iy] += cd_scalar[0].data[iz][iy][ix];
+                Sigma[ix+Nx][iy] += cd_scalar[1].data[iz][iy][ix];
+            }
+            Sigma[ix+TwoNx][iy] += (cd_scalar[0].data[mid[0]][iy][ix]+cd_scalar[0].data[mid[1]][iy][ix]);
+            for (int iz = Hp[0]; iz != Hp[1]; iz++) {
+                Sigma[ix+ThreeNx][iy] += cd_scalar[0].data[iz][iy][ix];
+            }
+            Sigma[ix][iy] *= (spacing[2]/Sigma_gas_0);
+            Sigma[ix+Nx][iy] *= (spacing[2]/Sigma_gas_0);
+            Sigma[ix+TwoNx][iy] *= (spacing[2]/Sigma_gas_0);
+            Sigma[ix+ThreeNx][iy] *= (spacing[2]/Sigma_gas_0);
+        }
+    }
+    return 0;
+}
+
 
 /********** Calculate double rho_g and rho_p **********/
 /*! \fn int VertRho(double *VertRho)

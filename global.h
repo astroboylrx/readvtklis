@@ -166,6 +166,7 @@ public:
     
     // output to result_MeanSigma.txt, first sigma_g and then sigma_p
     double **MeanSigma;                             /*!< sigma_g and sigma_p averaged over y */
+    double **Sigma;                                 /*!< sigma_g and sigma_p */
     
     // output to result_VpecG.txt, first x, then y, and then z
     double **VpecG;                                 /*!< Vpec_g averaged horizontally at each z, weighted by rho_g */
