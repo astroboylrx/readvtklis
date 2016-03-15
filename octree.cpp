@@ -40,16 +40,18 @@ OctreeNode::~OctreeNode()
 /****************************/
 
 /********** Constructor **********/
-Octree::Octree()
+Octree::Octree(int n_file)
 {
     s3o2 = sqrt(3.0)/2.0;
     foPio3 = 4.0*PI/3.0;
     NxCubic = NULL;
     MaxD = NULL;
-    RMPL = NULL;
+    RMPL = new float*[n_file];
+    for (int i = 0; i != n_file; i++) {
+        RMPL[i] = NULL;
+    }
     Radius = NULL;
     Initialize();
-    
 }
 
 /********** Initialize **********/
@@ -70,6 +72,11 @@ Octree::~Octree()
     CleanMem(root);
     delete root; root = NULL;
     if (NxCubic != NULL) delete [] NxCubic;
+    for (int i = 0; i != fio->n_file; i++) {
+        if (RMPL[i] != NULL) {
+            delete [] RMPL[i];
+        }
+    }
     if (RMPL != NULL) delete [] RMPL;
     if (Radius != NULL) delete [] Radius;
 }
@@ -87,9 +94,9 @@ void Octree::CleanMem(OctreeNode *p)
 }
 
 /********** BuildTree **********/
-/*! \fn BuildTree(VtkFile *VF, ParticleList *PL)
+/*! \fn BuildTree(VtkFile *VF, ParticleList *PL, int file_i)
  *  \brief Build the whole tree */
-int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
+int Octree::BuildTree(VtkFile *VF, ParticleList *PL, int file_i)
 {
     CleanMem(root);
     delete root; root = NULL;
@@ -139,15 +146,15 @@ int Octree::BuildTree(VtkFile *VF, ParticleList *PL)
 #ifdef OutflowRate
             MaxD[i][2] = vf->L[2] * 2;
             // let it bigger than any distance so no periodic computation happen in x3 direction
-            // in fact all particles are in the middle plane, and the RMPL[root_level] is calculated by another way. This is not main concern
+            // in fact all particles are in the middle plane, and the RMPL[file_i][root_level] is calculated by another way. This is not main concern
 #endif
             //cout << myMPI->prank() << "MaxD[" << i << "]=" << pvector<float>(MaxD[i]) << ", R[i]=" << Radius[i] << endl;
         }
     }
-    if (RMPL == NULL) {
-        RMPL = new float[level+1];
+    if (RMPL[file_i] == NULL) {
+        RMPL[file_i] = new float[level+1];
         for (int i = 0; i <= level; i++) {
-            RMPL[i] = 0;
+            RMPL[file_i][i] = 0;
         }
     }
     
@@ -335,15 +342,15 @@ void Octree::EvaluateAccurateSphere(OctreeNode *p, T x[3], long &npar, float &R,
 }
 
 /********** MaxRhopPerLevel **********/
-/*! \fn void RhopMaxPerLevel()
+/*! \fn void RhopMaxPerLevel(int file_i)
  *  \brief Find the max rhop within a sphere with radius of N*dx */
-void Octree::RhopMaxPerLevel()
+void Octree::RhopMaxPerLevel(int file_i)
 {
     int ks = -1, ke = -1, iz, iy, ix;
     
     // in case needed
-    //RMPL[0] = Max_Rhop;
-    //RMPL[level] = RpAV * (vf->kpe-vf->kps) / vf->dimensions[2];
+    //RMPL[file_i][0] = Max_Rhop;
+    //RMPL[file_i][level] = RpAV * (vf->kpe-vf->kps) / vf->dimensions[2];
     
     // certainly those outside the center zone (with rhop = 0) can be omitted
     for (iz = vf->dimensions[2]/2-1; iz != 0; iz--) {
@@ -459,8 +466,8 @@ void Octree::RhopMaxPerLevel()
                 // Count real particle numbers in accurate sphere
                 EvaluateAccurateSphere<float>(root, temp_cellcenter, npar, Radius[i], i);
                 
-                if (npar > RMPL[i]) {
-                    RMPL[i] = npar;
+                if (npar > RMPL[file_i][i]) {
+                    RMPL[file_i][i] = npar;
                 }
                 
                 // some small sphere need more sample
@@ -472,8 +479,8 @@ void Octree::RhopMaxPerLevel()
                             tempcenter[xyz] = temp_cellcenter[xyz] - yesorno * Radius[0];
                         }
                         EvaluateAccurateSphere(root, tempcenter, npar, Radius[i], i);
-                        if (npar > RMPL[i]) {
-                            RMPL[i] = npar;
+                        if (npar > RMPL[file_i][i]) {
+                            RMPL[file_i][i] = npar;
                         }
                         if (i == 0) {
                             float tempcenter2[3];
@@ -485,8 +492,8 @@ void Octree::RhopMaxPerLevel()
                                     tempcenter2[xyz2] = tempcenter[xyz2] - yesorno2 * Radius[0]/2.0;
                                 }
                                 EvaluateAccurateSphere(root, tempcenter2, npar, Radius[i], i);
-                                if (npar > RMPL[i]) {
-                                    RMPL[i] = npar;
+                                if (npar > RMPL[file_i][i]) {
+                                    RMPL[file_i][i] = npar;
                                 }
                             }
                         }

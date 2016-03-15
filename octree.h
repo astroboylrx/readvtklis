@@ -66,13 +66,13 @@ public:
     float *Radius;                                  /*!< half etar */
     float **MaxD;                                   /*!< max allowed distance that we do not consider periodic boundary */
     float m1par;                                    /*!< mass of 1 particle */
-    float *RMPL;                                    /*!< Rhop_Max Per Level, in reverse order */
+    float **RMPL;                                   /*!< Rhop_Max Per Level, in reverse order for all files */
     float shortestL;                                /*!< The shortest side length of the numerical domain */
     float tempcenter[3];
     
-    /*! \fn Octree();
+    /*! \fn Octree(int n_file);
      *  \brief Constructor of tree sturcture */
-    Octree();
+    Octree(int n_file);
     
     /*! \fn Initialize();
      *  \brief refresh the class */
@@ -86,9 +86,9 @@ public:
      *  \brief clean all the memory */
     void CleanMem(OctreeNode *p);
     
-    /*! \fn int BuildTree(VtkFile *VF, ParticleList *PL)
+    /*! \fn int BuildTree(VtkFile *VF, ParticleList *PL, int file_i)
      *  \brief Build the whole tree */
-    int BuildTree(VtkFile *VF, ParticleList *PL);
+    int BuildTree(VtkFile *VF, ParticleList *PL, int file_i);
     
     /*! \fn OctreeNode *AddCell(float cc[], float &rhop)
      *  \brief using cell center to find the tree node, create nodes if needed */
@@ -118,9 +118,9 @@ public:
     template<typename T>
     float Distance(T x[3], T y[3], int &i_MaxD);
     
-    /*! \fn void RhopMaxPerLevel()
+    /*! \fn void RhopMaxPerLevel(int file_i)
      *  \brief Find the max rhop within a sphere with radius of N*dx */
-    void RhopMaxPerLevel();
+    void RhopMaxPerLevel(int file_i);
     
 };
 

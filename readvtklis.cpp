@@ -45,7 +45,6 @@ int main(int argc, const char * argv[]) {
     fio->Generate_Filename();
     ParticleList *pl = new ParticleList;
     VtkFile *vf = new VtkFile;
-    Octree *ot = new Octree;
     
 #ifdef ENABLE_MPI
     if (myMPI->myrank == myMPI->master) {
@@ -59,6 +58,7 @@ int main(int argc, const char * argv[]) {
         myMPI->loop_end = -1;
     }
     myMPI->paras.AllocateMemory(fio->n_file);
+    Octree *ot = new Octree(fio->n_file);
     myMPI->Barrier();
     // for debug
     cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << endl;
@@ -136,7 +136,7 @@ int main(int argc, const char * argv[]) {
             
             // Then something based on both vtk and lis
             if (fio->RhoParMax_flag) {
-                ot->BuildTree(vf, pl);
+                ot->BuildTree(vf, pl, i);
             }
             if (fio->PointCloud_flag) {
                 pl->Lis2Vtk(fio->lis2vtk_filenames[i], vf->Header);
@@ -188,7 +188,7 @@ int main(int argc, const char * argv[]) {
             vf->Read_Data(fio->vtk_filenames[i]);
             pl->ReadLis(fio->lis_filenames[i]);
             // build tree
-            ot->BuildTree(vf, pl);
+            ot->BuildTree(vf, pl, i);
             if (fio->paras.RMPL == NULL) {
                 fio->paras.RMPL = new float[ot->level+1];
                 for (int i = 0; i <= ot->level; i++) {
@@ -199,10 +199,15 @@ int main(int argc, const char * argv[]) {
             myMPI->Barrier();
             myMPI->wait_time += myMPI->T() - temp_t;
             
-            ot->RhopMaxPerLevel();
+            ot->RhopMaxPerLevel(i);
+            if (i != 0) {
+                for (int level = 0; level <= ot->level; level++) {
+                    ot->RMPL[0][level] += ot->RMPL[i][level];
+                }
+            }
         }
-        for (int i = 0; i <= ot->level; i++) {
-            ot->RMPL[i] = ot->m1par * ot->RMPL[i] / (ot->foPio3 * ot->Radius[i] * ot->Radius[i] * ot->Radius[i]);
+        for (int level = 0; level <= ot->level; level++) {
+            ot->RMPL[0][level] = ot->m1par * ot->RMPL[0][level] / (ot->foPio3 * ot->Radius[level] * ot->Radius[level] * ot->Radius[level]) / fio->n_file;
         }
         
 #else /* ENABLE_MPI */
@@ -373,7 +378,7 @@ int IntegrateData(VtkFile *vf, Octree *ot)
         }
     }
     if (fio->RhopMaxPerLevel_flag) {
-        MPI::COMM_WORLD.Allreduce(ot->RMPL, fio->paras.RMPL, ot->level+1, MPI::FLOAT, MPI::MAX);
+        MPI::COMM_WORLD.Allreduce(ot->RMPL[0], fio->paras.RMPL, ot->level+1, MPI::FLOAT, MPI::MAX);
     }
     if (fio->GasPar_flag) {
         for (int i = 0; i != fio->n_file; i++) {
