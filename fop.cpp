@@ -623,7 +623,7 @@ int FileIO::Output_Data()
         file_RhopMax << setw(15) << setfill(' ') << "#Diameter";
         file_RhopMax << setw(15) << setfill(' ') << "Max(Rho_p)" << "\n";
         
-        int level = int(log10(fio->paras.dimensions[0])/log10(2.0));
+        int level = round(log10(fio->paras.dimensions[0])/log10(2.0));
         for (int i = 0; i <= level; i++) {
             file_RhopMax << setw(15) << scientific << fio->paras.spacing[0]*pow(2.0, i);
             file_RhopMax << setw(15) << scientific << fio->paras.RMPL[i] << "\n";

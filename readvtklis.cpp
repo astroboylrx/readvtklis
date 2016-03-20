@@ -24,6 +24,7 @@ FileIO *fio = new FileIO;
 /********** sub-routines **********/
 int RecordData(int i, VtkFile *vf, ParticleList *pl, Octree * ot);
 int IntegrateData(VtkFile *vf, Octree *ot);
+
 int GasParDynamic();
 int wangbadan(int exitcode);
 
@@ -59,6 +60,8 @@ int main(int argc, const char * argv[]) {
     }
     myMPI->paras.AllocateMemory(fio->n_file);
     Octree *ot = new Octree(fio->n_file);
+    Quadtree *qt = new Quadtree(fio->n_file);
+    
     myMPI->Barrier();
     // for debug
     cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << endl;
@@ -176,6 +179,7 @@ int main(int argc, const char * argv[]) {
     
     if (fio->RhopMaxPerLevel_flag) {
 #ifdef ENABLE_MPI
+        float *temp_RMPL = NULL;
         for (int i = 0; i < fio->n_file; i++) {
             // read data
             if (myMPI->myrank == 0) {
@@ -187,6 +191,7 @@ int main(int argc, const char * argv[]) {
             }
             vf->Read_Data(fio->vtk_filenames[i]);
             pl->ReadLis(fio->lis_filenames[i]);
+#ifdef OCTREE
             // build tree
             ot->BuildTree(vf, pl, i);
             if (fio->paras.RMPL == NULL) {
@@ -195,20 +200,63 @@ int main(int argc, const char * argv[]) {
                     fio->paras.RMPL[i] = 0;
                 }
             }
+            if (temp_RMPL == NULL) {
+                temp_RMPL = new float[ot->level+1];
+                for (int i = 0; i <= ot->level; i++) {
+                    temp_RMPL[i] = 0;
+                }
+            }
             double temp_t = myMPI->T();
             myMPI->Barrier();
             myMPI->wait_time += myMPI->T() - temp_t;
             
             ot->RhopMaxPerLevel(i);
-            if (i != 0) {
-                for (int level = 0; level <= ot->level; level++) {
-                    ot->RMPL[0][level] += ot->RMPL[i][level];
+            myMPI->Barrier();
+            MPI::COMM_WORLD.Allreduce(ot->RMPL[i], temp_RMPL, ot->level+1, MPI::FLOAT, MPI::MAX);
+            for (int level = 0; level <= ot->level; level++) {
+                fio->paras.RMPL[level] += temp_RMPL[level];
+            }
+            
+#endif /* OCTREE */
+#ifdef QUADTREE
+            // build tree
+            qt->BuildTree(vf, pl, i);
+            if (fio->paras.RMPL == NULL) {
+                fio->paras.RMPL = new float[qt->level+1];
+                for (int i = 0; i <= qt->level; i++) {
+                    fio->paras.RMPL[i] = 0;
                 }
             }
+            if (temp_RMPL == NULL) {
+                temp_RMPL = new float[qt->level+1];
+                for (int i = 0; i <= qt->level; i++) {
+                    temp_RMPL[i] = 0;
+                }
+            }
+            double temp_t = myMPI->T();
+            myMPI->Barrier();
+            myMPI->wait_time += myMPI->T() - temp_t;
+            
+            qt->SigmapMaxPerLevel(i);
+            myMPI->Barrier();
+            MPI::COMM_WORLD.Allreduce(qt->SMPL[i], temp_RMPL, qt->level+1, MPI::FLOAT, MPI::MAX);
+            for (int level = 0; level <= qt->level; level++) {
+                fio->paras.RMPL[level] += temp_RMPL[level];
+            }
+#endif /* QUADTREE */
         }
+        
+#ifdef OCTREE
         for (int level = 0; level <= ot->level; level++) {
-            ot->RMPL[0][level] = ot->m1par * ot->RMPL[0][level] / (ot->foPio3 * ot->Radius[level] * ot->Radius[level] * ot->Radius[level]) / fio->n_file;
+            fio->paras.RMPL[level] = ot->m1par * fio->paras.RMPL[level] / (ot->foPio3 * ot->Radius[level] * ot->Radius[level] * ot->Radius[level]) / fio->n_file;
         }
+#endif /* OCTREE */
+#ifdef QUADTREE
+        for (int level = 0; level <= qt->level; level++) {
+            fio->paras.RMPL[level] = qt->m1par * fio->paras.RMPL[level] / (PI * qt->Radius[level] * qt->Radius[level]) / fio->n_file;
+        }
+#endif /* QUADTREE */
+
         
 #else /* ENABLE_MPI */
         cout << "Such a heavy computation will take forever in single CPU. Please consider using parallel computing." << endl;
@@ -284,10 +332,10 @@ int RecordData(int i, VtkFile *vf, ParticleList *pl, Octree * ot) {
         paras->N_par[i] = pl->n;
     }
     if (fio->RhoParMax_flag) {
-        paras->Max_Rhop[i] = ot->Max_Rhop;
-        paras->RpAV[i] = ot->RpAV;
-        paras->RpSQ[i] = ot->RpSQ;
-        paras->RpQU[i] = ot->RpQU;
+        paras->Max_Rhop[i] = vf->Max_Rhop;
+        paras->RpAV[i] = vf->RpAV;
+        paras->RpSQ[i] = vf->RpSQ;
+        paras->RpQU[i] = vf->RpQU;
     }
     if (fio->HeiPar_flag) {
         pl->ScaleHeight(paras->Hp[i], paras->Hp_in1sigma[i]);
@@ -377,9 +425,11 @@ int IntegrateData(VtkFile *vf, Octree *ot)
 #endif
         }
     }
-    if (fio->RhopMaxPerLevel_flag) {
-        MPI::COMM_WORLD.Allreduce(ot->RMPL[0], fio->paras.RMPL, ot->level+1, MPI::FLOAT, MPI::MAX);
-    }
+#ifdef OCTREE
+    //if (fio->RhopMaxPerLevel_flag) {
+    //    MPI::COMM_WORLD.Allreduce(ot->RMPL[0], fio->paras.RMPL, ot->level+1, MPI::FLOAT, MPI::MAX);
+    //}
+#endif
     if (fio->GasPar_flag) {
         for (int i = 0; i != fio->n_file; i++) {
             MPI::COMM_WORLD.Allreduce(myMPI->paras.GasHst[i], fio->paras.GasHst[i], 16, MPI::DOUBLE, MPI::SUM);

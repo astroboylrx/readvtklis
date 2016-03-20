@@ -553,7 +553,7 @@ int VtkFile::Calculate_Mass_Find_Max()
         return 1;
     }
     
-    /* RL: move these calculations to octree.cpp
+    // RL: move these calculations from octree.cpp back here
     for (vector<CellData_Scalar>::iterator it = cd_scalar.begin(); it != cd_scalar.end(); it++) {
         if (it->dataname.compare("density") == 0) {
             //m_gas = m_temp*cell_volume;

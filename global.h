@@ -43,6 +43,10 @@ using namespace::std;
 #define OutflowRate
 //#define PeriodicFlux
 
+//#define OCTREE
+#define QUADTREE
+#define BTREE
+
 //#define CorrValue // print correlation value of Mx
 
 /*************************************/

@@ -102,7 +102,7 @@ int ParticleList::ReadLis(string filename)
             file.read((char *)(&it->pid), sizeof(long));
             // pid only has meaning in one grid, but we need read it
             // to skip a data block in the file
-            it->pid = pid++;
+            it->pid = pid++; // define our own particle ID number
             file.read((char *)(&it->cpuid), sizeof(int));
         }
         /*** resize list ***/
