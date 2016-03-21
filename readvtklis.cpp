@@ -201,7 +201,7 @@ int main(int argc, const char * argv[]) {
             ot->BuildTree(vf, pl, i);
             if (fio->paras.RMPL == NULL) {
                 fio->paras.RMPL = new float[(ot->level+1) * 3];
-                for (int i = 0; i <= ot->level; i++) {
+                for (int i = 0; i < (ot->level+1)*3; i++) {
                     fio->paras.RMPL[i] = 0;
                 }
                 tot_level = ot->level+1;
@@ -229,10 +229,11 @@ int main(int argc, const char * argv[]) {
             qt->BuildTree(vf, pl, i);
             /*
             if (fio->paras.RMPL == NULL) {
-                fio->paras.RMPL = new float[qt->level+1];
-                for (int i = 0; i <= qt->level; i++) {
+                fio->paras.RMPL = new float[(qt->level+1)*3];
+                for (int i = 0; i < (qt->level+1)*3; i++) {
                     fio->paras.RMPL[i] = 0;
                 }
+                tot_level = qt->level+1;
             }
             if (temp_RMPL == NULL) {
                 temp_RMPL = new float[qt->level+1];
