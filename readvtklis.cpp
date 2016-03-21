@@ -287,12 +287,12 @@ int main(int argc, const char * argv[]) {
 #endif /* OCTREE */
 #ifdef QUADTREE
         for (int level = 0; level <= qt->level; level++) {
-            fio->paras.RMPL[level+tot_level] = qt->m1par * fio->paras.RMPL[level] / (PI * qt->Radius[level] * qt->Radius[level]) / fio->n_file;
+            fio->paras.RMPL[level+tot_level] = qt->m1par * fio->paras.RMPL[level+tot_level] / (PI * qt->Radius[level] * qt->Radius[level]) / fio->n_file;
         }
 #endif /* QUADTREE */
 #ifdef BTREE
         for (int level = 0; level <= bt->level; level++) {
-            fio->paras.RMPL[level+2*tot_level] = bt->m1par * fio->paras.RMPL[level] / (bt->Radius[level] * 2) / fio->n_file;
+            fio->paras.RMPL[level+2*tot_level] = bt->m1par * fio->paras.RMPL[level+2*tot_level] / (bt->Radius[level] * 2) / fio->n_file;
         }
 #endif
 
