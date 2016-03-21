@@ -35,6 +35,10 @@ QuadtreeNode::~QuadtreeNode()
         vector<QuadtreeNode *> temp;
         Daughter.swap(temp);
     }
+    if (deep_pids.size() > 0) {
+        vector<long> temp;
+        deep_pids.swap(temp);
+    }
 }
 
 
@@ -121,7 +125,7 @@ int Quadtree::BuildTree(VtkFile *VF, ParticleList *PL, int file_i)
     
     /***** The following need the "level" to allocate space *****/
     level = round(log10(rootNx)/log10(2.0));
-    level_limit = round(log10(root->Lx/0.0005)/log10(2.0)); // no point to go further down to <5e-4
+    level_limit = round(log10(root->Lx/0.001)/log10(2.0)); // no point to go further down to <5e-4
     
     if (MaxD == NULL) {
         MaxD = new float*[level+1];
@@ -213,7 +217,6 @@ int Quadtree::AddParticle(QuadtreeNode *p, Particle &it)
     
     return 0;
 }
-
 
 /********** Distance **********/
 /*! \fn float Distance(T x[], T y[], int &i_MaxD)
@@ -419,6 +422,10 @@ OctreeNode::~OctreeNode()
     if (Daughter.size() > 0) {
         vector<OctreeNode *> temp;
         Daughter.swap(temp);
+    }
+    if (deep_pids.size() > 0) {
+        vector<long> temp;
+        deep_pids.swap(temp);
     }
 }
 

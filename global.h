@@ -43,7 +43,7 @@ using namespace::std;
 #define OutflowRate
 //#define PeriodicFlux
 
-//#define OCTREE
+#define OCTREE
 #define QUADTREE
 #define BTREE
 
@@ -135,11 +135,18 @@ int deallocate3d_vector_array(T ****data, int *dimensions)
 
 /*! \fn string pvector(T x[3])
  *  \brief print vector */
-template<typename T>
-string pvector(T x[3])
+template<int D, typename T>
+string pvector(T x[])
 {
     ostringstream oss;
-    oss << "[" << x[0] << "," << x[1] << "," << x[2] << "]";
+    oss << "[";
+    for (int i = 0; i != D; i++) {
+        if (i != 0) {
+            oss << ",";
+        }
+        oss << x[i];
+    }
+    oss << "]";
     return oss.str();
 }
 

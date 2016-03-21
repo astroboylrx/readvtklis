@@ -621,12 +621,17 @@ int FileIO::Output_Data()
             return 1;
         }
         file_RhopMax << setw(15) << setfill(' ') << "#Diameter";
-        file_RhopMax << setw(15) << setfill(' ') << "Max(Rho_p)" << "\n";
+        file_RhopMax << setw(15) << setfill(' ') << "Max(Rho_p)";
+        file_RhopMax << setw(15) << setfill(' ') << "Max(Sigma_p)";
+        file_RhopMax << setw(15) << setfill(' ') << "Max(Lambda_p)";
+        file_RhopMax << "\n";
         
         int level = round(log10(fio->paras.dimensions[0])/log10(2.0));
         for (int i = 0; i <= level; i++) {
             file_RhopMax << setw(15) << scientific << fio->paras.spacing[0]*pow(2.0, i);
-            file_RhopMax << setw(15) << scientific << fio->paras.RMPL[i] << "\n";
+            file_RhopMax << setw(15) << scientific << fio->paras.RMPL[i];
+            file_RhopMax << setw(15) << scientific << fio->paras.RMPL[i+level+1];
+            file_RhopMax << setw(15) << scientific << fio->paras.RMPL[i+2*level+2] << "\n";
         }
         
         file_RhopMax.close();
