@@ -232,11 +232,11 @@ int main(int argc, const char * argv[]) {
                 fio->paras.RMPL[level] += temp_RMPL[level];
             }
             if (myMPI->myrank == 0) {
-                std::cout << "loop " << i << "ot done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+                std::cout << "loop " << i << ", ot done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
             }
             ot->CleanMem(ot->root);
             if (myMPI->myrank == 0) {
-                std::cout << "loop " << i << "ot CleanMem, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+                std::cout << "loop " << i << ", ot CleanMem, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
             }
             
             

@@ -463,7 +463,7 @@ public:
             }
             mine_contribution++;
         }
-        cout << myMPI->prank() << mine_contribution << " jobs are done." << endl;
+        //cout << myMPI->prank() << mine_contribution << " jobs are done." << endl;
 
     }
 #endif /* ENABLE_MPI */
