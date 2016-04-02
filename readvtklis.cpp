@@ -41,7 +41,7 @@ int main(int argc, const char * argv[]) {
 #else
     clock_t begin_t = clock();
 #endif
-    //sleep(15);
+    //sleep(30);
     fio->Initialize(argc, argv);
     fio->Generate_Filename();
     ParticleList *pl = new ParticleList;
@@ -182,6 +182,9 @@ int main(int argc, const char * argv[]) {
         cout << vf->cell_center[iz][0][0][2] << " " << rhog[iz] << " " << sigma_rhog[iz] << endl;
     } // */
     
+    if (myMPI->myrank == 0) {
+        std::cout << "Before loop, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+    }
     if (fio->RhopMaxPerLevel_flag) {
 #ifdef ENABLE_MPI
         float *temp_RMPL = NULL; double temp_t; int tot_level = 0;
@@ -225,9 +228,12 @@ int main(int argc, const char * argv[]) {
             
 #endif /* OCTREE */
 #ifdef QUADTREE
+            if (myMPI->myrank == 0) {
+                std::cout << "loop " << i << ", current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+            }
             // build tree
             qt->BuildTree(vf, pl, i);
-            /*
+            //
             if (fio->paras.RMPL == NULL) {
                 fio->paras.RMPL = new float[(qt->level+1)*3];
                 for (int i = 0; i < (qt->level+1)*3; i++) {
@@ -255,12 +261,13 @@ int main(int argc, const char * argv[]) {
 #ifdef BTREE
             // build tree
             bt->BuildTree(vf, pl, i);
-            /*
+            //
             if (fio->paras.RMPL == NULL) {
-                fio->paras.RMPL = new float[bt->level+1];
-                for (int i = 0; i <= bt->level; i++) {
+                fio->paras.RMPL = new float[(bt->level+1)*3];
+                for (int i = 0; i <= (bt->level+1)*3; i++) {
                     fio->paras.RMPL[i] = 0;
                 }
+                tot_level = bt->level+1;
             }
             if (temp_RMPL == NULL) {
                 temp_RMPL = new float[bt->level+1];
@@ -288,13 +295,14 @@ int main(int argc, const char * argv[]) {
 #endif /* OCTREE */
 #ifdef QUADTREE
         for (int level = 0; level <= qt->level; level++) {
-            fio->paras.RMPL[level+tot_level] = qt->m1par * fio->paras.RMPL[level+tot_level] / (PI * qt->Radius[level] * qt->Radius[level]) / fio->n_file;
+            fio->paras.RMPL[level+tot_level] = qt->m1par * fio->paras.RMPL[level+tot_level] / (PI * qt->Radius[level] * qt->Radius[level]) / fio->n_file / sqrt(2*PI); // in the unit of SigmaG
         }
 #endif /* QUADTREE */
 #ifdef BTREE
         for (int level = 0; level <= bt->level; level++) {
-            fio->paras.RMPL[level+2*tot_level] = bt->m1par * fio->paras.RMPL[level+2*tot_level] / (bt->Radius[level] * 2) / fio->n_file;
+            fio->paras.RMPL[level+2*tot_level] = bt->m1par * fio->paras.RMPL[level+2*tot_level] / (bt->Radius[level] * 2) / fio->n_file / sqrt(2*PI); // in the unit of lambda_g, which is sqrt(2*PI) = SigmaG*1H
         }
+        
 #endif
 
         
