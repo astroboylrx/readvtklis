@@ -197,8 +197,11 @@ public:
      *  \brief build the tree by add particles into it */
     void BuildTree(VtkFile *VF, ParticleList *PL, int file_i) {
         
-        CleanMem(root);
-        delete root; root = nullptr;
+        if (root != nullptr) {
+            CleanMem(root);
+            delete root; root = nullptr;
+        }
+
         Initialize();
         vf = VF;
         pl = PL;
@@ -231,6 +234,7 @@ public:
         
         
         if (MaxD == nullptr) {
+            //if (myMPI->myrank == 0) std::cout << "enter once" << std::endl;
             MaxD = new float*[level+1];
             if (Radius == nullptr) {
                 Radius = new float[level+1];
@@ -464,7 +468,11 @@ public:
             mine_contribution++;
         }
         //cout << myMPI->prank() << mine_contribution << " jobs are done." << endl;
-
+        
+        for (int npo = 0; npo != Npoints; npo++) {
+            delete [] indices[npo];
+        }
+        delete [] indices;
     }
 #endif /* ENABLE_MPI */
     

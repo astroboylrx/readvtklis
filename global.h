@@ -43,7 +43,7 @@ using namespace::std;
 #define OutflowRate
 //#define PeriodicFlux
 
-#define OCTREE
+//#define OCTREE
 #define QUADTREE
 #define BTREE
 

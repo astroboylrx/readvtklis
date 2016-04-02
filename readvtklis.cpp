@@ -183,7 +183,7 @@ int main(int argc, const char * argv[]) {
     } // */
     
     if (myMPI->myrank == 0) {
-        std::cout << "Before loop, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+        std::cout << "Before loop, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
     }
     if (fio->RhopMaxPerLevel_flag) {
 #ifdef ENABLE_MPI
@@ -199,14 +199,14 @@ int main(int argc, const char * argv[]) {
             }
             vf->Read_Data(fio->vtk_filenames[i]);
             pl->ReadLis(fio->lis_filenames[i]);
-#ifdef OCTREE
             if (myMPI->myrank == 0) {
-                std::cout << "loop " << i << ", reading done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+                std::cout << "loop " << i << ", reading done, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
             }
+#ifdef OCTREE
             // build tree
             ot->BuildTree(vf, pl, i);
             if (myMPI->myrank == 0) {
-                std::cout << "loop " << i << ", building ot done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+                std::cout << "loop " << i << ", building ot done, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
             }
             if (fio->paras.RMPL == NULL) {
                 fio->paras.RMPL = new float[(ot->level+1) * 3];
@@ -232,11 +232,11 @@ int main(int argc, const char * argv[]) {
                 fio->paras.RMPL[level] += temp_RMPL[level];
             }
             if (myMPI->myrank == 0) {
-                std::cout << "loop " << i << ", ot done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+                std::cout << "loop " << i << ", ot done, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
             }
             ot->CleanMem(ot->root);
             if (myMPI->myrank == 0) {
-                std::cout << "loop " << i << ", ot CleanMem, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+                std::cout << "loop " << i << ", ot CleanMem, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
             }
             
             
@@ -245,7 +245,7 @@ int main(int argc, const char * argv[]) {
             // build tree
             qt->BuildTree(vf, pl, i);
             if (myMPI->myrank == 0) {
-                std::cout << "loop " << i << ", building qt done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+                std::cout << "loop " << i << ", building qt done, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
             }
             //
             if (fio->paras.RMPL == NULL) {
@@ -272,11 +272,11 @@ int main(int argc, const char * argv[]) {
                 fio->paras.RMPL[level+tot_level] += temp_RMPL[level];
             }
             if (myMPI->myrank == 0) {
-                std::cout << "loop " << i << ", qt done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+                std::cout << "loop " << i << ", qt done, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
             }
-            qt->CleanMem(qt->root);
+            qt->CleanMem(qt->root); delete qt->root; qt->root = nullptr;
             if (myMPI->myrank == 0) {
-                std::cout << "loop " << i << ", qt CleanMem, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+                std::cout << "loop " << i << ", qt CleanMem, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
             }
 #endif /* QUADTREE */
 #ifdef BTREE
@@ -284,7 +284,7 @@ int main(int argc, const char * argv[]) {
             bt->BuildTree(vf, pl, i);
             //
             if (myMPI->myrank == 0) {
-                std::cout << "loop " << i << ", building bt done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+                std::cout << "loop " << i << ", building bt done, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
             }
             if (fio->paras.RMPL == NULL) {
                 fio->paras.RMPL = new float[(bt->level+1)*3];
@@ -310,11 +310,11 @@ int main(int argc, const char * argv[]) {
                 fio->paras.RMPL[level+2*tot_level] += temp_RMPL[level];
             }
             if (myMPI->myrank == 0) {
-                std::cout << "loop " << i << ", bt done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+                std::cout << "loop " << i << ", bt done, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
             }
-            bt->CleanMem(bt->root);
+            bt->CleanMem(bt->root); delete bt->root; bt->root = nullptr;
             if (myMPI->myrank == 0) {
-                std::cout << "loop " << i << ", bt CleanMem, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+                std::cout << "loop " << i << ", bt CleanMem, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
             }
 #endif
         }
