@@ -73,7 +73,7 @@ int main(int argc, const char * argv[]) {
     
     myMPI->Barrier();
     // for debug
-    cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << endl;
+    //cout << "Processor " << myMPI->myrank << ": " << myMPI->loop_begin << " " << myMPI->loop_end << " " << myMPI->loop_offset << endl;
 #endif
     
     // reading initial gas properties if needed since the dimensions are needed
@@ -200,8 +200,14 @@ int main(int argc, const char * argv[]) {
             vf->Read_Data(fio->vtk_filenames[i]);
             pl->ReadLis(fio->lis_filenames[i]);
 #ifdef OCTREE
+            if (myMPI->myrank == 0) {
+                std::cout << "loop " << i << ", reading done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+            }
             // build tree
             ot->BuildTree(vf, pl, i);
+            if (myMPI->myrank == 0) {
+                std::cout << "loop " << i << ", building ot done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+            }
             if (fio->paras.RMPL == NULL) {
                 fio->paras.RMPL = new float[(ot->level+1) * 3];
                 for (int i = 0; i < (ot->level+1)*3; i++) {
@@ -225,14 +231,22 @@ int main(int argc, const char * argv[]) {
             for (int level = 0; level <= ot->level; level++) {
                 fio->paras.RMPL[level] += temp_RMPL[level];
             }
+            if (myMPI->myrank == 0) {
+                std::cout << "loop " << i << "ot done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+            }
+            ot->CleanMem(ot->root);
+            if (myMPI->myrank == 0) {
+                std::cout << "loop " << i << "ot CleanMem, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+            }
+            
             
 #endif /* OCTREE */
 #ifdef QUADTREE
-            if (myMPI->myrank == 0) {
-                std::cout << "loop " << i << ", current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
-            }
             // build tree
             qt->BuildTree(vf, pl, i);
+            if (myMPI->myrank == 0) {
+                std::cout << "loop " << i << ", building qt done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+            }
             //
             if (fio->paras.RMPL == NULL) {
                 fio->paras.RMPL = new float[(qt->level+1)*3];
@@ -257,11 +271,21 @@ int main(int argc, const char * argv[]) {
             for (int level = 0; level <= qt->level; level++) {
                 fio->paras.RMPL[level+tot_level] += temp_RMPL[level];
             }
+            if (myMPI->myrank == 0) {
+                std::cout << "loop " << i << ", qt done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+            }
+            qt->CleanMem(qt->root);
+            if (myMPI->myrank == 0) {
+                std::cout << "loop " << i << ", qt CleanMem, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+            }
 #endif /* QUADTREE */
 #ifdef BTREE
             // build tree
             bt->BuildTree(vf, pl, i);
             //
+            if (myMPI->myrank == 0) {
+                std::cout << "loop " << i << ", building bt done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+            }
             if (fio->paras.RMPL == NULL) {
                 fio->paras.RMPL = new float[(bt->level+1)*3];
                 for (int i = 0; i <= (bt->level+1)*3; i++) {
@@ -284,6 +308,13 @@ int main(int argc, const char * argv[]) {
             MPI::COMM_WORLD.Allreduce(bt->RMPL[i], temp_RMPL, bt->level+1, MPI::FLOAT, MPI::MAX);
             for (int level = 0; level <= bt->level; level++) {
                 fio->paras.RMPL[level+2*tot_level] += temp_RMPL[level];
+            }
+            if (myMPI->myrank == 0) {
+                std::cout << "loop " << i << ", bt done, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
+            }
+            bt->CleanMem(bt->root);
+            if (myMPI->myrank == 0) {
+                std::cout << "loop " << i << ", bt CleanMem, current RSS = " << getCurrentRSS()/8/1024 << "KB" << std::endl;
             }
 #endif
         }
