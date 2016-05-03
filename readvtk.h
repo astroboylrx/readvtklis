@@ -165,6 +165,17 @@ public:
      *  \brief calculate vertical rho_g and rho_p */
     int VertRho(double *VertRho);
     
+#ifdef ENABLE_FFT
+    double *fft1d_data;
+    fftw_complex *spectra;
+    fftw_plan plan;
+    
+    /*! \fn int PowerSpectra()
+     *  \brief apply fft to data */
+    int PowerSpectra1DX(CellData_Scalar const &s_data, double *ps);
+    int PowerSpectra1DX(CellData_Vector const &v_data, int const component, double *ps);
+#endif // ENABLE_FFT
+    
     /*! \fn int CorrLen(float *CoorL)
      *  \brief calculate the correlation length */
     int CorrLen(float *CorrL

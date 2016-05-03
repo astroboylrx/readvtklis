@@ -10,6 +10,7 @@
 #define __readvtklis__global__
 
 #define ENABLE_MPI
+#define ENABLE_FFT
 
 #include <cstdio>
 #include <iostream>
@@ -29,6 +30,9 @@
 #ifdef ENABLE_MPI
 #include "mpi.h"
 #endif
+#ifdef ENABLE_FFT
+#include "fftw3.h"
+#endif
 
 using namespace::std;
 
@@ -44,7 +48,7 @@ using namespace::std;
 //#define PeriodicFlux
 
 //#define OCTREE
-#define QUADTREE
+//#define QUADTREE
 #define BTREE
 
 //#define CorrValue // print correlation value of Mx

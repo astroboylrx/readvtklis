@@ -111,6 +111,10 @@ int ParticleList::ReadLis(string filename)
     } else {
         cout << "Failed to open " << filename << endl;
     }
+    auto it = List.begin();
+    std::cout << "id = " << it->pid << ", cpuid = " << it->cpuid << ", mass = " << it->mass << ", rad = " << it->rad << ", r = [" << it->x[0] << ", " << it->x[1] << ", " << it->x[2] << "], v = [" << it->v[0] << ", " << it->v[1] << ", " << it->v[2] << "]" << std::endl;
+    it += List.size() - 1;
+    std::cout << "id = " << it->pid << ", cpuid = " << it->cpuid << ", mass = " << it->mass << ", rad = " << it->rad << ", r = [" << it->x[0] << ", " << it->x[1] << ", " << it->x[2] << "], v = [" << it->v[0] << ", " << it->v[1] << ", " << it->v[2] << "]" << std::endl;
     file.close();
     return 0;
 }

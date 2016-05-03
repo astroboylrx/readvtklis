@@ -28,6 +28,8 @@ int IntegrateData(VtkFile *vf);
 int GasParDynamic();
 int wangbadan(int exitcode);
 
+double *test_sp = NULL;
+
 /*! \fn int main(int argc, const char * argv[])
  *  \brief main function. */
 int main(int argc, const char * argv[]) {
@@ -142,12 +144,18 @@ int main(int argc, const char * argv[]) {
             }
             
             // lis part
-            if (fio->RhoParMax_flag || fio->ParNum_flag || fio->HeiPar_flag || fio->PointCloud_flag || fio->GasPar_flag) {
+            if (fio->ParNum_flag || fio->HeiPar_flag || fio->PointCloud_flag || fio->GasPar_flag) {
                 pl->ReadLis(fio->lis_filenames[i]);
             }
             
             if (fio->PointCloud_flag) {
                 pl->Lis2Vtk(fio->lis2vtk_filenames[i], vf->Header);
+            }
+            if (test_sp == NULL) {
+                test_sp = new double[vf->dimensions[0]];
+                for (int ix = 0; ix != vf->dimensions[0]; ix++) {
+                    test_sp[ix] = 0;
+                }
             }
             
             // calculate and record_data
@@ -161,6 +169,32 @@ int main(int argc, const char * argv[]) {
 #else
     }
 #endif
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //////////////////////////// test area /////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    /* produce sigmap vs v_y,g
+    float sigmap[64], vyg[64]={0};
+    for (int ix = 0; ix != 64; ix++) {
+        sigmap[ix] = 0;
+        for (int iz = 0; iz != 64; iz++) {
+            for (int iy = 0; iy != 64; iy++) {
+                sigmap[ix] += vf->cd_scalar[1].data[iz][iy][ix] * vf->cell_volume;
+            }
+        }
+        sigmap[ix] /= (vf->Sigma_gas_0 * vf->spacing[0] * vf->spacing[1] * vf->dimensions[1]);
+        
+        vyg[ix] = 0;
+        for (int iy = 0; iy != 64; iy++) {
+            for (int iz = 32-8; iz != 32+8; iz++) {
+                vyg[ix] += vf->cd_vector[0].data[iz][iy][ix][1];
+            }
+        }
+        vyg[ix] /= (vf->dimensions[1] * 16);
+        
+        cout << vf->cell_center[0][0][ix][0] << " " << sigmap[ix] << " " << vyg[ix] << endl;
+    } // */
+    
     /* produce <rho_g>_xy(z)
     float rhog[64], sigma_rhog[64];
     for (int iz = 0; iz != vf->dimensions[2]; iz++) {
@@ -180,6 +214,12 @@ int main(int argc, const char * argv[]) {
         sigma_rhog[iz] /= vf->dimensions[0]*vf->dimensions[1];
         sigma_rhog[iz] = sqrt(sigma_rhog[iz]);
         cout << vf->cell_center[iz][0][0][2] << " " << rhog[iz] << " " << sigma_rhog[iz] << endl;
+    } // */
+    
+    /* produce 1-D velocity FFT analysis
+    for (int ix = 0; ix != vf->dimensions[0]; ix++) {
+        test_sp[ix] /= fio->n_file;
+        std::cout << vf->cell_center[0][0][ix][0] << " " << test_sp[ix] << std::endl;
     } // */
     
     if (myMPI->myrank == 0) {
@@ -234,7 +274,7 @@ int main(int argc, const char * argv[]) {
             if (myMPI->myrank == 0) {
                 std::cout << "loop " << i << ", ot done, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
             }
-            ot->CleanMem(ot->root);
+            ot->CleanMem(ot->root); delete ot->root; ot->root = nullptr;
             if (myMPI->myrank == 0) {
                 std::cout << "loop " << i << ", ot CleanMem, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
             }
@@ -415,6 +455,11 @@ int RecordData(int i, VtkFile *vf, ParticleList *pl) {
         paras->RpAV[i] = vf->RpAV;
         paras->RpSQ[i] = vf->RpSQ;
         paras->RpQU[i] = vf->RpQU;
+        double *tmp_sp = new double[vf->dimensions[0]];
+        vf->PowerSpectra1DX(vf->cd_vector[1], 2, tmp_sp);
+        for (int ix = 0; ix != vf->dimensions[0]; ix++) {
+            test_sp[ix] += tmp_sp[ix];
+        }
     }
     if (fio->HeiPar_flag) {
         pl->ScaleHeight(paras->Hp[i], paras->Hp_in1sigma[i]);

@@ -51,6 +51,12 @@ public:
     /*! \fn ~TreeNode()
      *  \brief destructor */
     ~TreeNode() {
+        for (int i = 0; i != 1<<D; i++) {
+            if (daughter[i] != nullptr) {
+                delete daughter[i];
+                daughter[i] = nullptr;
+            }
+        }
         if (deep_pids.size() > 0) {
             vector<int> temp;
             deep_pids.swap(temp);
@@ -110,9 +116,9 @@ public:
         for (int i = 0; i != 1<<D; i++) {
             if (p->daughter[i] != nullptr) {
                 CleanMem(p->daughter[i]);
+                delete p->daughter[i];
+                p->daughter[i] = nullptr;
             }
-            delete p->daughter[i];
-            p->daughter[i] = nullptr;
         }
     }
     

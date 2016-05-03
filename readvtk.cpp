@@ -208,11 +208,14 @@ VtkFile::VtkFile()
     cell_center = NULL;
     GPME = NULL;
     GPMEPar = NULL;
+    fft1d_data = NULL;
+    spectra = NULL;
 }
 
 /********** Destructor **********/
 VtkFile::~VtkFile()
 {
+    fftw_destroy_plan(plan);
     /*
     if (cd_scalar.size() > 0) {
         for (int i = 0; i != cd_scalar.size(); i++) {
@@ -501,6 +504,16 @@ int VtkFile::Read_Header_Record_Pos(string filename)
         }
     }
     file.close();
+    
+#ifdef ENABLE_FFT
+    if (fft1d_data == NULL) {
+        fft1d_data = new double[dimensions[0]];
+    }
+    if (spectra == NULL) {
+        spectra = new fftw_complex[dimensions[0]];
+        plan = fftw_plan_dft_r2c_1d(dimensions[0], fft1d_data, spectra, FFTW_MEASURE);
+    }
+#endif
 
     return 0;
 }
@@ -856,6 +869,69 @@ int VtkFile::CorrLen(float *CorrL
     delete [] corrRho;
     return 0;
 }
+
+#ifdef ENABLE_FFT
+/********** PowerSpectra **********/
+/*! \fn int PowerSpectra()
+ *  \brief apply fft to data */
+int VtkFile::PowerSpectra1DX(CellData_Scalar const &s_data, double *ps)
+{
+    double *tmp_data = new double[dimensions[0]];
+    for (int ix = 0; ix != dimensions[0]; ix++) {
+        ps[ix] = 0;
+    }
+    for (int iz = 0; iz != dimensions[2]; iz++) {
+        for (int ix = 0; ix != dimensions[0]; ix++) {
+            tmp_data[ix] = 0;
+            for (int iy = 0; iy != dimensions[1]; iy++) {
+                tmp_data[ix] += s_data.data[iz][iy][ix];
+            }
+            tmp_data[ix] /= dimensions[1];
+        }
+        
+        memcpy(fft1d_data, tmp_data, sizeof(double)*dimensions[0]);
+        fftw_execute(plan);
+        for (int ix = 0; ix != dimensions[0]; ix++) {
+            ps[ix] += sqrt(spectra[ix][0]*spectra[ix][0] + spectra[ix][1]*spectra[ix][1]);
+        }
+    }
+    for (int iz = 0; iz != dimensions[2]; iz++) {
+        ps[iz] /= dimensions[2];
+    }
+    delete [] tmp_data;
+    
+    return 0;
+}
+
+int VtkFile::PowerSpectra1DX(CellData_Vector const &v_data, int const component, double *ps) {
+    double *tmp_data = new double[dimensions[0]];
+    for (int ix = 0; ix != dimensions[0]; ix++) {
+        ps[ix] = 0;
+    }
+    for (int iz = 0; iz != dimensions[2]; iz++) {
+        for (int ix = 0; ix != dimensions[0]; ix++) {
+            tmp_data[ix] = 0;
+            for (int iy = 0; iy != dimensions[1]; iy++) {
+                tmp_data[ix] += v_data.data[iz][iy][ix][component];
+            }
+            tmp_data[ix] /= dimensions[1];
+        }
+        
+        memcpy(fft1d_data, tmp_data, sizeof(double)*dimensions[0]);
+        fftw_execute(plan);
+        for (int ix = 0; ix != dimensions[0]; ix++) {
+            ps[ix] += sqrt(spectra[ix][0]*spectra[ix][0] + spectra[ix][1]*spectra[ix][1]);
+        }
+    }
+    for (int iz = 0; iz != dimensions[2]; iz++) {
+        ps[iz] /= dimensions[2];
+    }
+    delete [] tmp_data;
+    
+    return 0;
+}
+#endif // ENABLE_FFT
+
 
 /********** GasPar **********/
 /*! \fn int GasPar()

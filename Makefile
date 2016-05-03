@@ -6,8 +6,8 @@ SOURCES   = readvtklis.cpp readvtk.cpp readlis.cpp fop.cpp global.cpp octree.cpp
 OBJECTS   = $(SOURCES:.cpp=.o)
 INCL      = readvtk.h readlis.h fop.h global.h octree.h
 
-CXXFLAGS  = -std=c++11 -I/opt/local/include/gcc49 -I/opt/local/include/mpich-mp
-LDFLAGS   = -L/opt/local/lib/gcc49 -L/opt/local/lib/mpich-mp
+CXXFLAGS  = -std=c++11 -I/opt/local/include/gcc5 -I/opt/local/include/mpich-mp
+LDFLAGS   = -L/opt/local/lib/gcc5 -L/opt/local/lib/mpich-mp
 LIBS      = -lm
 
 EXEC      = readvtklis
