@@ -453,11 +453,13 @@ int RecordData(int i, VtkFile *vf, ParticleList *pl) {
         paras->RpAV[i] = vf->RpAV;
         paras->RpSQ[i] = vf->RpSQ;
         paras->RpQU[i] = vf->RpQU;
+#ifdef ENABLE_FFT
         double *tmp_sp = new double[vf->dimensions[0]];
         vf->PowerSpectra1DX(vf->cd_vector[1], 2, tmp_sp);
         for (int ix = 0; ix != vf->dimensions[0]; ix++) {
             test_sp[ix] += tmp_sp[ix];
         }
+#endif
     }
     if (fio->HeiPar_flag) {
         pl->ScaleHeight(paras->Hp[i], paras->Hp_in1sigma[i]);

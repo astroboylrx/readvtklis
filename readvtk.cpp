@@ -208,14 +208,18 @@ VtkFile::VtkFile()
     cell_center = NULL;
     GPME = NULL;
     GPMEPar = NULL;
+#ifdef ENABLE_FFT
     fft1d_data = NULL;
     spectra = NULL;
+#endif
 }
 
 /********** Destructor **********/
 VtkFile::~VtkFile()
 {
+#ifdef ENABLE_FFT
     fftw_destroy_plan(plan);
+#endif
     /*
     if (cd_scalar.size() > 0) {
         for (int i = 0; i != cd_scalar.size(); i++) {
