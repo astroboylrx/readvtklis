@@ -13,8 +13,6 @@
 #include "octree.h"
 #include <unistd.h>
 
-using namespace std;
-
 /********** global variables **********/
 #ifdef ENABLE_MPI
 MPI_info *myMPI = new MPI_info;
@@ -222,9 +220,9 @@ int main(int argc, const char * argv[]) {
         std::cout << vf->cell_center[0][0][ix][0] << " " << test_sp[ix] << std::endl;
     } // */
     
-    if (myMPI->myrank == 0) {
+    //if (myMPI->myrank == 0) {
         std::cout << "Before loop, current RSS = " << getCurrentRSS()/8./1024 << "KB" << std::endl;
-    }
+    //}
     if (fio->RhopMaxPerLevel_flag) {
 #ifdef ENABLE_MPI
         float *temp_RMPL = NULL; double temp_t; int tot_level = 0;

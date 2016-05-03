@@ -479,8 +479,9 @@ public:
             delete [] indices[npo];
         }
         delete [] indices;
-    }
 #endif /* ENABLE_MPI */
+    }
+
     
 };
 
